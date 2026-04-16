@@ -1,0 +1,31 @@
+import express from 'express';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile } from '../controllers/authController.js';
+import { protect } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
+
+const router = express.Router();
+
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.get('/confirm/:token', confirmEmail);
+
+// User Profile Routes
+router.route('/profile')
+    .get(protect, getUserProfile)
+    .put(protect, updateUserProfile);
+
+// Upload route
+router.post('/upload', protect, (req, res) => {
+    upload.single('image')(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ message: err.message });
+        }
+        if (!req.file) {
+            return res.status(400).json({ message: 'Vui lòng chọn ảnh' });
+        }
+        const imageUrl = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
+        res.json({ imageUrl });
+    });
+});
+
+export default router;
