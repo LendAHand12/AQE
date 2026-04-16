@@ -73,6 +73,14 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    usdtBalance: {
+        type: Number,
+        default: 0
+    },
+    aqeBalance: {
+        type: Number,
+        default: 0
+    },
     bankAccounts: [bankAccountSchema]
 }, {
     timestamps: true
