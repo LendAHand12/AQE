@@ -1,0 +1,62 @@
+{
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "welcome_back": "Welcome Back",
+    "create_account": "Create New Account",
+    "login_desc": "Log in to manage your investment portfolio",
+    "register_desc": "Start your investment journey today",
+    "email_placeholder": "Enter email",
+    "password_placeholder": "Enter password",
+    "password_only": "Password",
+    "phone_placeholder": "Phone number",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "confirm_password": "Confirm password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "agree_terms": "I agree to ",
+    "terms": "Terms",
+    "policy": "Policy",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "register_now": "Register now",
+    "or": "or",
+    "processing": "Processing..."
+  },
+  "dashboard": {
+    "success": "Login successful!",
+    "welcome": "Welcome {{name}} to the AQ Estate system.",
+    "logout": "Logout"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "portfolio": "Portfolio",
+    "marketplace": "Marketplace",
+    "wallet": "Wallet",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "settings": {
+    "title": "Account Settings",
+    "subtitle": "Manage your personal information and security preferences",
+    "personal_info": "Personal Info",
+    "security": "Security",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "kyc": "KYC & Verification",
+    "support": "Support",
+    "basic_info": "Basic Information",
+    "contact_info": "Contact",
+    "address_info": "Address",
+    "bank_info": "Bank Accounts",
+    "save_changes": "Save Changes",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "danger_zone": "Danger Zone",
+    "delete_account": "Delete account permanently",
+    "delete_desc": "This action cannot be undone. All your data will be deleted.",
+    "request_delete": "Request Delete"
+  }
+}

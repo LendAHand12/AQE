@@ -1,0 +1,62 @@
+{
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "welcome_back": "Chào mừng trở lại",
+    "create_account": "Tạo tài khoản mới",
+    "login_desc": "Đăng nhập để quản lý danh mục đầu tư của bạn",
+    "register_desc": "Bắt đầu hành trình đầu tư của bạn ngay hôm nay",
+    "email_placeholder": "Nhập email",
+    "password_placeholder": "Nhập mật khẩu",
+    "password_only": "Mật khẩu",
+    "phone_placeholder": "Số điện thoại",
+    "first_name": "Tên",
+    "last_name": "Họ",
+    "confirm_password": "Nhập lại mật khẩu",
+    "remember_me": "Ghi nhớ tôi",
+    "forgot_password": "Quên mật khẩu?",
+    "agree_terms": "Tôi đồng ý ",
+    "terms": "Điều khoản",
+    "policy": "Chính sách",
+    "no_account": "Chưa có tài khoản?",
+    "have_account": "Đã có tài khoản?",
+    "register_now": "Đăng ký ngay",
+    "or": "hoặc",
+    "processing": "Đang xử lý..."
+  },
+  "dashboard": {
+    "success": "Đăng nhập thành công!",
+    "welcome": "Chào mừng {{name}} đến với hệ thống AQ Estate.",
+    "logout": "Đăng xuất"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "portfolio": "Danh mục",
+    "marketplace": "Marketplace",
+    "wallet": "Ví",
+    "analytics": "Phân tích",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất"
+  },
+  "settings": {
+    "title": "Cài đặt tài khoản",
+    "subtitle": "Quản lý thông tin cá nhân và tùy chọn bảo mật",
+    "personal_info": "Thông tin cá nhân",
+    "security": "Bảo mật",
+    "notifications": "Thông báo",
+    "appearance": "Giao diện",
+    "kyc": "KYC & Xác minh",
+    "support": "Hỗ trợ",
+    "basic_info": "Thông tin cơ bản",
+    "contact_info": "Liên hệ",
+    "address_info": "Địa chỉ",
+    "bank_info": "Tài khoản ngân hàng",
+    "save_changes": "Lưu thay đổi",
+    "verified": "Đã xác minh",
+    "unverified": "Chưa xác minh",
+    "danger_zone": "Vùng nguy hiểm",
+    "delete_account": "Xóa tài khoản vĩnh viễn",
+    "delete_desc": "Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa.",
+    "request_delete": "Yêu cầu xóa"
+  }
+}

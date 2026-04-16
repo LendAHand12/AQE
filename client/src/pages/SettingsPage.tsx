@@ -1,0 +1,507 @@
+import React, { useState, useEffect, useRef, useCallback } from "react"
+import { useTranslation } from "react-i18next"
+import { 
+  User, 
+  CheckCircle2, 
+  Plus, 
+  ShieldCheck, 
+  ShieldAlert, 
+  HelpCircle,
+  Loader2,
+  Camera,
+  Download,
+  Trash,
+  Wallet
+} from "lucide-react"
+import Cropper from 'react-easy-crop'
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { 
+  Card, 
+  CardContent 
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
+import apiClient from "@/lib/axios"
+
+// Helper function to create the cropped image
+const getCroppedImg = async (imageSrc: string, pixelCrop: any) => {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image()
+    img.addEventListener('load', () => resolve(img))
+    img.addEventListener('error', (error) => reject(error))
+    img.setAttribute('crossOrigin', 'anonymous')
+    img.src = imageSrc
+  })
+
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Canvas is empty'))
+        return
+      }
+      resolve(blob)
+    }, 'image/jpeg')
+  })
+}
+
+export default function SettingsPage() {
+  const { t } = useTranslation()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Profile State
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    birthday: "",
+    gender: "Nam",
+    telegram: "",
+    address: "",
+    nation: "Việt Nam",
+    kycStatus: "unverified",
+    avatar: null,
+    walletAddress: "",
+    bankAccounts: [] as any[]
+  })
+
+  // Crop State
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  // Bank Modal State
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false)
+  const [newBank, setNewBank] = useState({ bankName: "", accountNumber: "", accountName: "", isDefault: false })
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await apiClient.get("/auth/profile")
+        const data = response.data
+        setFormData({
+          ...data,
+          birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
+          bankAccounts: data.bankAccounts || []
+        })
+      } catch (err: any) {
+        toast.error(t("errors.fetch_failed") || "Không thể tải thông tin profile")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [t])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleGenderChange = (value: string) => {
+    setFormData({ ...formData, gender: value })
+  }
+
+  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels)
+  }, [])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.addEventListener('load', () => {
+        setImageToCrop(reader.result as string)
+        setIsCropModalOpen(true)
+      })
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleApplyCrop = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return
+
+    setUploading(true)
+    try {
+      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels)
+      if (!croppedImageBlob) return
+
+      const uploadData = new FormData()
+      uploadData.append("image", croppedImageBlob, "avatar.jpg")
+
+      const response = await apiClient.post("/auth/upload", uploadData)
+      const imageUrl = response.data.imageUrl
+
+      // Update form data
+      const updatedFormData = { ...formData, avatar: imageUrl }
+      setFormData(updatedFormData)
+      
+      // Automatically Save to DB
+      await apiClient.put("/auth/profile", updatedFormData)
+      
+      toast.success("Cập nhật ảnh đại diện thành công!")
+      setIsCropModalOpen(false)
+      setImageToCrop(null)
+    } catch (err: any) {
+      toast.error("Lỗi khi xử lý ảnh")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const response = await apiClient.put("/auth/profile", formData)
+      toast.success(t("settings.save_success") || "Cập nhật thành công!")
+      localStorage.setItem("user", JSON.stringify(response.data))
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t("errors.update_failed") || "Cập nhật thất bại")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddBank = () => {
+    if (!newBank.bankName || !newBank.accountNumber || !newBank.accountName) {
+      toast.error("Vui lòng điền đầy đủ thông tin ngân hàng")
+      return
+    }
+    let updatedBanks = [...formData.bankAccounts]
+    if (newBank.isDefault) updatedBanks = updatedBanks.map(b => ({ ...b, isDefault: false }))
+    
+    setFormData({ ...formData, bankAccounts: [...updatedBanks, newBank] })
+    setNewBank({ bankName: "", accountNumber: "", accountName: "", isDefault: false })
+    setIsBankModalOpen(false)
+    toast.info("Tài khoản đã được thêm vào danh sách. Nhấn 'Lưu thay đổi' để hoàn tất.")
+  }
+
+  const handleRemoveBank = (index: number) => {
+    const newBanks = formData.bankAccounts.filter((_, i) => i !== index)
+    setFormData({ ...formData, bankAccounts: newBanks })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <Loader2 className="w-10 h-10 text-[#276152] animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-[900px] mx-auto py-8 px-4 space-y-10">
+      {/* Header */}
+      <div className="flex justify-between items-end">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold text-[#111827]">{t("settings.title")}</h1>
+          <p className="text-sm text-[#6b7280]">{t("settings.subtitle")}</p>
+        </div>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="bg-[#276152] hover:bg-[#1e4d41] rounded-[8px] font-bold px-8 h-11"
+        >
+          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Lưu thay đổi
+        </Button>
+      </div>
+
+      <Tabs defaultValue="personal" className="w-full">
+        <div className="border-b border-gray-200">
+          <TabsList className="bg-transparent h-auto p-0 flex justify-start gap-12 w-full overflow-x-auto scroller-none">
+            {[
+              { id: "personal", label: "Thông tin cá nhân", icon: User },
+              { id: "security", label: "Bảo mật", icon: ShieldCheck },
+              { id: "kyc", label: "KYC & Xác minh", icon: ShieldAlert },
+              { id: "support", label: "Hỗ trợ", icon: HelpCircle },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="group relative px-0 py-4 h-full bg-transparent border-none shadow-none rounded-none data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-[2px] data-[state=active]:after:bg-[#276152] data-[state=active]:text-[#276152] flex items-center gap-2"
+              >
+                <tab.icon className="w-4 h-4 text-gray-400 group-data-[state=active]:text-[#276152]" />
+                <span className="text-[14px] font-medium">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <TabsContent value="personal" className="mt-8 space-y-8">
+          {/* Avatar Section */}
+          <Card className="border border-gray-100 shadow-none rounded-[16px]">
+            <CardContent className="py-10 flex flex-col items-center justify-center">
+              <Avatar className="w-24 h-24 bg-[#1e4d40] text-white overflow-hidden">
+                {formData.avatar && <AvatarImage src={formData.avatar} className="object-cover" />}
+                <AvatarFallback className="text-3xl font-bold bg-[#1e4d40]">
+                  {formData.lastName?.charAt(0)}{formData.firstName?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="mt-6 flex items-center gap-6">
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[13px] font-medium px-4 py-1.5 border border-gray-200 rounded-[4px] hover:bg-gray-50 transition-all flex items-center gap-2"
+                >
+                  <Camera size={14} /> Thay đổi ảnh
+                </button>
+                <button onClick={() => setFormData({...formData, avatar: null})} className="text-[13px] font-medium text-red-500 hover:underline">Xóa</button>
+              </div>
+              <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-[#d9ede8] rounded-full text-[#1e4d40] text-[12px] font-semibold">
+                <CheckCircle2 size={14} />
+                {formData.kycStatus === 'verified' ? 'Đã xác minh' : 'Chưa xác minh'}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Form Content Card */}
+          <Card className="border border-gray-100 shadow-none rounded-[16px]">
+            <CardContent className="p-8 space-y-12">
+              {/* Basic Info */}
+              <div className="space-y-6">
+                <h3 className="text-[16px] font-bold text-[#111827] border-b border-gray-100 pb-3">Thông tin cơ bản</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Họ</Label>
+                    <Input name="lastName" value={formData.lastName} onChange={handleChange} className="h-11 border-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Tên</Label>
+                    <Input name="firstName" value={formData.firstName} onChange={handleChange} className="h-11 border-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Ngày sinh</Label>
+                    <Input type="date" name="birthday" value={formData.birthday} onChange={handleChange} className="h-11 border-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Giới tính</Label>
+                    <Select value={formData.gender} onValueChange={handleGenderChange}>
+                      <SelectTrigger className="h-11 border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Nam">Nam</SelectItem>
+                        <SelectItem value="Nữ">Nữ</SelectItem>
+                        <SelectItem value="Khác">Khác</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="space-y-6">
+                <h3 className="text-[16px] font-bold text-[#111827] border-b border-gray-100 pb-3">Liên hệ</h3>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Email</Label>
+                    <div className="relative">
+                      <Input value={formData.email} disabled className="h-11 pr-24 bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed" />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#d9ede8] text-[#1e4d40] text-[11px] font-bold rounded">
+                          <CheckCircle2 size={12} /> Đã xác minh
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Số điện thoại</Label>
+                    <Input 
+                      name="phone" 
+                      value={formData.phone} 
+                      onChange={handleChange} 
+                      placeholder="0912345678"
+                      className="h-11 border-gray-200 focus:ring-1 focus:ring-[#276152]" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Telegram</Label>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</div>
+                      <Input name="telegram" value={formData.telegram} onChange={handleChange} className="h-11 border-gray-200 pl-7" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-6">
+                <h3 className="text-[16px] font-bold text-[#111827] border-b border-gray-100 pb-3">Địa chỉ</h3>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Địa chỉ cụ thể</Label>
+                    <Input name="address" value={formData.address} onChange={handleChange} className="h-11 border-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-gray-500">Quốc gia</Label>
+                    <Select value={formData.nation} onValueChange={(v) => setFormData({...formData, nation: v})}>
+                      <SelectTrigger className="h-11 border-gray-200"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Việt Nam">Việt Nam</SelectItem>
+                        <SelectItem value="USA">USA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Wallet Address */}
+              <div className="space-y-6">
+                <h3 className="text-[16px] font-bold text-[#111827] border-b border-gray-100 pb-3">Ví điện tử</h3>
+                <div className="space-y-2">
+                  <Label className="text-[13px] font-medium text-gray-500">Địa chỉ ví (USDT BEP20)</Label>
+                  <div className="relative">
+                    <Input 
+                      name="walletAddress" 
+                      value={formData.walletAddress || ""} 
+                      onChange={handleChange} 
+                      placeholder="0x..."
+                      className="h-11 border-gray-200 pl-10 focus:ring-1 focus:ring-[#276152]" 
+                    />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                      <Wallet className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-[#6b7280]">Lưu ý: Mọi giao dịch rút tiền sẽ được gửi về địa chỉ ví này.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bank Accounts */}
+          <Card className="border border-gray-100 shadow-none rounded-[16px]">
+            <CardContent className="p-8 space-y-6">
+              <h3 className="text-[16px] font-bold text-[#111827]">Tài khoản ngân hàng</h3>
+              <div className="space-y-3">
+                {formData.bankAccounts.map((bank, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-[#f8faf9] border border-gray-100 rounded-[12px]">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center font-bold text-gray-400 text-xs">{(bank.bankName || 'XX').substring(0,2).toUpperCase()}</div>
+                      <div>
+                        <p className="text-[14px] font-bold text-[#111827]">{bank.bankName}</p>
+                        <p className="text-[13px] text-gray-500 font-mono">**** **** {bank.accountNumber?.slice(-4)}</p>
+                        <p className="text-[11px] text-gray-400 font-medium uppercase">{bank.accountName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {bank.isDefault && <Badge className="bg-[#d9ede8] text-[#1e4d40]">Mặc định</Badge>}
+                      <button onClick={() => handleRemoveBank(index)} className="text-red-500 hover:underline transition-all"><Trash size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+                <Dialog open={isBankModalOpen} onOpenChange={setIsBankModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full border-2 border-dashed border-[#d9ede8] text-[#276152] font-bold h-12 rounded-[12px] hover:bg-[#276152]/5">
+                      <Plus size={18} className="mr-2" /> Thêm tài khoản
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader><DialogTitle>Thêm tài khoản ngân hàng</DialogTitle></DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Ngân hàng</Label>
+                        <Input value={newBank.bankName} onChange={(e) => setNewBank({...newBank, bankName: e.target.value})} className="col-span-3 h-10" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Họ và tên</Label>
+                        <Input value={newBank.accountName} onChange={(e) => setNewBank({...newBank, accountName: e.target.value.toUpperCase()})} className="col-span-3 h-10 uppercase" placeholder="NGUYEN VAN A" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Số tài khoản</Label>
+                        <Input value={newBank.accountNumber} onChange={(e) => setNewBank({...newBank, accountNumber: e.target.value})} className="col-span-3 h-10" />
+                      </div>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <input type="checkbox" checked={newBank.isDefault} onChange={(e) => setNewBank({...newBank, isDefault: e.target.checked})} />
+                        <Label>Đặt làm mặc định</Label>
+                      </div>
+                    </div>
+                    <DialogFooter><Button onClick={handleAddBank} className="bg-[#276152]">Xác nhận</Button></DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Image Crop Modal */}
+      <Dialog open={isCropModalOpen} onOpenChange={setIsCropModalOpen}>
+        <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col">
+          <DialogHeader><DialogTitle>Cắt ảnh đại diện</DialogTitle></DialogHeader>
+          <div className="flex-1 relative bg-gray-900 rounded-lg overflow-hidden mt-4">
+            {imageToCrop && (
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            )}
+          </div>
+          <div className="py-4 space-y-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">Phóng to</span>
+              <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-[#276152]" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCropModalOpen(false)}>Hủy</Button>
+            <Button onClick={handleApplyCrop} disabled={uploading} className="bg-[#276152]">
+              {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Áp dụng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+  return <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+}
