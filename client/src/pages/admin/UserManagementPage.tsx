@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
+import { getImageUrl, cn } from "@/lib/utils"
 
 export default function UserManagementPage() {
   const { t } = useTranslation()
@@ -90,7 +91,7 @@ export default function UserManagementPage() {
   }
 
   const filteredUsers = users.filter(u => 
-    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase())
+    `${u.fullName} ${u.username} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
@@ -147,14 +148,14 @@ export default function UserManagementPage() {
               <TableRow key={user._id} className="border-b border-gray-50 hover:bg-[#f8faf9]/50 transition-colors">
                 <TableCell className="py-5 font-bold text-[#111827]">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#276152] text-white flex items-center justify-center text-sm font-bold shadow-inner overflow-hidden border border-gray-100">
+                    <div className="w-10 h-10 rounded-full bg-[#276152] text-white flex items-center justify-center text-sm font-bold shadow-inner overflow-hidden border border-gray-100 uppercase">
                       {user.avatar ? (
-                        <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={getImageUrl(user.avatar)} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <span>{user.lastName?.charAt(0)}{user.firstName?.charAt(0)}</span>
+                        <span>{user.fullName?.charAt(0)}</span>
                       )}
                     </div>
-                    {user.lastName} {user.firstName}
+                    {user.fullName}
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-600 font-medium">{user.email}</TableCell>
@@ -166,7 +167,7 @@ export default function UserManagementPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {user.kycStatus === 'verified' && <Badge className="bg-blue-50 text-blue-600 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><CheckCircle2 size={12}/> Đã xác minh</Badge>}
+                  {user.kycStatus === 'verified' && <Badge className="bg-blue-50 text-blue-600 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><CheckCircle2 size={12}/> Đã duyệt</Badge>}
                   {user.kycStatus === 'pending' && <Badge className="bg-orange-50 text-orange-600 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><Clock size={12}/> Chờ duyệt</Badge>}
                   {user.kycStatus === 'unverified' && <Badge className="bg-gray-100 text-gray-500 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><AlertCircle size={12}/> Chưa KYC</Badge>}
                 </TableCell>
@@ -210,23 +211,19 @@ export default function UserManagementPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] rounded-[24px] max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[700px] rounded-[24px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-2xl font-bold text-[#111827]">Chỉnh sửa người dùng</DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
             <div className="grid gap-6 py-4">
               {/* Basic Info */}
               <div className="space-y-4">
                 <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Thông tin cá nhân</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Họ</label>
-                    <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} className="h-11 rounded-[8px]" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Tên</label>
-                    <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} className="h-11 rounded-[8px]" />
+                    <label className="text-sm font-bold text-gray-500">Họ và Tên</label>
+                    <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px]" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -308,7 +305,7 @@ export default function UserManagementPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="pt-4 border-t border-gray-100">
+          <DialogFooter className="p-6 pt-4 border-t border-gray-100">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Hủy</Button>
             <Button onClick={handleUpdate} className="bg-[#276152] rounded-[8px] px-8">Lưu tất cả thay đổi</Button>
           </DialogFooter>

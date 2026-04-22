@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { Block, Transaction, TokenState } from '../models/Blockchain.js';
+import { Block, TokenState } from '../models/Blockchain.js';
+import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import AdminLog from '../models/AdminLog.js';
 
@@ -88,9 +89,6 @@ export const buyToken = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
         
-        // Skip balance check for simulation purposes, but we update balances
-        // if (user.usdtBalance < amountUsdt) return res.status(400).json({ message: 'Insufficient USDT' });
-
         const stats = await TokenState.findOne({ symbol: 'AQE' });
         const tokensToReceive = amountUsdt / stats.currentPrice;
 
@@ -102,7 +100,9 @@ export const buyToken = async (req, res) => {
             amount: tokensToReceive,
             symbol: 'AQE',
             type: 'BUY',
-            status: 'SUCCESS'
+            status: 'SUCCESS',
+            balanceBefore: user.aqeBalance,
+            balanceAfter: user.aqeBalance + tokensToReceive
         });
 
         // 2. Update User Balances
@@ -161,7 +161,9 @@ export const sellToken = async (req, res) => {
             amount: amountAqe,
             symbol: 'AQE',
             type: 'SELL',
-            status: 'SUCCESS'
+            status: 'SUCCESS',
+            balanceBefore: user.aqeBalance,
+            balanceAfter: user.aqeBalance - amountAqe
         });
 
         user.aqeBalance -= amountAqe;
@@ -193,16 +195,22 @@ export const sellToken = async (req, res) => {
 
 // @desc    Update Token Settings (Admin)
 export const updateTokenSettings = async (req, res) => {
-    const { totalSupply, usdtPool, currentPrice, name, symbol } = req.body;
+    const { totalSupply, usdtPool, name, symbol } = req.body;
     try {
         let stats = await TokenState.findOne({ symbol: symbol || 'AQE' });
         if (!stats) {
             stats = new TokenState({ symbol: symbol || 'AQE' });
         }
         
-        stats.totalSupply = totalSupply !== undefined ? totalSupply : stats.totalSupply;
-        stats.usdtPool = usdtPool !== undefined ? usdtPool : stats.usdtPool;
-        stats.currentPrice = currentPrice !== undefined ? currentPrice : stats.currentPrice;
+        stats.totalSupply = totalSupply !== undefined ? Number(totalSupply) : stats.totalSupply;
+        stats.usdtPool = usdtPool !== undefined ? Number(usdtPool) : stats.usdtPool;
+        
+        // --- AUTO CALCULATE PRICE & MARKET CAP ---
+        if (stats.totalSupply > 0) {
+            stats.currentPrice = stats.usdtPool / stats.totalSupply;
+        }
+        
+        stats.marketCap = stats.totalSupply * stats.currentPrice;
         stats.name = name || stats.name;
         
         const updatedStats = await stats.save();
@@ -213,7 +221,11 @@ export const updateTokenSettings = async (req, res) => {
             adminUsername: req.admin.username,
             action: 'UPDATE_TOKEN_SETTINGS',
             target: stats.symbol,
-            details: { newValues: req.body }
+            details: { 
+                newValues: req.body,
+                calculatedPrice: stats.currentPrice,
+                calculatedMarketCap: stats.marketCap
+            }
         });
 
         res.json({ message: 'Cập nhật thông số Token thành công', stats: updatedStats });

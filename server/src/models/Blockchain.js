@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Transaction from './Transaction.js';
 
 // --- BLOCK MODEL ---
 const blockSchema = mongoose.Schema({
@@ -11,20 +12,7 @@ const blockSchema = mongoose.Schema({
 }, { timestamps: true });
 
 export const Block = mongoose.model('Block', blockSchema);
-
-// --- TRANSACTION MODEL ---
-const transactionSchema = mongoose.Schema({
-    hash: { type: String, required: true, unique: true },
-    from: { type: String, required: true }, // _id of user
-    to: { type: String, required: true },   // _id of user or 'Contract'
-    amount: { type: Number, required: true },
-    symbol: { type: String, default: 'AQE' },
-    type: { type: String, enum: ['BUY', 'SELL', 'TRANSFER', 'DEPOSIT'], required: true },
-    status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED'], default: 'SUCCESS' },
-    blockNumber: { type: Number },
-}, { timestamps: true });
-
-export const Transaction = mongoose.model('Transaction', transactionSchema);
+export { Transaction };
 
 // --- TOKEN SETTINGS & STATE ---
 const tokenStateSchema = mongoose.Schema({

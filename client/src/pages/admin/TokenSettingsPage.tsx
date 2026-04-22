@@ -47,6 +47,16 @@ export default function TokenSettingsPage() {
     fetchSettings()
   }, [])
 
+  // Auto-calculate price when totalSupply or usdtPool changes
+  useEffect(() => {
+    if (settings.totalSupply > 0) {
+      const calculatedPrice = settings.usdtPool / settings.totalSupply
+      if (calculatedPrice !== settings.currentPrice) {
+        setSettings(prev => ({ ...prev, currentPrice: calculatedPrice }))
+      }
+    }
+  }, [settings.totalSupply, settings.usdtPool])
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -146,13 +156,17 @@ export default function TokenSettingsPage() {
                 <div className="relative">
                   <Input 
                     type="number"
-                    step="0.0001"
+                    step="0.00000001"
                     value={settings.currentPrice} 
-                    onChange={(e) => setSettings({...settings, currentPrice: Number(e.target.value)})} 
-                    className="h-12 rounded-[12px] pl-10 font-bold text-[#276152]"
+                    disabled
+                    className="h-12 rounded-[12px] pl-10 font-bold text-[#276152] bg-gray-50 cursor-not-allowed"
                   />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">$</span>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <RefreshCw className="w-4 h-4 text-gray-400 animate-pulse" />
+                  </div>
                 </div>
+                <p className="text-[12px] text-[#276152] italic font-medium">Giá được tính tự động: {settings.usdtPool} USDT / {settings.totalSupply.toLocaleString()} {settings.symbol}</p>
               </div>
             </CardContent>
           </Card>
@@ -194,7 +208,7 @@ export default function TokenSettingsPage() {
                 </div>
               </div>
               <p className="text-[12px] text-white/50 italic leading-relaxed">
-                Lưu ý: Việc thay đổi trực tiếp giá có thể gây biến động mạnh trên Explorer. Chỉ nên điều chỉnh khi cần cấu hình lại hệ thống.
+                Lưu ý: Giá hiện tại được tính toán tự động dựa trên thanh khoản USDT và Tổng cung. Việc điều chỉnh Tổng cung sẽ trực tiếp ảnh hưởng đến giá trị Token trên toàn hệ thống.
               </p>
             </CardContent>
           </Card>

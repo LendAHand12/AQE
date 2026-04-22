@@ -9,13 +9,16 @@ const bankAccountSchema = mongoose.Schema({
 });
 
 const userSchema = mongoose.Schema({
-    firstName: {
+    fullName: {
         type: String,
         required: true
     },
-    lastName: {
+    username: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true
     },
     email: {
         type: String,
@@ -64,10 +67,55 @@ const userSchema = mongoose.Schema({
         type: String,
         default: 'Việt Nam'
     },
+    idCardFront: {
+        type: String,
+        default: null
+    },
+    idCardBack: {
+        type: String,
+        default: null
+    },
+    portraitPhoto: {
+        type: String,
+        default: null
+    },
     kycStatus: {
         type: String,
         enum: ['verified', 'pending', 'unverified'],
         default: 'unverified'
+    },
+    faceTecTid: {
+        type: String,
+        default: null
+    },
+    isTwoFactorEnabled: {
+        type: Boolean,
+        default: false
+    },
+    twoFactorSecret: {
+        type: String,
+        default: null
+    },
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    pledgeUsdt: {
+        type: Number,
+        default: 0
+    },
+    paidUsdtPreRegister: {
+        type: Number,
+        default: 0
+    },
+    preRegisterTokens: {
+        type: Number,
+        default: 0
+    },
+    hasReceivedPromotion: {
+        type: Boolean,
+        default: false
     },
     walletAddress: {
         type: String,

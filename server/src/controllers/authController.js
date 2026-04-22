@@ -1,24 +1,39 @@
 import crypto from 'crypto';
 import User from '../models/User.js';
+import Commission from '../models/Commission.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail } from '../utils/emailService.js';
 
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, phone, password, refId } = req.body;
-        const userExists = await User.findOne({ email });
-        if (userExists) return res.status(400).json({ message: 'Người dùng đã tồn tại' });
+        const { fullName, username, email, phone, password, refId } = req.body;
+        
+        const userExists = await User.findOne({ $or: [{ email }, { username: username.toLowerCase() }] });
+        if (userExists) {
+            const field = userExists.email === email ? 'Email' : 'Username';
+            return res.status(400).json({ message: `${field} đã tồn tại` });
+        }
+
+        let referrer = null;
+        if (refId) {
+            // Look up by username (mặc định username làm ref)
+            referrer = await User.findOne({ username: refId.toLowerCase() });
+        }
 
         const confirmationToken = crypto.randomBytes(32).toString('hex');
         const user = await User.create({
-            firstName, lastName, email, phone, password,
-            referralId: refId || null,
+            fullName, 
+            username: username.toLowerCase(), 
+            email, 
+            phone, 
+            password,
+            referredBy: referrer ? referrer._id : null,
             confirmationToken
         });
 
         if (user) {
-            await sendConfirmationEmail(user.email, confirmationToken, user.firstName);
+            await sendConfirmationEmail(user.email, confirmationToken, user.fullName);
             res.status(201).json({ message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản.' });
         } else {
             res.status(400).json({ message: 'Thông tin người dùng không hợp lệ' });
@@ -53,7 +68,10 @@ export const loginUser = async (req, res) => {
         if (user && (await user.matchPassword(password))) {
             if (!user.isActive) return res.status(401).json({ message: 'Vui lòng xác nhận email trước khi đăng nhập.' });
             res.json({
-                _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email,
+                _id: user._id, 
+                fullName: user.fullName, 
+                username: user.username,
+                email: user.email,
                 kycStatus: user.kycStatus,
                 token: generateToken(user._id),
             });
@@ -84,14 +102,21 @@ export const updateUserProfile = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (user) {
-            user.firstName = req.body.firstName || user.firstName;
-            user.lastName = req.body.lastName || user.lastName;
+            // Check for username uniqueness if changing
+            if (req.body.username && req.body.username.toLowerCase() !== user.username) {
+                const usernameExists = await User.findOne({ username: req.body.username.toLowerCase() });
+                if (usernameExists) return res.status(400).json({ message: 'Username này đã có người sử dụng' });
+                user.username = req.body.username.toLowerCase();
+            }
+
+            user.fullName = req.body.fullName || user.fullName;
             user.phone = req.body.phone || user.phone;
             user.birthday = req.body.birthday || user.birthday;
             user.gender = req.body.gender || user.gender;
             user.telegram = req.body.telegram || user.telegram;
             user.address = req.body.address || user.address;
             user.nation = req.body.nation || user.nation;
+            user.walletAddress = req.body.walletAddress || user.walletAddress;
             user.avatar = req.body.avatar || user.avatar;
             user.walletAddress = req.body.walletAddress || user.walletAddress;
 
@@ -125,6 +150,105 @@ export const updateUserProfile = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+// @desc    Update FaceTec status
+export const updateFaceTecStatus = async (req, res) => {
+    try {
+        const { facetecTid } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.faceTecTid = facetecTid;
+        user.kycStatus = 'verified'; // Mark as verified upon FaceTec success
+        await user.save();
+
+        res.json({ message: 'KYC FaceTec thành công', user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle 2FA (Basic Setup)
+export const setup2FA = async (req, res) => {
+    try {
+        const { secret } = req.body; // In real app, generate this on server
+        const user = await User.findById(req.user._id);
+        
+        user.twoFactorSecret = secret;
+        user.isTwoFactorEnabled = true;
+        await user.save();
+
+        res.json({ message: 'Kích hoạt 2FA thành công' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Submit ID Verification (Step 1)
+export const submitIdVerification = async (req, res) => {
+    try {
+        const { idCardFront, idCardBack, portraitPhoto } = req.body;
+        const user = await User.findById(req.user._id);
+
+        if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+        if (user.kycStatus === 'verified' || user.kycStatus === 'pending') {
+            return res.status(400).json({ message: 'Yêu cầu xác thực đang chờ duyệt hoặc đã thành công' });
+        }
+
+        user.idCardFront = idCardFront;
+        user.idCardBack = idCardBack;
+        user.portraitPhoto = portraitPhoto;
+        user.kycStatus = 'pending';
+
+        await user.save();
+        res.json({ message: 'Gửi yêu cầu xác thực thành công. Vui lòng chờ admin phê duyệt.', user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+// @desc    Get user's referral network (F1 & F2)
+// @route   GET /api/auth/referrals
+// @access  Private
+export const getReferrals = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Find F1s (Direct referrals) who are active
+        const f1s = await User.find({ referredBy: userId, isActive: true })
+            .select('fullName username email pledgeUsdt paidUsdtPreRegister createdAt');
+
+        // Find F2s (Indirect referrals) for each F1
+        const network = await Promise.all(f1s.map(async (f1) => {
+            const f2s = await User.find({ referredBy: f1._id, isActive: true })
+                .select('fullName username email pledgeUsdt paidUsdtPreRegister createdAt');
+            
+            return {
+                ...f1.toObject(),
+                f2s
+            };
+        }));
+
+        // Calculate summary
+        const totalF1 = f1s.length;
+        const totalF2 = network.reduce((acc, curr) => acc + curr.f2s.length, 0);
+
+        // Fetch total commission
+        const commissions = await Commission.find({ recipientId: userId });
+        const totalCommission = commissions.reduce((acc, curr) => acc + curr.amountUsdt, 0);
+
+        res.json({
+            summary: {
+                totalF1,
+                totalF2,
+                totalReferrals: totalF1 + totalF2,
+                totalCommission
+            },
+            network
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

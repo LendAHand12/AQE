@@ -9,10 +9,17 @@ import {
   TrendingUp, 
   Settings, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Fingerprint,
+  Rocket,
+  CreditCard,
+  Gift,
+  History,
+  Users
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logo from "@/assets/logo_green.svg"
+import { useAuth } from "@/providers/AuthProvider"
 
 interface SidebarItem {
   icon: React.ElementType
@@ -23,15 +30,20 @@ interface SidebarItem {
 
 export default function Sidebar() {
   const { t } = useTranslation()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
-    { icon: Briefcase, label: t("sidebar.portfolio"), path: "/portfolio", key: "portfolio" },
-    { icon: ShoppingBag, label: t("sidebar.marketplace"), path: "/marketplace", key: "marketplace" },
-    { icon: Wallet, label: t("sidebar.wallet"), path: "/wallet", key: "wallet" },
-    { icon: TrendingUp, label: t("sidebar.analytics"), path: "/analytics", key: "analytics" },
+    { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
+    { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
+    { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
+    { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },
+    // { icon: Briefcase, label: t("sidebar.portfolio"), path: "/portfolio", key: "portfolio" },
+    // { icon: ShoppingBag, label: t("sidebar.marketplace"), path: "/marketplace", key: "marketplace" },
+    // { icon: Wallet, label: t("sidebar.wallet"), path: "/wallet", key: "wallet" },
+    // { icon: TrendingUp, label: t("sidebar.analytics"), path: "/analytics", key: "analytics" },
   ]
 
   const bottomMenuItems: SidebarItem[] = [
@@ -39,8 +51,7 @@ export default function Sidebar() {
   ]
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    localStorage.removeItem("token")
+    logout()
     navigate("/login")
   }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
-import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2, CheckCircle2 } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2, Fingerprint, Link2 } from "lucide-react"
+import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
@@ -14,10 +14,9 @@ export default function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
+    username: "",
     email: "",
     phone: "",
     password: "",
@@ -41,33 +40,38 @@ export default function RegisterForm() {
     e.preventDefault()
     
     if (formData.password !== formData.confirmPassword) {
-      setError(t("errors.password_mismatch") || "Mật khẩu xác nhận không khớp")
+      setError(t("auth.errors.password_mismatch"))
       return
     }
 
     setLoading(true)
+    setLoading(true)
     setError("")
-    setSuccess("")
 
     try {
       const response = await apiClient.post("/auth/register", formData)
-      setSuccess(response.data.message)
+      toast.success(t("auth.register_success_title"), {
+        description: t("auth.register_success_desc"),
+        duration: 5000,
+      })
+
       // Clear form on success
       setFormData({
-        firstName: "",
-        lastName: "",
+        fullName: "",
+        username: "",
         email: "",
         phone: "",
         password: "",
         confirmPassword: "",
         refId: ""
       })
-      // Navigate after a short delay so they can read the alert
+      
+      // Navigate after a short delay
       setTimeout(() => {
         navigate("/login")
       }, 5000)
     } catch (err: any) {
-      setError(err.response?.data?.message || t("errors.unknown") || "Đã có lỗi xảy ra")
+      setError(err.response?.data?.message || t("auth.errors.unknown"))
     } finally {
       setLoading(false)
     }
@@ -81,43 +85,35 @@ export default function RegisterForm() {
         </div>
       )}
 
-      {success && (
-        <Alert className="bg-[#f0fdf4] border-[#bcf0da] text-[#276152] animate-in fade-in slide-in-from-top-2 duration-500">
-          <CheckCircle2 className="h-4 w-4 text-[#276152]" />
-          <AlertTitle className="font-bold">Đăng ký thành công!</AlertTitle>
-          <AlertDescription className="text-[13px]">
-            {success} Hệ thống sẽ tự động chuyển hướng về trang đăng nhập sau vài giây.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Success alert removed in favor of toast */}
 
-      {/* Name Fields */}
-      <div className="flex gap-4">
-        <div className="relative group flex-1">
+      {/* Full Name & Username */}
+      <div className="space-y-4">
+        <div className="relative group">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#276152] transition-colors">
             <User size={20} />
           </div>
           <input
             type="text"
-            name="lastName"
-            value={formData.lastName}
+            name="fullName"
+            value={formData.fullName}
             onChange={handleChange}
             required
-            placeholder={t("auth.last_name")}
+            placeholder={t("auth.full_name_placeholder")}
             className="w-full h-[44px] pl-10 pr-4 bg-white border border-[#9ca3af] rounded-[8px] outline-none focus:border-[#276152] focus:ring-1 focus:ring-[#276152] transition-all text-[#111827] placeholder:text-[#9ca3af]"
           />
         </div>
-        <div className="relative group flex-1">
+        <div className="relative group">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#276152] transition-colors">
-            <User size={20} />
+            <Fingerprint size={20} />
           </div>
           <input
             type="text"
-            name="firstName"
-            value={formData.firstName}
+            name="username"
+            value={formData.username}
             onChange={handleChange}
             required
-            placeholder={t("auth.first_name")}
+            placeholder={t("auth.username_placeholder")}
             className="w-full h-[44px] pl-10 pr-4 bg-white border border-[#9ca3af] rounded-[8px] outline-none focus:border-[#276152] focus:ring-1 focus:ring-[#276152] transition-all text-[#111827] placeholder:text-[#9ca3af]"
           />
         </div>
@@ -201,18 +197,34 @@ export default function RegisterForm() {
         </button>
       </div>
 
+      {/* Referral ID Input */}
+      <div className="relative group">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#276152] transition-colors">
+          <Link2 size={20} />
+        </div>
+        <input
+          type="text"
+          name="refId"
+          value={formData.refId}
+          onChange={handleChange}
+          readOnly
+          placeholder={t("auth.ref_id_placeholder")}
+          className="w-full h-[44px] pl-10 pr-4 bg-gray-50 border border-[#9ca3af] rounded-[8px] outline-none cursor-not-allowed text-[#6b7280] placeholder:text-[#9ca3af]"
+        />
+      </div>
+
       {/* Terms & Conditions */}
       <div className="flex items-center gap-2 pt-1 font-sans">
         <Checkbox id="terms" required className="border-[#d5d7db] data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]" />
         <label htmlFor="terms" className="text-[14px] font-normal text-[#6b7280] cursor-pointer select-none">
-          {t("auth.agree_terms")} <span className="text-[#276152] font-semibold">{t("auth.terms")}</span> & <span className="text-[#276152] font-semibold">{t("auth.policy")}</span>
+          {t("auth.agree_terms")} <span className="text-[#276152] font-semibold">{t("auth.terms")}</span> {t("auth.and")} <span className="text-[#276152] font-semibold">{t("auth.policy")}</span>
         </label>
       </div>
 
       {/* Register Button */}
       <button 
         type="submit"
-        disabled={loading || !!success}
+        disabled={loading}
         className="w-full h-[44px] bg-[#276152] hover:bg-[#1e4d41] text-white font-semibold rounded-[12px] transition-all duration-300 shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
       >
         {loading ? (

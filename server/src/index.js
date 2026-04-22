@@ -9,6 +9,10 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import explorerRoutes from './routes/explorerRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+
+import { createServer } from 'http';
+import { initSocket } from './utils/socket.js';
 
 // Load env vars
 dotenv.config();
@@ -17,8 +21,12 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Socket.io
+initSocket(httpServer);
 
 // Middleware
 app.use(helmet({
@@ -35,6 +43,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Simple Route
 app.get('/', (req, res) => {
@@ -43,6 +52,6 @@ app.get('/', (req, res) => {
 
 // Port
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

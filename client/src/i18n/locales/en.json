@@ -10,8 +10,14 @@
     "password_placeholder": "Enter password",
     "password_only": "Password",
     "phone_placeholder": "Phone number",
-    "first_name": "First Name",
-    "last_name": "Last Name",
+    "or": "or",
+    "processing": "Processing...",
+    "full_name_placeholder": "Full Name",
+    "username_placeholder": "Username",
+    "ref_id_placeholder": "Referral Code (Optional)",
+    "and": "and",
+    "register_success_title": "Registration Successful!",
+    "register_success_desc": "The system will automatically redirect you to the login page in a few seconds.",
     "confirm_password": "Confirm password",
     "remember_me": "Remember me",
     "forgot_password": "Forgot password?",
@@ -21,13 +27,52 @@
     "no_account": "Don't have an account?",
     "have_account": "Already have an account?",
     "register_now": "Register now",
-    "or": "or",
-    "processing": "Processing..."
+    "errors": {
+      "password_mismatch": "Confirm password does not match",
+      "unknown": "An error occurred, please try again later"
+    }
   },
   "dashboard": {
     "success": "Login successful!",
     "welcome": "Welcome {{name}} to the AQ Estate system.",
-    "logout": "Logout"
+    "logout": "Logout",
+    "stats": {
+      "total_assets": "Total Assets",
+      "monthly_profit": "Monthly Profit",
+      "tokens_held": "Tokens Held",
+      "upcoming_dividends": "Upcoming Dividends"
+    },
+    "sections": {
+      "portfolio": "Portfolio performance",
+      "top_assets": "Top Assets",
+      "dividend_timeline": "Dividend Timeline",
+      "portfolio_distribution": "Portfolio Distribution",
+      "market": "Market Snapshot"
+    },
+    "actions": {
+      "buy": "Buy AQE",
+      "withdraw": "Withdraw",
+      "deposit": "Deposit",
+      "report": "Report",
+      "settings": "Settings",
+      "view_all": "View All"
+    },
+    "coming_soon_msg": "We are currently perfecting the Dashboard with premium investment features. Please come back later!",
+    "go_to_pre_register": "Join Pre-register Now"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "No notifications",
+    "kyc_approved_title": "KYC Approved",
+    "kyc_approved_msg": "Congratulations! Your identity verification has been approved.",
+    "kyc_rejected_title": "KYC Rejected",
+    "kyc_rejected_msg": "Your identity verification was rejected. Please check your documents.",
+    "new_notification": "You have a new notification",
+    "payment_completed_title": "Payment Completed",
+    "payment_completed_msg": "Congratulations! You have completed 100% of your pre-registration payment.",
+    "reward_received_title": "Bonus Reward Received",
+    "reward_received_msg": "You have received a {{percent}}% AQE Token bonus for early payment."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -36,27 +81,316 @@
     "wallet": "Wallet",
     "analytics": "Analytics",
     "settings": "Settings",
+    "kyc": "Identification (KYC)",
+    "preRegister": "Pre-Register",
+    "referrals": "Referrals",
+    "payment_history": "Payment History",
+    "balance_history": "Balances History",
+    "commissions": "Commissions",
     "logout": "Logout"
   },
   "settings": {
     "title": "Account Settings",
-    "subtitle": "Manage your personal information and security preferences",
-    "personal_info": "Personal Info",
-    "security": "Security",
-    "notifications": "Notifications",
-    "appearance": "Appearance",
-    "kyc": "KYC & Verification",
-    "support": "Support",
-    "basic_info": "Basic Information",
-    "contact_info": "Contact",
-    "address_info": "Address",
-    "bank_info": "Bank Accounts",
+    "subtitle": "Manage your profile, security, and banking information.",
     "save_changes": "Save Changes",
-    "verified": "Verified",
-    "unverified": "Unverified",
-    "danger_zone": "Danger Zone",
-    "delete_account": "Delete account permanently",
-    "delete_desc": "This action cannot be undone. All your data will be deleted.",
-    "request_delete": "Request Delete"
+    "saving": "Saving...",
+    "save_success": "Settings updated successfully!",
+    "fetch_failed": "Failed to load profile information",
+    "tabs": {
+      "personal": "Personal Info",
+      "security": "Security",
+      "kyc": "KYC & Verification",
+      "support": "Support"
+    },
+    "avatar": {
+      "change": "Change Photo",
+      "delete": "Delete",
+      "crop_title": "Crop Profile Photo",
+      "zoom": "Zoom",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "update_success": "Profile photo updated!",
+      "process_error": "Error processing image"
+    },
+    "basic_info": {
+      "title": "Basic Information",
+      "full_name": "Full Name",
+      "username": "Username (Referral Code)",
+      "username_note": "* Note: Changing your username will change your referral link.",
+      "birthday": "Birthday",
+      "gender": "Gender",
+      "genders": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      }
+    },
+    "contact": {
+      "title": "Contact",
+      "email": "Email",
+      "verified": "Verified",
+      "not_verified": "Not Verified",
+      "phone": "Phone Number",
+      "telegram": "Telegram"
+    },
+    "address": {
+      "title": "Address",
+      "street": "Street Address",
+      "country": "Country",
+      "countries": {
+        "vietnam": "Vietnam",
+        "usa": "USA"
+      }
+    },
+    "wallet": {
+      "title": "E-Wallet",
+      "address": "Wallet Address (USDT BEP20)",
+      "note": "Note: All withdrawal transactions will be sent to this address."
+    },
+    "bank": {
+      "title": "Bank Accounts",
+      "default": "Default",
+      "add_account": "Add Account",
+      "dialog_title": "Add Bank Account",
+      "bank_name": "Bank Name",
+      "account_holder": "Account Holder",
+      "account_number": "Account Number",
+      "set_default": "Set as default",
+      "confirm": "Confirm",
+      "fill_all": "Please fill in all bank details",
+      "added_note": "Account added to list. Click 'Save Changes' to finalize."
+    },
+    "security_tab": {
+      "dev": "Security features are under development..."
+    },
+    "support_tab": {
+      "dev": "Support center is under development..."
+    }
+  },
+  "history": {
+    "date": "Date",
+    "type": "Type",
+    "detail": "Detail",
+    "amount": "Amount",
+    "fee": "Fee",
+    "balance_after": "Balance After",
+    "status": "Status",
+    "details": "Details",
+    "id": "ID",
+    "filter": "Filter",
+    "search": "Search transactions...",
+    "empty": "No transaction data found"
+  },
+  "notfound": {
+    "title": "404 - Page Not Found",
+    "description": "Oops! The page you're looking for doesn't exist or has been moved to another URL.",
+    "back_home": "Back to Home"
+  },
+  "pre_register": {
+    "title": "Pre-Register Campaign - Hewe Hotel & Club",
+    "subtitle": "Pre-register and receive special offers when buying AQE tokens",
+    "hero_badge": "May Campaign",
+    "hero_title": "Receive up to 10% Bonus",
+    "hero_time": "May 1st - May 31st, 2026",
+    "hero_min": "Minimum Purchase",
+    "hero_prepay": "Pre-payment",
+    "benefits_title": "Pre-Register Benefits",
+    "bonus_title": "Bonus based on payment timing",
+    "bonus_before": "Payment before May 31st",
+    "bonus_after": "Payment after May 31st",
+    "bonus_late": "After June 30th",
+    "referral_title": "2-Tier Referral Commission",
+    "f1_label": "F1 (Direct)",
+    "f2_label": "F2 (Tier 2)",
+    "comm_note": "* Commission is only received after successful transaction",
+    "alert_title": "Security & Transparency",
+    "alert_desc": "To ensure transparency, you MUST complete & receive Admin approval for KYC Step 1 before making a payment. Transactions are made directly from your personal wallet to the system wallet.",
+    "ref_card_title": "Referral Program",
+    "ref_card_desc": "Share your link and earn attractive rewards from your network.",
+    "copy_btn": "Copy Link",
+    "copied": "Link copied!",
+    "total_referrals": "Total Referrals",
+    "total_commission": "Total Commission",
+    "reg_info_title": "Registration Details",
+    "reg_amount_label": "Purchase Registration Limit (USDT)",
+    "reg_amount_min": "Minimum 100 USDT",
+    "reg_initial_label": "Tier 1 Payment Amount",
+    "reg_initial_hint": "Minimum 30% deposit",
+    "confirm_payment_btn": "Confirm & Pay Now",
+    "kyc_btn": "Complete KYC",
+    "kyc_toast": "Please complete KYC Step 1 first!",
+    "reg_success": "Registration successful!",
+    "reg_failed": "Registration failed",
+    "pay_min_error": "Tier 1 payment must be at least 30% ({{min}} USDT)",
+    "pay_confirm_toast": "Please confirm the transaction in your personal wallet...",
+    "pay_sent_toast": "Transaction sent! Waiting for Blockchain confirmation...",
+    "pay_success": "Payment successful!",
+    "pay_completed_msg": "Congratulations! You have fulfilled 100% of your payment obligation for this campaign.",
+    "pay_failed": "Transaction failed",
+    "pay_now": "Pay Now",
+    "kyc_verified_required": "Admin must approve your KYC Step 1 to proceed with payment.",
+    "connect_to_pay_hint": "Please connect your wallet to proceed with payment"
+  },
+  "payments": {
+    "title": "Payment History",
+    "subtitle": "Track your AQE purchase transactions",
+    "export_report_excel": "Export Excel",
+    "table": {
+      "date": "Transaction Date",
+      "description": "Description",
+      "amount": "Amount (USDT)",
+      "received": "Received (AQE)",
+      "hash": "Tx Hash",
+      "status": "Status",
+      "details": "Details",
+      "phase_label": "Phase"
+    },
+    "desc_preregister": "AQE Pre-registration",
+    "desc_buy": "AQE Token Buy",
+    "desc_sell": "AQE Token Sell",
+    "phases": {
+      "pre_register": "AQE Pre-registration",
+      "direct_buy": "Direct Token Buy"
+    },
+    "status": {
+      "success": "Success",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "summary": {
+      "total_paid": "Total Paid",
+      "total_received": "Total Tokens Received (inc. bonus)"
+    },
+    "empty": "No transactions found"
+  },
+  "commissions": {
+    "title": "Commission History",
+    "subtitle": "Rewards from your referral network",
+    "total_earned": "Total Commission Earned",
+    "table": {
+      "date": "Received Date",
+      "from": "From User",
+      "level": "Level",
+      "amount": "Earned (USDT)",
+      "status": "Status"
+    },
+    "empty": "No commissions found"
+  },
+  "balance_history": {
+    "title": "Balances History",
+    "subtitle": "Track all transactions in your account",
+    "available_balance": "Available Balance",
+    "total_comm_earned": "Total Commissions Earned",
+    "withdraw_total": "Total Withdrawn",
+    "export_excel": "Export Excel",
+    "search_placeholder": "Search by transaction ID or description...",
+    "tabs": {
+      "all": "All",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "buy": "Buy Token",
+      "sell": "Sell Token",
+      "commission": "Commissions & Rewards",
+      "transfer": "Transfer"
+    },
+    "summary": {
+      "total_deposit": "Total Deposits",
+      "total_withdraw": "Total Withdrawals",
+      "total_profit": "Profits & Rewards",
+      "total_fee": "Transaction Fees"
+    },
+    "types": {
+      "commission": "COMMISSION",
+      "reward": "REWARD",
+      "sell": "SELL AQE",
+      "withdraw": "WITHDRAW",
+      "transfer": "TRANSFER",
+      "deposit": "DEPOSIT",
+      "buy": "BUY TOKEN"
+    }
+  },
+  "header": {
+    "good_morning": "Good morning",
+    "good_afternoon": "Good afternoon",
+    "good_evening": "Good evening",
+    "notifications": "Notifications",
+    "language": "Language",
+    "select_language": "Select Language",
+    "select_language_desc": "Choose your preferred language for the system experience.",
+    "connect_wallet": "Connect Wallet"
+  },
+  "confirm_email": {
+    "verifying": "Verifying your account...",
+    "verifying_desc": "Please wait a moment while we activate your account.",
+    "success_title": "Verification Successful!",
+    "success_desc": "Your account has been successfully activated. Benefit from all the features of AQ Estate today.",
+    "login_now": "Log In Now",
+    "error_title": "Verification Failed",
+    "error_desc": "The confirmation link is invalid or has expired. Please try again or contact support.",
+    "back_to_login": "Back to Login"
+  },
+  "kyc": {
+    "title": "Identity Verification (KYC)",
+    "subtitle": "Complete the verification steps to secure your account and unlock full trading features.",
+    "fetch_error": "Failed to load verification info",
+    "security_note": "Data Security Important",
+    "security_note_desc": "We are committed to absolute security of your personal data according to international standards. This information is only used for identity verification and fraud prevention purposes.",
+    "steps": {
+      "step_1": "Step 1: ID Verification",
+      "step_1_desc": "Upload ID/Passport photos to unlock payment rights.",
+      "step_2": "Step 2: Face Scan",
+      "step_2_desc": "Register your face with FaceTec to unlock withdrawal rights.",
+      "step_3": "Step 3: Google Authenticator",
+      "step_3_desc": "Activate 2-factor authentication (2FA) to enhance security when logging in.",
+      "id_verified": "ID Verified",
+      "face_verified": "Face Scanned",
+      "twofa_enabled": "2FA Enabled"
+    },
+    "id_verification": {
+      "front": "ID Card/Passport Front",
+      "back": "ID Card/Passport Back",
+      "portrait": "Close-up Portrait Photo",
+      "upload_front": "Upload Front",
+      "upload_back": "Upload Back",
+      "upload_portrait": "Upload Portrait",
+      "status_unverified": "Unverified",
+      "status_pending": "Pending Review",
+      "status_verified": "Verified",
+      "submit": "Submit Verification Request",
+      "note": "Note: Photos must be clear, not glared, and show all 4 corners of the document."
+    },
+    "facescan": {
+      "title": "Face Verification",
+      "desc": "Please complete ID verification before performing this step.",
+      "start": "Start Face Scan",
+      "standard": "Utilizing FaceTec technology to ensure identity authenticity.",
+      "success": "Face verification successful"
+    },
+    "google_auth": {
+      "title": "2-Factor Authentication (2FA)",
+      "desc": "Scan the QR code using Google Authenticator or Authy app.",
+      "setup": "Activate 2FA",
+      "secret_key": "Secret Key",
+      "copy": "Copy Key",
+      "instructions": "Please save this secret key in a safe place. You will need it to recover 2FA if you lose your phone."
+    },
+    "errors": {
+      "upload_required": "Please upload all required photos",
+      "submit_failed": "Submission failed. Please try again.",
+      "step_locked": "Please complete the previous step to continue."
+    },
+    "status": {
+      "pending_title": "Pending Approval",
+      "pending_desc": "Your information has been submitted. Admin is checking, please check back later.",
+      "verified_title": "Verification Complete",
+      "verified_desc": "You have successfully completed this step!"
+    }
+  },
+  "referrals": {
+    "title": "Referral Network",
+    "subtitle": "Manage and track your affiliate network",
+    "network_list": "Network List (F1 & F2)",
+    "f1_label": "Level 1 (F1)",
+    "f2_label": "Level 2 (F2)"
   }
 }

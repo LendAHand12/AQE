@@ -1,7 +1,9 @@
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
 import AdminLog from '../models/AdminLog.js';
+import Notification from '../models/Notification.js';
 import { generateToken } from '../utils/jwt.js';
+import { emitNotification } from '../utils/socket.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -42,11 +44,30 @@ export const updateUserByAdmin = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (user) {
-            user.firstName = req.body.firstName || user.firstName;
-            user.lastName = req.body.lastName || user.lastName;
+            user.fullName = req.body.fullName || user.fullName;
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
             user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
+            // Create notification if KYC status changed
+            if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
+                const kycType = req.body.kycStatus === 'verified' ? 'KYC_APPROVED' : 'KYC_REJECTED';
+                const title = req.body.kycStatus === 'verified' ? 'KYC Approved' : 'KYC Rejected';
+                const message = req.body.kycStatus === 'verified' 
+                    ? 'Congratulations! Your identity verification has been approved.' 
+                    : 'Your identity verification was rejected. Please check your documents and try again.';
+
+                const notification = await Notification.create({
+                    userId: user._id,
+                    title,
+                    message,
+                    type: kycType,
+                    isRead: false
+                });
+
+                // Emit real-time notification
+                emitNotification(user._id, notification);
+            }
+
             user.kycStatus = req.body.kycStatus || user.kycStatus;
             
             const updatedUser = await user.save();

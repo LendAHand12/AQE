@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile } from '../controllers/authController.js';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, setup2FA, submitIdVerification, getReferrals } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 
@@ -8,6 +8,10 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/confirm/:token', confirmEmail);
+router.get('/referrals', protect, getReferrals);
+router.post('/kyc-status', protect, updateFaceTecStatus);
+router.post('/setup-2fa', protect, setup2FA);
+router.post('/verify-id', protect, submitIdVerification);
 
 // User Profile Routes
 router.route('/profile')
@@ -23,7 +27,7 @@ router.post('/upload', protect, (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'Vui lòng chọn ảnh' });
         }
-        const imageUrl = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
+        const imageUrl = `/uploads/${req.file.filename}`;
         res.json({ imageUrl });
     });
 });

@@ -4,10 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
+import { useAuth } from "@/providers/AuthProvider"
 
 export default function LoginForm() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -27,11 +29,12 @@ export default function LoginForm() {
 
     try {
       const response = await apiClient.post("/auth/login", formData)
-      localStorage.setItem("user", JSON.stringify(response.data))
-      localStorage.setItem("token", response.data.token)
+      login(response.data, response.data.token)
+      // Navigation is often handled by the context or page after state update, 
+      // but keeping it here is fine for immediate feedback.
       navigate("/dashboard")
     } catch (err: any) {
-      setError(err.response?.data?.message || t("errors.unknown"))
+      setError(err.response?.data?.message || t("auth.errors.unknown"))
     } finally {
       setLoading(false)
     }

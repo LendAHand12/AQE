@@ -10,8 +10,14 @@
     "password_placeholder": "Nhập mật khẩu",
     "password_only": "Mật khẩu",
     "phone_placeholder": "Số điện thoại",
-    "first_name": "Tên",
-    "last_name": "Họ",
+    "or": "hoặc",
+    "processing": "Đang xử lý...",
+    "full_name_placeholder": "Họ tên đầy đủ",
+    "username_placeholder": "Tên đăng nhập",
+    "ref_id_placeholder": "Mã giới thiệu (Không bắt buộc)",
+    "and": "và",
+    "register_success_title": "Đăng ký thành công!",
+    "register_success_desc": "Hệ thống sẽ tự động chuyển hướng về trang đăng nhập sau vài giây.",
     "confirm_password": "Nhập lại mật khẩu",
     "remember_me": "Ghi nhớ tôi",
     "forgot_password": "Quên mật khẩu?",
@@ -21,13 +27,52 @@
     "no_account": "Chưa có tài khoản?",
     "have_account": "Đã có tài khoản?",
     "register_now": "Đăng ký ngay",
-    "or": "hoặc",
-    "processing": "Đang xử lý..."
+    "errors": {
+      "password_mismatch": "Mật khẩu xác nhận không khớp",
+      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại sau"
+    }
   },
   "dashboard": {
     "success": "Đăng nhập thành công!",
     "welcome": "Chào mừng {{name}} đến với hệ thống AQ Estate.",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "stats": {
+      "total_assets": "Tổng tài sản",
+      "monthly_profit": "Lợi nhuận tháng",
+      "tokens_held": "Token đang nắm",
+      "upcoming_dividends": "Cổ tức sắp nhận"
+    },
+    "sections": {
+      "portfolio": "Danh mục đầu tư",
+      "top_assets": "Tài sản hàng đầu",
+      "dividend_timeline": "Lịch trả cổ tức",
+      "portfolio_distribution": "Phân bổ danh mục",
+      "market": "Thị trường"
+    },
+    "actions": {
+      "buy": "Mua Token",
+      "withdraw": "Rút tiền",
+      "deposit": "Nạp tiền",
+      "report": "Xem báo cáo",
+      "settings": "Cài thông báo",
+      "view_all": "Xem tất cả"
+    },
+    "coming_soon_msg": "Chúng tôi đang hoàn thiện trang Dashboard với những tính năng đầu tư cao cấp nhất. Vui lòng quay lại sau!",
+    "go_to_pre_register": "Tham gia Pre-register ngay"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "mark_all_read": "Đánh dấu tất cả đã đọc",
+    "empty": "Không có thông báo nào",
+    "kyc_approved_title": "KYC đã được duyệt",
+    "kyc_approved_msg": "Chúc mừng! Yêu cầu xác thực danh tính của bạn đã được phê duyệt.",
+    "kyc_rejected_title": "KYC bị từ chối",
+    "kyc_rejected_msg": "Yêu cầu xác thực danh tính của bạn đã bị từ chối. Vui lòng kiểm tra lại tài liệu.",
+    "new_notification": "Bạn có thông báo mới",
+    "payment_completed_title": "Thanh toán hoàn tất",
+    "payment_completed_msg": "Chúc mừng! Bạn đã hoàn tất 100% số tiền đăng ký mua sớm.",
+    "reward_received_title": "Nhận phần thưởng Bonus",
+    "reward_received_msg": "Bạn đã nhận được phần thưởng {{percent}}% AQE Token thưởng cho việc thanh toán sớm."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -36,27 +81,317 @@
     "wallet": "Ví",
     "analytics": "Phân tích",
     "settings": "Cài đặt",
+    "kyc": "Xác minh danh tính",
+    "preRegister": "Đăng ký mua sớm",
+    "referrals": "Mạng lưới",
+    "payment_history": "Lịch sử giao dịch",
+    "balance_history": "Lịch sử số dư",
+    "commissions": "Hoa hồng",
     "logout": "Đăng xuất"
+  },
+  "history": {
+    "date": "Ngày",
+    "type": "Loại",
+    "detail": "Chi tiết",
+    "amount": "Số tiền",
+    "fee": "Phí",
+    "balance_after": "Số dư sau",
+    "status": "Trạng thái",
+    "details": "Chi tiết",
+    "id": "ID",
+    "filter": "Lọc",
+    "search": "Tìm kiếm giao dịch...",
+    "empty": "Không có giao dịch nào"
+  },
+  "notfound": {
+    "title": "404 - Không tìm thấy trang",
+    "description": "Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển sang địa chỉ khác.",
+    "back_home": "Quay lại Trang chủ"
+  },
+  "pre_register": {
+    "title": "Chiến dịch Đăng ký sớm - Hewe Hotel & Club",
+    "subtitle": "Đăng ký trước và nhận ưu đãi đặc biệt khi mua AQE tokens",
+    "hero_badge": "Chiến dịch tháng 5",
+    "hero_title": "Nhận đến 10% Bonus",
+    "hero_time": "1 tháng 5 - 31 tháng 5, 2026",
+    "hero_min": "Đăng ký tối thiểu",
+    "hero_prepay": "Trả trước tối thiểu",
+    "benefits_title": "Quyền lợi đặc biệt",
+    "bonus_title": "Mốc thưởng cam kết thanh toán",
+    "bonus_before": "Thanh toán 100% trước 31/5",
+    "bonus_after": "Thanh toán 100% từ 1/6 - 30/6",
+    "bonus_late": "Thanh toán sau 30/6",
+    "referral_title": "Thưởng giới thiệu",
+    "f1_label": "Giới thiệu trực tiếp (F1)",
+    "f2_label": "Giới thiệu gián tiếp (F2)",
+    "comm_note": "* Hoa hồng được trả ngay bằng USDT sau khi người được giới thiệu hoàn tất 100% thanh toán cam kết.",
+    "alert_title": "Lưu ý bảo mật & Minh bạch",
+    "alert_desc": "Để đảm bảo tính minh bạch, bạn BẮT BUỘC phải hoàn tất & được Admin duyệt KYC Bước 1 trước khi thanh toán. Mọi giao dịch được thực hiện trực tiếp từ ví cá nhân của bạn đến ví hệ thống.",
+    "ref_card_title": "Chương trình giới thiệu",
+    "ref_card_desc": "Chia sẻ liên kết của bạn và nhận phần thưởng hấp dẫn.",
+    "copy_btn": "Sao chép liên kết",
+    "copied": "Đã sao chép liên kết!",
+    "total_referrals": "Tổng giới thiệu",
+    "total_commission": "Tổng hoa hồng",
+    "reg_info_title": "Thông tin đăng ký mua",
+    "reg_amount_label": "Hạn mức đăng ký mua (USDT)",
+    "reg_amount_min": "Tối thiểu 100 USDT",
+    "reg_initial_label": "Số tiền thanh toán đợt 1",
+    "reg_initial_hint": "Tối thiểu 30% đặt cọc",
+    "confirm_payment_btn": "Xác nhận & Thanh toán",
+    "kyc_btn": "Hoàn tất KYC",
+    "kyc_toast": "Vui lòng hoàn tất danh tính (KYC) trước!",
+    "reg_success": "Đăng ký thành công!",
+    "reg_failed": "Đăng ký thất bại",
+    "pay_min_error": "Thanh toán đợt 1 tối thiểu là 30% ({{min}} USDT)",
+    "pay_confirm_toast": "Vui lòng xác nhận giao dịch trên ví cá nhân...",
+    "pay_sent_toast": "Giao dịch đã được gửi! Đang chờ xác nhận từ Blockchain...",
+    "pay_success": "Thanh toán thành công!",
+    "pay_completed_msg": "Chúc mừng! Bạn đã hoàn thành 100% nghĩa vụ thanh toán cho chiến dịch này.",
+    "pay_failed": "Giao dịch thất bại",
+    "complete_kyc_first": "Yêu cầu Duyệt KYC",
+    "kyc_verified_required": "Bạn cần được Admin duyệt KYC Bước 1 để thực hiện thanh toán.",
+    "pay_now": "Thanh toán ngay",
+    "connect_to_pay_hint": "Vui lòng kết nối ví để thực hiện thanh toán"
+  },
+  "payments": {
+    "title": "Lịch sử thanh toán",
+    "subtitle": "Theo dõi các giao dịch mua AQE của bạn",
+    "export_report_excel": "Xuất báo cáo sang Excel",
+    "table": {
+      "date": "Ngày giao dịch",
+      "description": "Nội dung",
+      "amount": "Số tiền (USDT)",
+      "received": "Nhận được (AQE)",
+      "hash": "Mã giao dịch",
+      "status": "Trạng thái",
+      "details": "Chi tiết",
+      "phase_label": "Giai đoạn"
+    },
+    "desc_preregister": "Đăng ký mua sớm AQE",
+    "desc_buy": "Mua token AQE",
+    "desc_sell": "Bán token AQE",
+    "phases": {
+      "pre_register": "Thanh toán Đăng ký sớm",
+      "direct_buy": "Mua Token trực tiếp"
+    },
+    "status": {
+      "success": "Hoàn tất",
+      "pending": "Đang xử lý",
+      "failed": "Thất bại"
+    },
+    "summary": {
+      "total_paid": "Tổng đã thanh toán",
+      "total_received": "Tổng Token đã nhận (bao gồm bonus)"
+    },
+    "empty": "Chưa có giao dịch nào"
+  },
+  "balance_history": {
+    "title": "Lịch sử biến động số dư",
+    "subtitle": "Theo dõi tất cả giao dịch trong tài khoản",
+    "available_balance": "Số dư khả dụng",
+    "total_comm_earned": "Tổng hoa hồng nhận được",
+    "withdraw_total": "Tổng đã rút",
+    "export_excel": "Xuất Excel",
+    "search_placeholder": "Tìm kiếm theo mã giao dịch hoặc mô tả...",
+    "tabs": {
+      "all": "Tất cả",
+      "deposit": "Nạp",
+      "withdraw": "Rút",
+      "buy": "Mua token",
+      "sell": "Bán token",
+      "commission": "Cổ tức & Hoa hồng",
+      "transfer": "Chuyển"
+    },
+    "summary": {
+      "total_deposit": "Tổng nạp",
+      "total_withdraw": "Tổng rút",
+      "total_profit": "Lợi nhuận & Thưởng",
+      "total_fee": "Phí giao dịch"
+    },
+    "types": {
+      "commission": "HOA HỒNG",
+      "reward": "PHẦN THƯỞNG",
+      "sell": "BÁN AQE",
+      "withdraw": "RÚT TIỀN",
+      "transfer": "CHUYỂN TIỀN",
+      "deposit": "NẠP TIỀN",
+      "buy": "MUA TOKEN"
+    }
+  },
+  "commissions": {
+    "title": "Lịch sử hoa hồng",
+    "subtitle": "Phần thưởng từ chương trình giới thiệu",
+    "total_earned": "Tổng hoa hồng nhận được",
+    "table": {
+      "date": "Ngày nhận",
+      "from": "Từ người dùng",
+      "level": "Cấp độ",
+      "amount": "Hoa hồng (USDT)",
+      "status": "Trạng thái"
+    },
+    "empty": "Chưa có hoa hồng nào"
+  },
+  "header": {
+    "good_morning": "Chào buổi sáng",
+    "good_afternoon": "Chào buổi chiều",
+    "good_evening": "Chào buổi tối",
+    "notifications": "Thông báo",
+    "language": "Ngôn ngữ",
+    "select_language": "Chọn ngôn ngữ",
+    "select_language_desc": "Chọn ngôn ngữ bạn muốn sử dụng cho hệ thống.",
+    "connect_wallet": "Kết nối ví"
+  },
+  "confirm_email": {
+    "verifying": "Đang xác thực tài khoản...",
+    "verifying_desc": "Vui lòng chờ trong giây lát trong khi chúng tôi kích hoạt tài khoản của bạn.",
+    "success_title": "Xác thực thành công!",
+    "success_desc": "Tài khoản của bạn đã được kích hoạt thành công. Hãy tận hưởng tất cả tính năng của AQ Estate ngay hôm nay.",
+    "login_now": "Đăng nhập ngay",
+    "error_title": "Xác thực thất bại",
+    "error_desc": "Liên kết xác nhận không hợp lệ hoặc đã hết hạn. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "back_to_login": "Quay lại đăng nhập"
   },
   "settings": {
     "title": "Cài đặt tài khoản",
-    "subtitle": "Quản lý thông tin cá nhân và tùy chọn bảo mật",
-    "personal_info": "Thông tin cá nhân",
-    "security": "Bảo mật",
-    "notifications": "Thông báo",
-    "appearance": "Giao diện",
-    "kyc": "KYC & Xác minh",
-    "support": "Hỗ trợ",
-    "basic_info": "Thông tin cơ bản",
-    "contact_info": "Liên hệ",
-    "address_info": "Địa chỉ",
-    "bank_info": "Tài khoản ngân hàng",
+    "subtitle": "Quản lý hồ sơ, bảo mật và thông tin ngân hàng của bạn.",
     "save_changes": "Lưu thay đổi",
-    "verified": "Đã xác minh",
-    "unverified": "Chưa xác minh",
-    "danger_zone": "Vùng nguy hiểm",
-    "delete_account": "Xóa tài khoản vĩnh viễn",
-    "delete_desc": "Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa.",
-    "request_delete": "Yêu cầu xóa"
+    "saving": "Đang lưu...",
+    "save_success": "Cập nhật thành công!",
+    "fetch_failed": "Không thể tải thông tin profile",
+    "tabs": {
+      "personal": "Thông tin cá nhân",
+      "security": "Bảo mật",
+      "kyc": "KYC & Xác minh",
+      "support": "Hỗ trợ"
+    },
+    "avatar": {
+      "change": "Thay đổi ảnh",
+      "delete": "Xóa",
+      "crop_title": "Cắt ảnh đại diện",
+      "zoom": "Phóng to",
+      "apply": "Áp dụng",
+      "cancel": "Hủy",
+      "update_success": "Cập nhật ảnh đại diện thành công!",
+      "process_error": "Lỗi khi xử lý ảnh"
+    },
+    "basic_info": {
+      "title": "Thông tin cơ bản",
+      "full_name": "Họ và tên",
+      "username": "Tên đăng nhập (Mã giới thiệu)",
+      "username_note": "* Lưu ý: Đổi username sẽ làm thay đổi link giới thiệu của bạn.",
+      "birthday": "Ngày sinh",
+      "gender": "Giới tính",
+      "genders": {
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác"
+      }
+    },
+    "contact": {
+      "title": "Liên hệ",
+      "email": "Email",
+      "verified": "Đã xác minh",
+      "not_verified": "Chưa xác minh",
+      "phone": "Số điện thoại",
+      "telegram": "Telegram"
+    },
+    "address": {
+      "title": "Địa chỉ",
+      "street": "Địa chỉ cụ thể",
+      "country": "Quốc gia",
+      "countries": {
+        "vietnam": "Việt Nam",
+        "usa": "USA"
+      }
+    },
+    "wallet": {
+      "title": "Ví điện tử",
+      "address": "Địa chỉ ví (USDT BEP20)",
+      "note": "Lưu ý: Mọi giao dịch rút tiền sẽ được gửi về địa chỉ ví này."
+    },
+    "bank": {
+      "title": "Tài khoản ngân hàng",
+      "default": "Mặc định",
+      "add_account": "Thêm tài khoản",
+      "dialog_title": "Thêm tài khoản ngân hàng",
+      "bank_name": "Ngân hàng",
+      "account_holder": "Họ và tên",
+      "account_number": "Số tài khoản",
+      "set_default": "Đặt làm mặc định",
+      "confirm": "Xác nhận",
+      "fill_all": "Vui lòng điền đầy đủ thông tin ngân hàng",
+      "added_note": "Tài khoản đã được thêm vào danh sách. Nhấn 'Lưu thay đổi' để hoàn tất."
+    },
+    "security_tab": {
+      "dev": "Tính năng bảo mật đang được phát triển..."
+    },
+    "support_tab": {
+      "dev": "Trung tâm hỗ trợ đang được phát triển..."
+    }
+  },
+  "kyc": {
+    "title": "Xác thực danh tính (KYC)",
+    "subtitle": "Hoàn tất các bước xác thực để bảo mật tài khoản và mở khóa đầy đủ tính năng giao dịch.",
+    "fetch_error": "Không thể tải thông tin xác thực",
+    "security_note": "Bảo mật dữ liệu quan trọng",
+    "security_note_desc": "Chúng tôi cam kết bảo mật tuyệt đối dữ liệu cá nhân của bạn theo tiêu chuẩn quốc tế. Thông tin này chỉ được sử dụng cho mục đích xác thực danh tính và ngăn ngừa gian lận.",
+    "steps": {
+      "step_1": "Bước 1: Xác thực giấy tờ",
+      "step_1_desc": "Tải lên ảnh CMND/CCCD hoặc Hộ chiếu để mở khóa quyền thanh toán.",
+      "step_2": "Bước 2: Face Scan",
+      "step_2_desc": "Đăng ký khuôn mặt với FaceTec để mở khóa quyền rút tiền.",
+      "step_3": "Bước 3: Google Authenticator",
+      "step_3_desc": "Kích hoạt bảo mật 2 lớp (2FA) để tăng cường an toàn khi đăng nhập.",
+      "id_verified": "Đã xác thực giấy tờ",
+      "face_verified": "Đã Face Scan",
+      "twofa_enabled": "Đã kích hoạt 2FA"
+    },
+    "id_verification": {
+      "front": "Mặt trước CMND/CCCD",
+      "back": "Mặt sau CMND/CCCD",
+      "portrait": "Ảnh chân dung cận mặt",
+      "upload_front": "Tải lên mặt trước",
+      "upload_back": "Tải lên mặt sau",
+      "upload_portrait": "Tải lên ảnh chân dung",
+      "status_unverified": "Chưa xác thực",
+      "status_pending": "Đang chờ duyệt",
+      "status_verified": "Đã xác thực",
+      "submit": "Gửi yêu cầu xác thực",
+      "note": "Lưu ý: Ảnh cần rõ nét, không bị lóa và đầy đủ 4 góc của giấy tờ."
+    },
+    "facescan": {
+      "title": "Xác thực khuôn mặt",
+      "desc": "Vui lòng hoàn thành xác thực giấy tờ trước khi thực hiện bước này.",
+      "start": "Bắt đầu Face Scan",
+      "standard": "Sử dụng công nghệ FaceTec để đảm bảo tính chính chủ.",
+      "success": "Xác thực khuôn mặt thành công"
+    },
+    "google_auth": {
+      "title": "Bảo mật 2 lớp (2FA)",
+      "desc": "Quét mã QR bằng ứng dụng Google Authenticator hoặc Authy.",
+      "setup": "Kích hoạt 2FA",
+      "secret_key": "Mã bí mật (Secret Key)",
+      "copy": "Sao chép mã",
+      "instructions": "Vui lòng lưu lại mã bí mật này ở nơi an toàn. Bạn sẽ cần nó để khôi phục 2FA nếu làm mất điện thoại."
+    },
+    "errors": {
+      "upload_required": "Vui lòng tải lên đầy đủ các ảnh yêu cầu",
+      "submit_failed": "Gửi thông tin thất bại. Vui lòng thử lại.",
+      "step_locked": "Vui lòng hoàn tất bước trước đó để tiếp tục."
+    },
+    "status": {
+      "pending_title": "Đang chờ phê duyệt",
+      "pending_desc": "Thông tin của bạn đã được gửi. Admin đang tiến hành kiểm tra, vui lòng quay lại sau.",
+      "verified_title": "Hoàn tất xác thực",
+      "verified_desc": "Bạn đã hoàn tất bước này thành công!"
+    }
+  },
+  "referrals": {
+    "title": "Mạng lưới giới thiệu",
+    "subtitle": "Quản lý và theo dõi mạng lưới cộng tác viên của bạn",
+    "network_list": "Danh sách mạng lưới (F1 & F2)",
+    "f1_label": "Cấp độ 1 (F1)",
+    "f2_label": "Cấp độ 2 (F2)"
   }
 }
