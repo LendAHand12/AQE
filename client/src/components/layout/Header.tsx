@@ -1,4 +1,4 @@
-import { Bell, Globe, Check } from "lucide-react"
+import { Bell, Globe, Check, Menu, LogOut } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -9,17 +9,25 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { useEffect, useState } from "react"
-import { getImageUrl } from "@/lib/utils"
+import { useEffect, useState, useRef } from "react"
+import { getImageUrl, cn } from "@/lib/utils"
 import NotificationDropdown from "./NotificationDropdown"
 import { useAuth } from "@/providers/AuthProvider"
+import { useNavigate } from "react-router-dom"
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState("")
   const [greetingKey, setGreetingKey] = useState("header.good_morning")
   const [isLangOpen, setIsLangOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const userName = user?.fullName || user?.username || "User"
   const userAvatar = user?.avatar || null
@@ -59,21 +67,45 @@ export default function Header() {
     }
   }, [i18n.language])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleLogout = () => {
+    logout()
+    navigate("/login")
+  }
+
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
     setIsLangOpen(false)
   }
 
   return (
-    <header className="h-[105px] bg-white border-b border-[#efefef] px-6 pt-[24px] pb-[25px] flex items-center justify-between sticky top-0 z-40">
-      {/* Left side: Welcome & Date */}
-      <div className="flex flex-col gap-[2px]">
-        <h2 className="text-[20px] font-semibold text-[#0d1f1d] leading-[30px] tracking-[0.6px]">
-          {t(greetingKey)}, {userName}
-        </h2>
-        <p className="text-[16px] text-[#717c8d] font-medium leading-[24px]">
-          {currentDate}
-        </p>
+    <header className="h-[90px] lg:h-[105px] bg-white py-2 border-b border-[#efefef] px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+      {/* Left side: Menu Toggle (Mobile) & Welcome & Date */}
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden p-2 text-[#276152] hover:bg-[#276152]/5 rounded-lg transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+        
+        <div className="hidden lg:flex flex-col gap-[2px]">
+          <h2 className="text-[20px] font-semibold text-[#0d1f1d] leading-[30px] tracking-[0.6px]">
+            {t(greetingKey)}, {userName}
+          </h2>
+          <p className="text-[16px] text-[#717c8d] font-medium leading-[24px]">
+            {currentDate}
+          </p>
+        </div>
       </div>
 
       {/* Right side: Actions */}
@@ -153,14 +185,33 @@ export default function Header() {
         <NotificationDropdown />
 
         {/* User Profile - Pill Container (Info Only) */}
-        <div className="bg-[#efefef] rounded-full pl-1 pr-4 py-1 flex items-center gap-[12px] h-[45px]">
-          <Avatar className="size-[37px] border border-white shadow-sm shrink-0">
-            {userAvatar && <AvatarImage key={userAvatar} src={getImageUrl(userAvatar)} className="object-cover" />}
-            <AvatarFallback className="bg-[#276152] text-white font-bold text-xs">
-              {userName.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-[16px] font-semibold text-[#0d1f1d] leading-none whitespace-nowrap">{userName}</span>
+        <div className="relative" ref={userMenuRef}>
+          <div 
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="bg-[#efefef] rounded-full p-1 lg:pr-4 flex items-center lg:gap-[12px] h-[40px] lg:h-[45px] cursor-pointer hover:bg-gray-200 transition-colors"
+          >
+            <Avatar className="size-[32px] lg:size-[37px] border border-white shadow-sm shrink-0">
+              {userAvatar && <AvatarImage key={userAvatar} src={getImageUrl(userAvatar)} className="object-cover" />}
+              <AvatarFallback className="bg-[#276152] text-white font-bold text-xs">
+                {userName.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="hidden lg:inline text-[16px] font-semibold text-[#0d1f1d] leading-none whitespace-nowrap">{userName}</span>
+          </div>
+
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-3 w-[180px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-2">
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-semibold text-sm"
+                >
+                  <LogOut size={18} />
+                  {t("sidebar.logout")}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

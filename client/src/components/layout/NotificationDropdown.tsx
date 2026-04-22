@@ -94,12 +94,12 @@ export default function NotificationDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="size-[45px] rounded-full bg-[#efefef] hover:bg-gray-200 transition-colors flex items-center justify-center relative group"
+        className="size-[36px] lg:size-[45px] rounded-full bg-[#efefef] hover:bg-gray-200 transition-colors flex items-center justify-center relative group"
       >
         <div className="relative">
-          <Bell className="h-6 w-6 text-[#717c8d] group-hover:text-[#276152]" />
+          <Bell className="h-4 w-4 lg:h-6 lg:w-6 text-[#717c8d] group-hover:text-[#276152]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 size-5 bg-red-600 rounded-full border-2 border-white text-[10px] text-white font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 size-4 lg:size-5 bg-red-600 rounded-full border-2 border-white text-[9px] lg:text-[10px] text-white font-bold flex items-center justify-center">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -107,7 +107,7 @@ export default function NotificationDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-[380px] bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="fixed sm:absolute inset-x-4 sm:inset-auto sm:right-0 top-[95px] sm:top-full sm:mt-3 w-auto sm:w-[380px] bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
             <h3 className="text-lg font-bold text-[#0d1f1d]">{t("notifications.title")}</h3>
             {unreadCount > 0 && (

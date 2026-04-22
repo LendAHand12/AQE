@@ -15,7 +15,8 @@ import {
   CreditCard,
   Gift,
   History,
-  Users
+  Users,
+  X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logo from "@/assets/logo_green.svg"
@@ -28,7 +29,12 @@ interface SidebarItem {
   key: string
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { t } = useTranslation()
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -40,10 +46,6 @@ export default function Sidebar() {
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
     { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },
-    // { icon: Briefcase, label: t("sidebar.portfolio"), path: "/portfolio", key: "portfolio" },
-    // { icon: ShoppingBag, label: t("sidebar.marketplace"), path: "/marketplace", key: "marketplace" },
-    // { icon: Wallet, label: t("sidebar.wallet"), path: "/wallet", key: "wallet" },
-    // { icon: TrendingUp, label: t("sidebar.analytics"), path: "/analytics", key: "analytics" },
   ]
 
   const bottomMenuItems: SidebarItem[] = [
@@ -55,13 +57,29 @@ export default function Sidebar() {
     navigate("/login")
   }
 
+  const handleNavigate = (path: string) => {
+    navigate(path)
+    if (onClose) onClose()
+  }
+
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <div className="w-[280px] h-screen bg-white border-r border-[#e5e7eb] flex flex-col transition-all duration-300">
+    <div className={cn(
+      "fixed inset-y-0 left-0 z-[50] w-[280px] bg-white border-r border-[#e5e7eb] flex flex-col transition-transform duration-300 transform lg:relative lg:translate-x-0 h-screen",
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    )}>
       {/* Brand Header */}
-      <div className="p-8 flex items-center gap-3">
-        <img src={logo} alt="AQ Estate" className="h-10 w-auto" />
+      <div className="p-7 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="AQ Estate" className="h-10 w-auto" />
+        </div>
+        <button 
+          onClick={onClose}
+          className="lg:hidden p-2 text-[#6b7280] hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <X size={24} />
+        </button>
       </div>
 
       {/* Main Navigation */}
@@ -69,7 +87,7 @@ export default function Sidebar() {
         {mainMenuItems.map((item) => (
           <button
             key={item.key}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigate(item.path)}
             className={cn(
               "w-full flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-300 group relative",
               isActive(item.path) 
@@ -101,7 +119,7 @@ export default function Sidebar() {
         {bottomMenuItems.map((item) => (
           <button
             key={item.key}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigate(item.path)}
             className={cn(
               "w-full flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-300 group",
               isActive(item.path) 

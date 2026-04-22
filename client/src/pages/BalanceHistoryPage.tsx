@@ -106,11 +106,7 @@ export default function BalanceHistoryPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="h-[44px] border-[#276152] text-[#276152] font-semibold gap-2 rounded-[8px] hover:bg-[#276152]/5">
-              {t("balance_history.export_excel")} <FileDown size={18} />
-            </Button>
-          </div>
+
         </div>
 
       {/* Summary Cards */}
