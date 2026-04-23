@@ -1,19 +1,11 @@
-import React from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { 
   LayoutDashboard, 
-  Briefcase, 
-  ShoppingBag, 
-  Wallet, 
-  TrendingUp, 
   Settings, 
   LogOut,
-  ChevronRight,
-  Fingerprint,
   Rocket,
   CreditCard,
-  Gift,
   History,
   Users,
   X
@@ -23,7 +15,7 @@ import logo from "@/assets/logo_green.svg"
 import { useAuth } from "@/providers/AuthProvider"
 
 interface SidebarItem {
-  icon: React.ElementType
+  icon: any
   label: string
   path: string
   key: string
@@ -66,7 +58,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <div className={cn(
-      "fixed inset-y-0 left-0 z-[50] w-[280px] bg-white border-r border-[#e5e7eb] flex flex-col transition-transform duration-300 transform lg:relative lg:translate-x-0 h-screen",
+      "fixed inset-y-0 left-0 z-[50] w-[280px] bg-white border-r border-[#e5e7eb] flex flex-col transition-transform duration-300 transform lg:sticky lg:top-0 lg:translate-x-0 h-screen",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       {/* Brand Header */}
@@ -82,66 +74,63 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1 px-4 space-y-2 mt-4">
-        {mainMenuItems.map((item) => (
-          <button
-            key={item.key}
-            onClick={() => handleNavigate(item.path)}
-            className={cn(
-              "w-full flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-300 group relative",
-              isActive(item.path) 
-                ? "bg-[#276152]/10 text-[#276152]" 
-                : "text-[#6b7280] hover:bg-gray-50 hover:text-[#111827]"
-            )}
-          >
-            {/* Active Indicator Line */}
-            {isActive(item.path) && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#276152] rounded-r-full" />
-            )}
-            
-            <item.icon 
-              size={22} 
+      {/* Navigation Links */}
+      <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
+        <nav className="space-y-1.5">
+          {mainMenuItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => handleNavigate(item.path)}
               className={cn(
-                "transition-transform group-hover:scale-110",
-                isActive(item.path) ? "text-[#276152]" : "text-[#9ca3af]"
-              )} 
-            />
-            <span className="font-semibold text-[15px] tracking-wide">
-              {item.label}
-            </span>
-          </button>
-        ))}
-      </nav>
+                "w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group",
+                isActive(item.path) 
+                  ? "bg-[#276152] text-white shadow-lg shadow-[#276152]/20" 
+                  : "text-[#717c8d] hover:bg-[#276152]/5 hover:text-[#276152]"
+              )}
+            >
+              <div className="flex items-center gap-3.5">
+                <item.icon size={20} className={cn(
+                  "transition-colors",
+                  isActive(item.path) ? "text-white" : "text-[#717c8d] group-hover:text-[#276152]"
+                )} />
+                <span className="text-[14px] font-bold tracking-tight">{item.label}</span>
+              </div>
+              <div className={cn(
+                "w-1 h-1 rounded-full transition-all duration-300",
+                isActive(item.path) ? "bg-white scale-150" : "bg-transparent"
+              )} />
+            </button>
+          ))}
+        </nav>
+      </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-[#e5e7eb] space-y-1">
+      <div className="p-6 border-t border-gray-50 space-y-2">
         {bottomMenuItems.map((item) => (
           <button
             key={item.key}
             onClick={() => handleNavigate(item.path)}
             className={cn(
-              "w-full flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-300 group",
-              isActive(item.path) 
-                ? "bg-[#276152]/10 text-[#276152]" 
-                : "text-[#6b7280] hover:bg-gray-50 hover:text-[#111827]"
+              "w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-300 group",
+              isActive(item.path)
+                ? "bg-[#276152] text-white shadow-lg shadow-[#276152]/10"
+                : "text-[#717c8d] hover:bg-gray-50 hover:text-[#276152]"
             )}
           >
-            <item.icon size={22} className="text-[#9ca3af]" />
-            <span className="font-semibold text-[15px] tracking-wide">
-              {item.label}
-            </span>
+            <item.icon size={20} className={cn(
+              "transition-colors",
+              isActive(item.key) ? "text-white" : "text-[#717c8d] group-hover:text-[#276152]"
+            )} />
+            <span className="text-[14px] font-bold tracking-tight">{item.label}</span>
           </button>
         ))}
-        
+
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-[12px] text-red-500 hover:bg-red-50 transition-all duration-300 group"
+          className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-300 group"
         >
-          <LogOut size={22} className="text-red-400 group-hover:text-red-500" />
-          <span className="font-semibold text-[15px] tracking-wide">
-            {t("sidebar.logout")}
-          </span>
+          <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[14px] font-bold tracking-tight">Đăng xuất</span>
         </button>
       </div>
     </div>

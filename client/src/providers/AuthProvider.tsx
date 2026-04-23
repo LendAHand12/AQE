@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (userData: any, token: string) => void
   logout: () => void
+  syncProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)

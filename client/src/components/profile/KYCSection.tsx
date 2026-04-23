@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { 
   ShieldCheck, 
-  UserCheck, 
   Fingerprint, 
   Key, 
-  ChevronRight, 
   CheckCircle2, 
   ShieldAlert,
   Loader2,

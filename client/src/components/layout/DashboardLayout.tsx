@@ -1,13 +1,12 @@
-import React from "react"
 import { Outlet } from "react-router-dom"
 import Sidebar from "./Sidebar"
 import Header from "./Header"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/providers/AuthProvider"
 
 export default function DashboardLayout() {
   const { syncProfile } = useAuth()
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     syncProfile()

@@ -8,7 +8,6 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight, 
-  Settings,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -256,7 +255,7 @@ export default function AdminLoginPage() {
                     {twoFaCode.map((digit, i) => (
                       <input
                         key={i}
-                        ref={el => twoFaRefs.current[i] = el}
+                        ref={el => { twoFaRefs.current[i] = el; }}
                         type="text"
                         maxLength={1}
                         value={digit}

@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { 
   CreditCard, 
   Search,
   Loader2,
   Calendar,
   Wallet,
-  FileDown,
   ArrowRight
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"

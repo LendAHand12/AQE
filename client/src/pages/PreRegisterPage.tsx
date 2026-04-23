@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { 
   Rocket,
   ShieldCheck,
@@ -20,10 +20,9 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
-import { useAppKit, useDisconnect } from '@reown/appkit/react'
-import { useAccount, useWriteContract } from 'wagmi'
-import { parseUnits } from 'viem'
-import { USDT_CONFIG } from '@/providers/Web3Provider'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAccount, useDisconnect } from 'wagmi'
+import { transferUSDT } from "@/lib/payment"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -38,12 +37,10 @@ export default function PreRegisterPage() {
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
 
-  const { open } = useAppKit()
+  const { open } = useWeb3Modal()
   const { disconnect } = useDisconnect()
   const { address, isConnected } = useAccount()
-  const { writeContractAsync } = useWriteContract()
 
-  const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS || '0x0000000000000000000000000000000000000000'
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://aqe.vn'
 
   useEffect(() => {
@@ -124,13 +121,7 @@ export default function PreRegisterPage() {
     try {
       toast.info(t("pre_register.pay_confirm_toast"))
       
-      // const hash = await writeContractAsync({
-      //   address: USDT_CONFIG.address,
-      //   abi: USDT_CONFIG.abi,
-      //   functionName: 'transfer',
-      //   args: [ADMIN_WALLET as `0x${string}`, parseUnits(paymentAmount.toString(), 18)]
-      // })
-      const hash = "0x000000000000000000000000000000000000000000000000000000000000005"
+      const hash = await transferUSDT(paymentAmount.toString(), address as `0x${string}`)
 
       toast.success(t("pre_register.pay_sent_toast"))
 

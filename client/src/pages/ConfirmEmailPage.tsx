@@ -12,7 +12,6 @@ export default function ConfirmEmailPage() {
   const { token } = useParams()
   const navigate = useNavigate()
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState("")
   const hasCalled = React.useRef(false)
 
   useEffect(() => {
@@ -21,12 +20,10 @@ export default function ConfirmEmailPage() {
 
     const confirmAccount = async () => {
       try {
-        const response = await apiClient.get(`/auth/confirm/${token}`)
+        await apiClient.get(`/auth/confirm/${token}`)
         setStatus("success")
-        setMessage(response.data.message)
       } catch (error: any) {
         setStatus("error")
-        setMessage(error.response?.data?.message || t("confirm_email.error_desc"))
       }
     }
 

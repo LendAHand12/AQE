@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react"
-import { useTranslation } from "react-i18next"
+import { useState, useEffect } from "react"
 import { 
   Users, 
   Search, 
   Trash2, 
   Edit, 
-  MoreVertical, 
   CheckCircle2, 
   Clock, 
   AlertCircle,
@@ -39,10 +37,9 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
-import { getImageUrl, cn } from "@/lib/utils"
+import { getImageUrl } from "@/lib/utils"
 
 export default function UserManagementPage() {
-  const { t } = useTranslation()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")

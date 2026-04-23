@@ -29,7 +29,13 @@
     "register_now": "Register now",
     "errors": {
       "password_mismatch": "Confirm password does not match",
-      "unknown": "An error occurred, please try again later"
+      "unknown": "An error occurred, please try again later",
+      "email_exists": "Email is already in use",
+      "username_exists": "Username is already in use",
+      "phone_exists": "Phone number is already in use",
+      "user_exists": "This user already exists",
+      "invalid_credentials": "Invalid email or password",
+      "unconfirmed": "Please confirm your email before logging in."
     }
   },
   "dashboard": {

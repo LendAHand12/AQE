@@ -16,14 +16,12 @@ const userSchema = mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true,
         lowercase: true,
         trim: true
     },
     email: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     phone: {
         type: String,
@@ -38,6 +36,10 @@ const userSchema = mongoose.Schema({
         default: null
     },
     isActive: {
+        type: Boolean,
+        default: false
+    },
+    isDeleted: {
         type: Boolean,
         default: false
     },

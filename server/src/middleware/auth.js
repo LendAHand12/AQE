@@ -16,8 +16,8 @@ const protect = async (req, res, next) => {
             // Fetch user from DB and attach to request
             req.user = await User.findById(decoded.id).select('-password');
 
-            if (!req.user) {
-                return res.status(401).json({ message: 'Người dùng không tồn tại' });
+            if (!req.user || req.user.isDeleted) {
+                return res.status(401).json({ message: 'Người dùng không tồn tại hoặc đã bị xóa' });
             }
 
             next();

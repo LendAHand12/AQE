@@ -8,11 +8,23 @@ import { sendConfirmationEmail } from '../utils/emailService.js';
 export const registerUser = async (req, res) => {
     try {
         const { fullName, username, email, phone, password, refId } = req.body;
+
+        const userExists = await User.findOne({ 
+            isDeleted: false,
+            $or: [
+                { email }, 
+                { username: username.toLowerCase() },
+                { phone }
+            ] 
+        });
         
-        const userExists = await User.findOne({ $or: [{ email }, { username: username.toLowerCase() }] });
         if (userExists) {
-            const field = userExists.email === email ? 'Email' : 'Username';
-            return res.status(400).json({ message: `${field} đã tồn tại` });
+            let field = 'user_exists';
+            if (userExists.email === email) field = 'email_exists';
+            else if (userExists.username === username.toLowerCase()) field = 'username_exists';
+            else if (userExists.phone === phone) field = 'phone_exists';
+            
+            return res.status(400).json({ message: `auth.errors.${field}` });
         }
 
         let referrer = null;
@@ -63,10 +75,10 @@ export const confirmEmail = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email, isDeleted: false });
 
         if (user && (await user.matchPassword(password))) {
-            if (!user.isActive) return res.status(401).json({ message: 'Vui lòng xác nhận email trước khi đăng nhập.' });
+            if (!user.isActive) return res.status(401).json({ message: 'auth.errors.unconfirmed' });
             res.json({
                 _id: user._id, 
                 fullName: user.fullName, 
@@ -76,7 +88,7 @@ export const loginUser = async (req, res) => {
                 token: generateToken(user._id),
             });
         } else {
-            res.status(401).json({ message: 'Email hoặc mật khẩu không hợp lệ' });
+            res.status(401).json({ message: 'auth.errors.invalid_credentials' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -104,13 +116,25 @@ export const updateUserProfile = async (req, res) => {
         if (user) {
             // Check for username uniqueness if changing
             if (req.body.username && req.body.username.toLowerCase() !== user.username) {
-                const usernameExists = await User.findOne({ username: req.body.username.toLowerCase() });
-                if (usernameExists) return res.status(400).json({ message: 'Username này đã có người sử dụng' });
+                const usernameExists = await User.findOne({ 
+                    username: req.body.username.toLowerCase(), 
+                    isDeleted: false 
+                });
+                if (usernameExists) return res.status(400).json({ message: 'auth.errors.username_exists' });
                 user.username = req.body.username.toLowerCase();
             }
 
+            // Check for phone uniqueness if changing
+            if (req.body.phone && req.body.phone !== user.phone) {
+                const phoneExists = await User.findOne({ 
+                    phone: req.body.phone, 
+                    isDeleted: false 
+                });
+                if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
+                user.phone = req.body.phone;
+            }
+
             user.fullName = req.body.fullName || user.fullName;
-            user.phone = req.body.phone || user.phone;
             user.birthday = req.body.birthday || user.birthday;
             user.gender = req.body.gender || user.gender;
             user.telegram = req.body.telegram || user.telegram;

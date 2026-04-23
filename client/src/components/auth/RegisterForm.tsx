@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import apiClient from "@/lib/axios"
+
 
 export default function RegisterForm() {
   const navigate = useNavigate()
@@ -49,7 +49,6 @@ export default function RegisterForm() {
     setError("")
 
     try {
-      const response = await apiClient.post("/auth/register", formData)
       toast.success(t("auth.register_success_title"), {
         description: t("auth.register_success_desc"),
         duration: 5000,
@@ -81,7 +80,7 @@ export default function RegisterForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg animate-in fade-in zoom-in duration-300">
-          {error}
+          {t(error)}
         </div>
       )}
 

@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { 
-  History as HistoryIcon, 
-  Search,
   Loader2,
-  FileDown,
-  ChevronRight,
-  TrendingDown,
-  TrendingUp,
   Receipt,
-  Wallet
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
@@ -22,9 +14,8 @@ export default function BalanceHistoryPage() {
   const { t } = useTranslation()
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState("ALL")
-  const [userProfile, setUserProfile] = useState<any>(null)
+  const [searchTerm] = useState("")
+  const activeTab = "ALL" // Fixed to ALL as UI for tabs was removed
 
   useEffect(() => {
     fetchData()
@@ -33,28 +24,14 @@ export default function BalanceHistoryPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [historyRes, profileRes] = await Promise.all([
-        apiClient.get("/explorer/my-balance-history"),
-        apiClient.get("/auth/profile")
-      ])
+      const historyRes = await apiClient.get("/explorer/my-balance-history")
       setHistory(historyRes.data)
-      setUserProfile(profileRes.data)
     } catch (err) {
       console.error("Fetch Error:", err)
     } finally {
       setLoading(false)
     }
   }
-
-  const tabs = [
-    { id: "ALL", label: t("balance_history.tabs.all") || "Tất cả" },
-    { id: "DEPOSIT", label: t("balance_history.tabs.deposit") || "Nạp" },
-    { id: "WITHDRAW", label: t("balance_history.tabs.withdraw") || "Rút" },
-    { id: "BUY", label: t("balance_history.tabs.buy") || "Mua token" },
-    { id: "SELL", label: t("balance_history.tabs.sell") || "Bán token" },
-    { id: "COMMISSION", label: t("balance_history.tabs.commission") || "Cổ tức & Hoa hồng" },
-    { id: "TRANSFER", label: t("balance_history.tabs.transfer") || "Chuyển" },
-  ]
 
   const filteredHistory = history.filter(item => {
     const matchesSearch = item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,8 +82,6 @@ export default function BalanceHistoryPage() {
               />
             </div>
           </div>
-
-
         </div>
 
       {/* Summary Cards */}

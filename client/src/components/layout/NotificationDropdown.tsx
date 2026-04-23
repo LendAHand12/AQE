@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react"
-import { Bell, Check, Trash2, Clock, Info, CheckCircle2, AlertCircle } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Bell, Check, Info, CheckCircle2, AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatDistanceToNow } from "date-fns"

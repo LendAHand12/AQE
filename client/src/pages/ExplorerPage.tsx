@@ -1,29 +1,18 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { 
   Globe, 
   Box, 
   Activity, 
   DollarSign, 
   Search, 
-  Clock, 
   ArrowRight,
   Hash,
   Database,
   TrendingUp,
-  Loader2,
-  ChevronRight
+  Loader2
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import apiClient from "@/lib/axios"
 
 export default function ExplorerPage() {

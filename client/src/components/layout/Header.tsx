@@ -1,4 +1,4 @@
-import { Bell, Globe, Check, Menu, LogOut } from "lucide-react"
+import { Globe, Check, Menu, LogOut } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { useEffect, useState, useRef } from "react"
-import { getImageUrl, cn } from "@/lib/utils"
+import { getImageUrl } from "@/lib/utils"
 import NotificationDropdown from "./NotificationDropdown"
 import { useAuth } from "@/providers/AuthProvider"
 import { useNavigate } from "react-router-dom"

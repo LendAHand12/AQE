@@ -44,7 +44,7 @@ export default function LoginForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg animate-in fade-in zoom-in duration-300">
-          {error}
+          {t(error)}
         </div>
       )}
 

@@ -29,7 +29,13 @@
     "register_now": "Đăng ký ngay",
     "errors": {
       "password_mismatch": "Mật khẩu xác nhận không khớp",
-      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại sau"
+      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại sau",
+      "email_exists": "Email đã có người sử dụng",
+      "username_exists": "Tên đăng nhập này đã có người sử dụng",
+      "phone_exists": "Số điện thoại này đã có người sử dụng",
+      "user_exists": "Người dùng này đã tồn tại",
+      "invalid_credentials": "Email hoặc mật khẩu không hợp lệ",
+      "unconfirmed": "Vui lòng xác nhận email trước khi đăng nhập."
     }
   },
   "dashboard": {

@@ -31,7 +31,7 @@ export const loginAdmin = async (req, res) => {
 // @route   GET /api/admin/users
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+        const users = await User.find({ isDeleted: false }).select('-password').sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -42,11 +42,23 @@ export const getUsers = async (req, res) => {
 // @route   PUT /api/admin/users/:id
 export const updateUserByAdmin = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false });
         if (user) {
+            // Check for email uniqueness if changing
+            if (req.body.email && req.body.email !== user.email) {
+                const emailExists = await User.findOne({ email: req.body.email, isDeleted: false });
+                if (emailExists) return res.status(400).json({ message: 'auth.errors.email_exists' });
+                user.email = req.body.email;
+            }
+
+            // Check for phone uniqueness if changing
+            if (req.body.phone && req.body.phone !== user.phone) {
+                const phoneExists = await User.findOne({ phone: req.body.phone, isDeleted: false });
+                if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
+                user.phone = req.body.phone;
+            }
+
             user.fullName = req.body.fullName || user.fullName;
-            user.email = req.body.email || user.email;
-            user.phone = req.body.phone || user.phone;
             user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
@@ -94,10 +106,13 @@ export const updateUserByAdmin = async (req, res) => {
 // @route   DELETE /api/admin/users/:id
 export const deleteUser = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false });
         if (user) {
             const userEmail = user.email;
-            await User.findByIdAndDelete(req.params.id);
+            
+            // Soft delete: set isDeleted to true
+            user.isDeleted = true;
+            await user.save();
 
             // Log the action
             await AdminLog.create({
