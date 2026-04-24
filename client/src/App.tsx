@@ -8,6 +8,9 @@ import AdminLayout from "@/components/layout/AdminLayout"
 import AdminLoginPage from "@/pages/admin/AdminLoginPage"
 import UserManagementPage from "@/pages/admin/UserManagementPage"
 import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
+import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
+import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
+import AdminAQEHistoryPage from "@/pages/admin/AdminAQEHistoryPage"
 import ExplorerPage from "@/pages/ExplorerPage"
 import PreRegisterPage from "@/pages/PreRegisterPage"
 import PaymentHistoryPage from "@/pages/PaymentHistoryPage"
@@ -55,6 +58,9 @@ export function App() {
             <Route element={<AdminLayout />}>
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/settings" element={<TokenSettingsPage />} />
+              <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
+              <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
+              <Route path="/admin/transactions/aqe" element={<AdminAQEHistoryPage />} />
               <Route path="/admin/dashboard" element={<div className="p-8"><h1 className="text-2xl font-bold">Admin Dashboard Coming Soon</h1></div>} />
             </Route>
 

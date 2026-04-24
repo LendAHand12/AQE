@@ -5,7 +5,10 @@ import {
   Settings, 
   LogOut,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  History,
+  Wallet,
+  Coins
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +22,21 @@ const navItems = [
     title: "Quản lý thành viên",
     href: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Lịch sử thanh toán",
+    href: "/admin/transactions/payments",
+    icon: Wallet,
+  },
+  {
+    title: "Lịch sử hoa hồng",
+    href: "/admin/transactions/commissions",
+    icon: Users,
+  },
+  {
+    title: "Phân phối AQE",
+    href: "/admin/transactions/aqe",
+    icon: Coins,
   },
   {
     title: "Cài đặt Pool & Token",

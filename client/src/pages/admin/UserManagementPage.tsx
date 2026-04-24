@@ -220,18 +220,18 @@ export default function UserManagementPage() {
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Họ và Tên</label>
-                    <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px]" />
+                    <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Ngày sinh</label>
-                    <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({...editingUser, birthday: e.target.value})} className="h-11 rounded-[8px]" />
+                    <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({...editingUser, birthday: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Giới tính</label>
                     <Select value={editingUser?.gender} onValueChange={(v) => setEditingUser({...editingUser, gender: v})}>
-                      <SelectTrigger className="h-11 rounded-[8px]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Nam">Nam</SelectItem>
                         <SelectItem value="Nữ">Nữ</SelectItem>
@@ -248,30 +248,30 @@ export default function UserManagementPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Email</label>
-                    <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 rounded-[8px]" />
+                    <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Số điện thoại</label>
-                    <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} className="h-11 rounded-[8px]" />
+                    <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Telegram</label>
-                  <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({...editingUser, telegram: e.target.value})} className="h-11 rounded-[8px]" placeholder="@username" />
+                  <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({...editingUser, telegram: e.target.value})} className="h-11 rounded-[8px] border-gray-200" placeholder="@username" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Địa chỉ cụ thể</label>
-                  <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({...editingUser, address: e.target.value})} className="h-11 rounded-[8px]" />
+                  <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({...editingUser, address: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Quốc gia</label>
-                    <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({...editingUser, nation: e.target.value})} className="h-11 rounded-[8px]" />
+                    <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({...editingUser, nation: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Trạng thái KYC</label>
                     <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({...editingUser, kycStatus: v})}>
-                      <SelectTrigger className="h-11 rounded-[8px]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unverified">Chưa KYC</SelectItem>
                         <SelectItem value="pending">Chờ xác minh</SelectItem>
@@ -287,15 +287,15 @@ export default function UserManagementPage() {
                 <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Tài chính</h4>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Địa chỉ ví (USDT BEP20)</label>
-                  <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs" />
+                  <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Trạng thái hoạt động</label>
                   <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isActive: v === "true"})}>
-                    <SelectTrigger className="h-11 rounded-[8px]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Đã kích hoạt</SelectItem>
-                      <SelectItem value="false">Khóa tài khoản</SelectItem>
+                      <SelectItem value="true">Đã kích hoạt (Active)</SelectItem>
+                      <SelectItem value="false">Khóa tài khoản / Chưa kích hoạt</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

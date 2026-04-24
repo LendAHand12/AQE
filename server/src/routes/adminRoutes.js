@@ -8,6 +8,7 @@ import {
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
 import { adminProtect } from '../middleware/auth.js';
+import { getAllTransactionsForAdmin } from '../controllers/paymentController.js';
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.route('/token-settings')
     .put(adminProtect, updateTokenSettings);
 
 router.get('/logs', adminProtect, getAdminLogs);
+router.get('/transactions', adminProtect, getAllTransactionsForAdmin);
 
 export default router;

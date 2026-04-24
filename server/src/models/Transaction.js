@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const transactionSchema = mongoose.Schema({
     hash: { type: String, required: true, unique: true },
-    from: { type: String, required: true }, // _id of user
-    to: { type: String, required: true },   // _id of user or 'Contract'
+    from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     amount: { type: Number, required: true },
     symbol: { type: String, default: 'AQE' },
     usdtAmount: { type: Number },

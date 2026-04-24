@@ -58,8 +58,15 @@ export const updateUserByAdmin = async (req, res) => {
                 user.phone = req.body.phone;
             }
 
-            user.fullName = req.body.fullName || user.fullName;
+            user.fullName = req.body.fullName ?? user.fullName;
             user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
+            user.birthday = req.body.birthday ?? user.birthday;
+            user.gender = req.body.gender ?? user.gender;
+            user.telegram = req.body.telegram ?? user.telegram;
+            user.address = req.body.address ?? user.address;
+            user.nation = req.body.nation ?? user.nation;
+            user.walletAddress = req.body.walletAddress ?? user.walletAddress;
+
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
                 const kycType = req.body.kycStatus === 'verified' ? 'KYC_APPROVED' : 'KYC_REJECTED';

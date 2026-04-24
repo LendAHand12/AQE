@@ -159,7 +159,7 @@ export const submitPreRegisterPayment = async (req, res) => {
         // --- STEP 1: PROCESS CURRENT PAYMENT ---
         await Transaction.create({
             hash,
-            from: 'Contract_AQE',
+            from: null, // System (Contract)
             to: user._id,
             amount: tokensCalculated,
             usdtAmount: amountNum,
@@ -171,7 +171,7 @@ export const submitPreRegisterPayment = async (req, res) => {
             isReleased: isLivePhase ? true : false,
             balanceBefore: user.preRegisterTokens,
             balanceAfter: user.preRegisterTokens + (isLivePhase ? 0 : tokensCalculated),
-            description: `Payment in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase`
+            description: `Payment in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase (from AQE Contract)`
         });
 
         if (isLivePhase) {
@@ -206,7 +206,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                         
                         await Transaction.create({
                             hash: '0x' + generateHash('bonus' + user._id),
-                            from: 'Contract_AQE',
+                            from: null, // System (Contract)
                             to: user._id,
                             amount: bonusTokens,
                             symbol: 'AQE',
@@ -216,7 +216,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                             isReleased: true,
                             balanceBefore: beforeBonus,
                             balanceAfter: user.preRegisterTokens,
-                            description: `Full payment bonus of ${bonusPercent * 100}% on ${user.pledgeUsdt} USDT`
+                            description: `Full payment bonus of ${bonusPercent * 100}% on ${user.pledgeUsdt} USDT (from AQE Contract)`
                         });
 
                         const bonusNotif = await Notification.create({
@@ -347,6 +347,20 @@ export const getUserPayments = async (req, res) => {
                 { to: userId, type: { $in: ['BUY', 'REWARD'] } }
             ]
         }).sort({ createdAt: -1 });
+
+        res.json(transactions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get ALL transactions (Admin only)
+export const getAllTransactionsForAdmin = async (req, res) => {
+    try {
+        const transactions = await Transaction.find()
+            .populate('from', 'username fullName email')
+            .populate('to', 'username fullName email')
+            .sort({ createdAt: -1 });
 
         res.json(transactions);
     } catch (error) {

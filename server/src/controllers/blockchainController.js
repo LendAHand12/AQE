@@ -54,7 +54,11 @@ export const getLatestBlocks = async (req, res) => {
 // @desc    Get Latest Transactions
 export const getLatestTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find().sort({ createdAt: -1 }).limit(10).populate('fromUser', 'firstName lastName');
+        const transactions = await Transaction.find()
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate('from', 'username fullName')
+            .populate('to', 'username fullName');
         res.json(transactions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -96,13 +100,14 @@ export const buyToken = async (req, res) => {
         const txn = await Transaction.create({
             hash: '0x' + generateHash('buy'),
             from: userId,
-            to: 'Contract_AQE',
+            to: null, // System (Contract)
             amount: tokensToReceive,
             symbol: 'AQE',
             type: 'BUY',
             status: 'SUCCESS',
             balanceBefore: user.aqeBalance,
-            balanceAfter: user.aqeBalance + tokensToReceive
+            balanceAfter: user.aqeBalance + tokensToReceive,
+            description: 'Buy AQE from Pool (System Contract)'
         });
 
         // 2. Update User Balances
@@ -157,13 +162,14 @@ export const sellToken = async (req, res) => {
         const txn = await Transaction.create({
             hash: '0x' + generateHash('sell'),
             from: userId,
-            to: 'Contract_AQE',
+            to: null, // System (Contract)
             amount: amountAqe,
             symbol: 'AQE',
             type: 'SELL',
             status: 'SUCCESS',
             balanceBefore: user.aqeBalance,
-            balanceAfter: user.aqeBalance - amountAqe
+            balanceAfter: user.aqeBalance - amountAqe,
+            description: 'Sell AQE to Pool (System Contract)'
         });
 
         user.aqeBalance -= amountAqe;
