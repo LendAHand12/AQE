@@ -51,7 +51,7 @@ export default function PreRegisterPage() {
     setLoading(true)
     try {
       const [pledgeRes, profileRes, referralRes] = await Promise.all([
-        apiClient.get("/explorer/pledge"),
+        apiClient.get("/payments/pledge"),
         apiClient.get("/auth/profile"),
         apiClient.get("/auth/referrals")
       ])
@@ -105,7 +105,7 @@ export default function PreRegisterPage() {
     const isFirstPayment = !pledge || pledge.paidUsdtPreRegister === 0
 
     // Extra validation for first registration amount
-    if (isFirstRegistration && pledgeAmount < 100) {
+    if (isFirstRegistration && pledgeAmount < 10) {
         toast.error(t("pre_register.reg_amount_min"))
         return
     }
@@ -125,10 +125,10 @@ export default function PreRegisterPage() {
 
       toast.success(t("pre_register.pay_sent_toast"))
 
-      await apiClient.post("/explorer/payment", { 
-        hash: hash, 
-        amountUsdt: paymentAmount,
-        totalPledgeUsdt: !pledge ? pledgeAmount : undefined
+      await apiClient.post("/payments/payment", { 
+        hash, 
+        amount: paymentAmount,
+        pledgeAmount: !pledge ? pledgeAmount : undefined
       })
 
       toast.success(t("pre_register.pay_success"))
@@ -330,11 +330,17 @@ export default function PreRegisterPage() {
                 </div>
 
                 <div className="flex gap-3 h-[44px]">
-                   <div className="flex-1 bg-[#efefef]/50 rounded-[12px] px-4 flex items-center">
+                   <div className="flex-1 bg-[#efefef]/50 rounded-[12px] px-4 flex items-center relative group/link">
                       <span className="text-[14px] text-[#6b7280] truncate">{`${FRONTEND_URL.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}`}</span>
+                      {(!pledge || pledge.pledgeUsdt === 0 || (pledge.paidUsdtPreRegister / pledge.pledgeUsdt) < 0.3) && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-[12px] flex items-center justify-center opacity-0 group-hover/link:opacity-100 transition-opacity">
+                          <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Need ≥30% Payment to unlock</span>
+                        </div>
+                      )}
                    </div>
                    <Button 
-                    className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] px-6 h-full font-medium"
+                    className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] px-6 h-full font-medium disabled:opacity-50 disabled:grayscale transition-all"
+                    disabled={!pledge || pledge.pledgeUsdt === 0 || (pledge.paidUsdtPreRegister / pledge.pledgeUsdt) < 0.3}
                     onClick={() => copyToClipboard(`${FRONTEND_URL}/register?ref=${userProfile?.username || 'TN2024AQE'}`)}
                    >
                      {t("pre_register.copy_btn")}

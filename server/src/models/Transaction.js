@@ -11,6 +11,7 @@ const transactionSchema = mongoose.Schema({
     phase: { type: String, enum: ['PRE_REGISTER', 'LIVE'], default: 'LIVE' },
     type: { type: String, enum: ['BUY', 'SELL', 'TRANSFER', 'DEPOSIT', 'REWARD', 'COMMISSION'], required: true },
     status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED'], default: 'SUCCESS' },
+    isReleased: { type: Boolean, default: false },
     balanceBefore: { type: Number },
     balanceAfter: { type: Number },
     blockNumber: { type: Number },

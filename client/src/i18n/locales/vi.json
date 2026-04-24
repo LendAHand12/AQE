@@ -12,6 +12,7 @@
     "phone_placeholder": "Số điện thoại",
     "or": "hoặc",
     "processing": "Đang xử lý...",
+    "checking_referral": "Đang xác thực liên kết...",
     "full_name_placeholder": "Họ tên đầy đủ",
     "username_placeholder": "Tên đăng nhập",
     "ref_id_placeholder": "Mã giới thiệu (Không bắt buộc)",
@@ -35,7 +36,9 @@
       "phone_exists": "Số điện thoại này đã có người sử dụng",
       "user_exists": "Người dùng này đã tồn tại",
       "invalid_credentials": "Email hoặc mật khẩu không hợp lệ",
-      "unconfirmed": "Vui lòng xác nhận email trước khi đăng nhập."
+      "unconfirmed": "Vui lòng xác nhận email trước khi đăng nhập.",
+      "referral_not_qualified": "Link không hợp lệ hoặc người giới thiệu chưa đủ điều kiện (cần thanh toán ≥30%)",
+      "invalid_referral": "Mã giới thiệu không tồn tại hoặc không hợp lệ"
     }
   },
   "dashboard": {
@@ -141,7 +144,7 @@
     "total_commission": "Tổng hoa hồng",
     "reg_info_title": "Thông tin đăng ký mua",
     "reg_amount_label": "Hạn mức đăng ký mua (USDT)",
-    "reg_amount_min": "Tối thiểu 100 USDT",
+    "reg_amount_min": "Tối thiểu 10 USDT",
     "reg_initial_label": "Số tiền thanh toán đợt 1",
     "reg_initial_hint": "Tối thiểu 30% đặt cọc",
     "confirm_payment_btn": "Xác nhận & Thanh toán",
@@ -158,16 +161,25 @@
     "complete_kyc_first": "Yêu cầu Duyệt KYC",
     "kyc_verified_required": "Bạn cần được Admin duyệt KYC Bước 1 để thực hiện thanh toán.",
     "pay_now": "Thanh toán ngay",
-    "connect_to_pay_hint": "Vui lòng kết nối ví để thực hiện thanh toán"
+    "connect_to_pay_hint": "Vui lòng kết nối ví để thực hiện thanh toán",
+    "connect_wallet_first": "Vui lòng kết nối ví trước",
+    "wallet_config_error": "Chưa cấu hình địa chỉ ví nhận tiền",
+    "insufficient_balance": "Số dư USDT không đủ",
+    "tx_sent": "Giao dịch đã được gửi! Đang chờ xác nhận...",
+    "tx_rejected": "Bạn đã từ chối giao dịch",
+    "blockchain_error": "Giao dịch thất bại trên Blockchain"
   },
   "payments": {
     "title": "Lịch sử thanh toán",
     "subtitle": "Theo dõi các giao dịch mua AQE của bạn",
+    "disclaimer": "Số AQE tạm tính sẽ được chính thức giải ngân vào ví sau khi bạn hoàn thành 100% thanh toán hoặc chốt sổ vào cuối mỗi tháng.",
     "export_report_excel": "Xuất báo cáo sang Excel",
     "table": {
       "date": "Ngày giao dịch",
       "description": "Nội dung",
       "amount": "Số tiền (USDT)",
+      "estimated": "AQE Tạm tính",
+      "official": "AQE Chính thức",
       "received": "Nhận được (AQE)",
       "hash": "Mã giao dịch",
       "status": "Trạng thái",
@@ -188,7 +200,8 @@
     },
     "summary": {
       "total_paid": "Tổng đã thanh toán",
-      "total_received": "Tổng Token đã nhận (bao gồm bonus)"
+      "total_estimated": "Tổng AQE Tạm tính",
+      "total_official": "Tổng AQE Chính thức"
     },
     "empty": "Chưa có giao dịch nào"
   },

@@ -12,6 +12,7 @@
     "phone_placeholder": "Phone number",
     "or": "or",
     "processing": "Processing...",
+    "checking_referral": "Validating link...",
     "full_name_placeholder": "Full Name",
     "username_placeholder": "Username",
     "ref_id_placeholder": "Referral Code (Optional)",
@@ -35,7 +36,9 @@
       "phone_exists": "Phone number is already in use",
       "user_exists": "This user already exists",
       "invalid_credentials": "Invalid email or password",
-      "unconfirmed": "Please confirm your email before logging in."
+      "unconfirmed": "Please confirm your email before logging in.",
+      "referral_not_qualified": "Invalid referral link or referrer is not qualified (requires ≥30% payment)",
+      "invalid_referral": "Referral code does not exist or is invalid"
     }
   },
   "dashboard": {
@@ -219,7 +222,7 @@
     "total_commission": "Total Commission",
     "reg_info_title": "Registration Details",
     "reg_amount_label": "Purchase Registration Limit (USDT)",
-    "reg_amount_min": "Minimum 100 USDT",
+    "reg_amount_min": "Minimum 10 USDT",
     "reg_initial_label": "Tier 1 Payment Amount",
     "reg_initial_hint": "Minimum 30% deposit",
     "confirm_payment_btn": "Confirm & Pay Now",
@@ -235,17 +238,25 @@
     "pay_failed": "Transaction failed",
     "pay_now": "Pay Now",
     "kyc_verified_required": "Admin must approve your KYC Step 1 to proceed with payment.",
-    "connect_to_pay_hint": "Please connect your wallet to proceed with payment"
+    "connect_to_pay_hint": "Please connect your wallet to proceed with payment",
+    "connect_wallet_first": "Please connect your wallet first",
+    "wallet_config_error": "Admin wallet address not configured",
+    "insufficient_balance": "Insufficient USDT balance",
+    "tx_sent": "Transaction sent! Waiting for confirmation...",
+    "tx_rejected": "Transaction rejected by user",
+    "blockchain_error": "Transaction failed on Blockchain"
   },
   "payments": {
     "title": "Payment History",
     "subtitle": "Track your AQE purchase transactions",
+    "disclaimer": "Estimated AQE will be officially released to your wallet after 100% payment or at month-end settlement.",
     "export_report_excel": "Export Excel",
     "table": {
       "date": "Transaction Date",
       "description": "Description",
       "amount": "Amount (USDT)",
-      "received": "Received (AQE)",
+      "estimated": "Estimated AQE",
+      "official": "Official AQE",
       "hash": "Tx Hash",
       "status": "Status",
       "details": "Details",
@@ -265,7 +276,8 @@
     },
     "summary": {
       "total_paid": "Total Paid",
-      "total_received": "Total Tokens Received (inc. bonus)"
+      "total_estimated": "Total Estimated AQE",
+      "total_official": "Total Official AQE"
     },
     "empty": "No transactions found"
   },

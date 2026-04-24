@@ -30,7 +30,22 @@ export const registerUser = async (req, res) => {
         let referrer = null;
         if (refId) {
             // Look up by username (mặc định username làm ref)
-            referrer = await User.findOne({ username: refId.toLowerCase() });
+            referrer = await User.findOne({ username: refId.toLowerCase(), isDeleted: false });
+            
+            if (!referrer) {
+                return res.status(400).json({ message: 'auth.errors.invalid_referral' });
+            }
+
+            // Check if referrer has paid at least 30% of their total pledge
+            if (referrer.pledgeUsdt > 0) {
+                const payPercent = (referrer.paidUsdtPreRegister / referrer.pledgeUsdt) * 100;
+                if (payPercent < 30) {
+                    return res.status(400).json({ message: 'auth.errors.referral_not_qualified' });
+                }
+            } else {
+                // If they haven't pledged anything, they are not qualified to refer
+                return res.status(400).json({ message: 'auth.errors.referral_not_qualified' });
+            }
         }
 
         const confirmationToken = crypto.randomBytes(32).toString('hex');
@@ -273,6 +288,42 @@ export const getReferrals = async (req, res) => {
             },
             network
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Validate referral code
+// @route   GET /api/auth/validate-referral/:username
+// @access  Public
+export const validateReferral = async (req, res) => {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username: username.toLowerCase(), isDeleted: false });
+
+        if (!user) {
+            return res.status(404).json({ message: 'auth.errors.invalid_referral', valid: false });
+        }
+
+        // Check qualification: must have paid >= 30% of pledge
+        if (user.pledgeUsdt > 0) {
+            const payPercent = (user.paidUsdtPreRegister / user.pledgeUsdt) * 100;
+            if (payPercent < 30) {
+                return res.status(400).json({ 
+                    message: 'auth.errors.referral_not_qualified', 
+                    valid: false,
+                    reason: 'payment_insufficient'
+                });
+            }
+        } else {
+            return res.status(400).json({ 
+                message: 'auth.errors.referral_not_qualified', 
+                valid: false,
+                reason: 'no_pledge'
+            });
+        }
+
+        res.json({ valid: true, fullName: user.fullName });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

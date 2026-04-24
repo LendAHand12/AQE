@@ -9,7 +9,9 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import explorerRoutes from './routes/explorerRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import { initCronJobs } from './services/cronService.js';
 
 import { createServer } from 'http';
 import { initSocket } from './utils/socket.js';
@@ -28,6 +30,9 @@ const __dirname = path.dirname(__filename);
 // Initialize Socket.io
 initSocket(httpServer);
 
+// Initialize Cron Jobs
+initCronJobs();
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -43,6 +48,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // Simple Route

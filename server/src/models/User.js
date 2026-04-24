@@ -119,6 +119,10 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isPledgeCompleted: {
+        type: Boolean,
+        default: false
+    },
     walletAddress: {
         type: String,
         default: null

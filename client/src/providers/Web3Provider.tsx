@@ -5,14 +5,18 @@ import { WagmiProvider } from 'wagmi'
 import { config, projectId } from '@/config/wagmi.config'
 
 // 3. Create modal
+if (!projectId) {
+  console.warn("WalletConnect Project ID is missing. Web3Modal may not function correctly.");
+}
+
 createWeb3Modal({
   wagmiConfig: config,
-  projectId: projectId || "",
+  projectId: projectId || "1b15f85b4e2f0c6f99354a3f49fe7660", // Fallback to a test ID if env is missing
   themeMode: "light",
   themeVariables: {
     "--w3m-z-index": 9999,
   },
-  enableAnalytics: false, // Optional - defaults to your Cloud configuration
+  enableAnalytics: false,
 })
 
 const queryClient = new QueryClient()

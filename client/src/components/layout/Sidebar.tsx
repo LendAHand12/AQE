@@ -82,23 +82,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               key={item.key}
               onClick={() => handleNavigate(item.path)}
               className={cn(
-                "w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group",
+                "w-full flex items-center gap-3.5 px-4 py-3.5 transition-all duration-300 group relative",
                 isActive(item.path) 
-                  ? "bg-[#276152] text-white shadow-lg shadow-[#276152]/20" 
-                  : "text-[#717c8d] hover:bg-[#276152]/5 hover:text-[#276152]"
+                  ? "bg-[#276152]/10 text-[#276152] rounded-r-full" 
+                  : "text-[#717c8d] hover:bg-[#276152]/5 hover:text-[#276152] rounded-xl mx-2"
               )}
             >
+              {/* Left Accent Bar */}
+              {isActive(item.path) && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#276152] rounded-r-full" />
+              )}
+
               <div className="flex items-center gap-3.5">
-                <item.icon size={20} className={cn(
+                <item.icon size={22} className={cn(
                   "transition-colors",
-                  isActive(item.path) ? "text-white" : "text-[#717c8d] group-hover:text-[#276152]"
+                  isActive(item.path) ? "text-[#276152]" : "text-[#717c8d] group-hover:text-[#276152]"
                 )} />
-                <span className="text-[14px] font-bold tracking-tight">{item.label}</span>
+                <span className={cn(
+                  "text-[15px] font-bold tracking-tight",
+                  isActive(item.path) ? "text-[#276152]" : "text-[#717c8d]"
+                )}>{item.label}</span>
               </div>
-              <div className={cn(
-                "w-1 h-1 rounded-full transition-all duration-300",
-                isActive(item.path) ? "bg-white scale-150" : "bg-transparent"
-              )} />
             </button>
           ))}
         </nav>
@@ -111,17 +115,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             key={item.key}
             onClick={() => handleNavigate(item.path)}
             className={cn(
-              "w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-300 group",
+              "w-full flex items-center gap-3.5 px-4 py-3.5 transition-all duration-300 group relative",
               isActive(item.path)
-                ? "bg-[#276152] text-white shadow-lg shadow-[#276152]/10"
-                : "text-[#717c8d] hover:bg-gray-50 hover:text-[#276152]"
+                ? "bg-[#276152]/10 text-[#276152] rounded-r-full"
+                : "text-[#717c8d] hover:bg-gray-50 hover:text-[#276152] rounded-xl mx-2"
             )}
           >
-            <item.icon size={20} className={cn(
+            {isActive(item.path) && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#276152] rounded-r-full" />
+            )}
+            <item.icon size={22} className={cn(
               "transition-colors",
-              isActive(item.key) ? "text-white" : "text-[#717c8d] group-hover:text-[#276152]"
+              isActive(item.path) ? "text-[#276152]" : "text-[#717c8d] group-hover:text-[#276152]"
             )} />
-            <span className="text-[14px] font-bold tracking-tight">{item.label}</span>
+            <span className={cn(
+              "text-[15px] font-bold tracking-tight",
+              isActive(item.path) ? "text-[#276152]" : "text-[#717c8d]"
+            )}>{item.label}</span>
           </button>
         ))}
 

@@ -3,9 +3,10 @@ import { parseUnits, formatUnits } from "viem";
 import { config } from "@/config/wagmi.config";
 import BEP20USDT_ABI from "@/abis/BEP20USDT.json";
 import { toast } from "sonner";
+import i18n from "@/i18n/config";
 
 const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955" as `0x${string}`;
-const MAIN_WALLET_ADDRESS = import.meta.env.VITE_MAIN_WALLET_ADDRESS as `0x${string}`;
+const MAIN_WALLET_ADDRESS = import.meta.env.VITE_ADMIN_WALLET_ADDRESS as `0x${string}`;
 
 /**
  * Get USDT balance of an address
@@ -38,11 +39,11 @@ export const transferUSDT = async (
   fromAddress: `0x${string}`
 ): Promise<`0x${string}`> => {
   if (!fromAddress) {
-    throw new Error("Vui lòng kết nối ví trước");
+    throw new Error(i18n.t("pre_register.connect_wallet_first"));
   }
 
   if (!MAIN_WALLET_ADDRESS) {
-    throw new Error("Chưa cấu hình địa chỉ ví nhận tiền (VITE_MAIN_WALLET_ADDRESS)");
+    throw new Error(i18n.t("pre_register.wallet_config_error"));
   }
 
   try {
@@ -52,7 +53,7 @@ export const transferUSDT = async (
     // 1. Check balance first (Step 3)
     const balance = await getUSDTBalance(fromAddress);
     if (parseFloat(balance) < parseFloat(amount)) {
-      toast.error("Số dư USDT không đủ");
+      toast.error(i18n.t("pre_register.insufficient_balance"));
       throw new Error("Insufficient balance");
     }
 
@@ -66,7 +67,7 @@ export const transferUSDT = async (
       chainId: 56,
     } as any);
 
-    toast.info("Giao dịch đã được gửi! Đang chờ xác nhận...");
+    toast.info(i18n.t("pre_register.tx_sent"));
 
     // 3. Wait for confirmation (Step 5)
     const receipt = await waitForTransactionReceipt(config, {
@@ -75,19 +76,18 @@ export const transferUSDT = async (
     });
 
     if (receipt.status === "success") {
-      toast.success("Thanh toán thành công!");
-      return receipt.transactionHash;
+      return hash;
     } else {
-      throw new Error("Giao dịch thất bại trên Blockchain");
+      throw new Error(i18n.t("pre_register.blockchain_error"));
     }
   } catch (error: any) {
     console.error("Transfer USDT error:", error);
-    const errorMessage = error?.shortMessage || error?.message || "Thanh toán thất bại";
+    const errorMessage = error?.shortMessage || error?.message || "";
 
     if (errorMessage.includes("User rejected") || errorMessage.includes("user rejected")) {
-      toast.error("Bạn đã từ chối giao dịch");
+      toast.error(i18n.t("pre_register.tx_rejected"));
     } else {
-      toast.error(errorMessage);
+      toast.error(errorMessage || i18n.t("pre_register.pay_failed"));
     }
     throw error;
   }

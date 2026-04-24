@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-
+import apiClient from "@/lib/axios"
 
 export default function RegisterForm() {
   const navigate = useNavigate()
@@ -13,6 +13,8 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [checkingReferral, setCheckingReferral] = useState(false)
+  const [isReferralValid, setIsReferralValid] = useState(true)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     fullName: "",
@@ -24,13 +26,29 @@ export default function RegisterForm() {
     refId: ""
   })
 
-  // Track referral ID from URL
+  // Track referral ID from URL & Validate
   useEffect(() => {
     const ref = searchParams.get("ref")
     if (ref) {
       setFormData(prev => ({ ...prev, refId: ref }))
+      validateReferral(ref)
     }
   }, [searchParams])
+
+  const validateReferral = async (ref: string) => {
+    setCheckingReferral(true)
+    setError("")
+    setIsReferralValid(true)
+    try {
+      await apiClient.get(`/auth/validate-referral/${ref}`)
+      // If success, isReferralValid stays true
+    } catch (err: any) {
+      setIsReferralValid(false)
+      setError(err.response?.data?.message || "auth.errors.invalid_referral")
+    } finally {
+      setCheckingReferral(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -44,13 +62,26 @@ export default function RegisterForm() {
       return
     }
 
-    setLoading(true)
+    if (!isReferralValid) {
+        setError(t("auth.errors.referral_not_qualified"))
+        return
+    }
+
     setLoading(true)
     setError("")
 
     try {
+      const response = await apiClient.post("/auth/register", {
+        fullName: formData.fullName,
+        username: formData.username,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        refId: formData.refId
+      })
+
       toast.success(t("auth.register_success_title"), {
-        description: t("auth.register_success_desc"),
+        description: response.data?.message || t("auth.register_success_desc"),
         duration: 5000,
       })
 
@@ -68,9 +99,11 @@ export default function RegisterForm() {
       // Navigate after a short delay
       setTimeout(() => {
         navigate("/login")
-      }, 5000)
+      }, 3000)
     } catch (err: any) {
-      setError(err.response?.data?.message || t("auth.errors.unknown"))
+      const msg = err.response?.data?.message || "auth.errors.unknown"
+      setError(msg)
+      toast.error(t(msg))
     } finally {
       setLoading(false)
     }
@@ -223,13 +256,13 @@ export default function RegisterForm() {
       {/* Register Button */}
       <button 
         type="submit"
-        disabled={loading}
+        disabled={loading || checkingReferral || !isReferralValid}
         className="w-full h-[44px] bg-[#276152] hover:bg-[#1e4d41] text-white font-semibold rounded-[12px] transition-all duration-300 shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
       >
-        {loading ? (
+        {loading || checkingReferral ? (
           <>
             <Loader2 className="animate-spin" size={20} />
-            {t("auth.processing")}
+            {checkingReferral ? t("auth.checking_referral") : t("auth.processing")}
           </>
         ) : (
           t("auth.register")

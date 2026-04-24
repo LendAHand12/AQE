@@ -15,9 +15,8 @@ const metadata = {
 
 const chains = [bsc] as const;
 const connectors = [
-  metaMask(),
-  walletConnect({ projectId, metadata }),
   injected(),
+  walletConnect({ projectId, metadata }),
 ];
 
 export const config = createConfig({

@@ -24,7 +24,7 @@ export default function BalanceHistoryPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const historyRes = await apiClient.get("/explorer/my-balance-history")
+      const historyRes = await apiClient.get("/payments/my-balance-history")
       setHistory(historyRes.data)
     } catch (err) {
       console.error("Fetch Error:", err)
