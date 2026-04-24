@@ -51,13 +51,13 @@ export default function PaymentHistoryPage() {
   }
 
   const filteredPayments = payments.filter(p => 
-    p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+    p.type !== 'REWARD' && (
+      p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
 
   const totalPaid = payments.reduce((sum, p) => sum + (p.usdtAmount || 0), 0)
-  const totalOfficial = payments.reduce((sum, p) => sum + (p.isReleased ? (p.amount || 0) : 0), 0)
-  const totalEstimated = payments.reduce((sum, p) => sum + (!p.isReleased ? (p.amount || 0) : 0), 0)
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
@@ -75,34 +75,15 @@ export default function PaymentHistoryPage() {
         <p className="text-[#636D7D] text-[16px]">
           {t("payments.subtitle") || "Theo dõi các giao dịch thanh toán mua AQE sớm của bạn"}
         </p>
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-sm flex items-center gap-2">
-           <div className="shrink-0 size-5 rounded-full bg-blue-100 flex items-center justify-center font-bold text-[10px]">i</div>
-           {t("payments.disclaimer")}
-        </div>
       </div>
 
       <div className="space-y-6">
         {/* Summary Mini Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#16A34A]/10 p-4 rounded-[12px] flex flex-col gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-[#16A34A]/10 p-4 rounded-[12px] flex flex-col gap-1 border border-[#16A34A]/20">
             <p className="text-[16px] text-[#0D1F1D] font-medium">{t("payments.summary.total_paid")}</p>
             <p className="text-[24px] font-bold text-[#16A34A] tracking-tight">
               {totalPaid.toLocaleString()} USDT
-            </p>
-          </div>
-          <div className="bg-[#276152]/10 p-4 rounded-[12px] flex flex-col gap-1 border border-[#276152]/20 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-1">
-               <Badge className="bg-[#276152] text-white text-[10px] uppercase font-bold">Wallet</Badge>
-            </div>
-            <p className="text-[16px] text-[#0D1F1D] font-medium">{t("payments.summary.total_official")}</p>
-            <p className="text-[24px] font-bold text-[#276152] tracking-tight">
-              {totalOfficial.toLocaleString()} AQE
-            </p>
-          </div>
-          <div className="bg-amber-50 p-4 rounded-[12px] flex flex-col gap-1 border border-amber-100">
-            <p className="text-[16px] text-[#0D1F1D] font-medium">{t("payments.summary.total_estimated")}</p>
-            <p className="text-[24px] font-bold text-amber-600 tracking-tight">
-              {totalEstimated.toLocaleString()} AQE
             </p>
           </div>
         </div>
@@ -131,8 +112,6 @@ export default function PaymentHistoryPage() {
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.date")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.description")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("payments.table.amount")}</th>
-                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right text-amber-600">{t("payments.table.estimated")}</th>
-                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right text-[#16A34A]">{t("payments.table.official")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.status")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.details")}</th>
                 </tr>
@@ -140,7 +119,7 @@ export default function PaymentHistoryPage() {
               <tbody className="divide-y divide-[#EFEFEF]">
                 {filteredPayments.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center text-[#868F9E]">
+                    <td colSpan={5} className="px-6 py-20 text-center text-[#868F9E]">
                       <div className="flex flex-col items-center gap-2 opacity-30">
                         <CreditCard size={64} />
                         <p className="text-[18px] font-medium">{t("payments.empty") || "Chưa có giao dịch thanh toán"}</p>
@@ -188,35 +167,19 @@ export default function PaymentHistoryPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right whitespace-nowrap">
-                         <span className="text-[14px] font-bold text-[#EF4444]">
-                            {p.usdtAmount ? `-${p.usdtAmount.toLocaleString()} USDT` : "---"}
-                         </span>
-                      </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
-                         <span className={cn(
-                           "text-[14px] font-bold",
-                           !p.isReleased ? "text-amber-600" : "text-gray-300"
-                         )}>
-                            {!p.isReleased ? `+${p.amount?.toLocaleString()} AQE` : "---"}
-                         </span>
-                      </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
-                         <span className={cn(
-                           "text-[16px] font-bold",
-                           p.isReleased ? "text-[#16A34A]" : "text-gray-300"
-                         )}>
-                            {p.isReleased ? `+${p.amount?.toLocaleString()} AQE` : "---"}
+                         <span className="text-[14px] font-bold text-[#111827]">
+                            {p.usdtAmount ? `${p.usdtAmount.toLocaleString()} USDT` : "---"}
                          </span>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex justify-center">
-                          <div className={cn(
-                            "rounded-full px-3 py-1 flex items-center gap-2 text-[11px] font-bold shadow-sm",
-                            p.status === 'SUCCESS' ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#FEF3C7] text-[#92400E]"
-                          )}>
+                         <div className="flex justify-center">
+                           <div className={cn(
+                             "rounded-full px-3 py-1 flex items-center gap-2 text-[11px] font-bold",
+                             p.status === 'SUCCESS' ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#FEF3C7] text-[#92400E]"
+                           )}>
                              {p.status === 'SUCCESS' ? t("payments.status.success") : t("payments.status.pending")}
-                          </div>
-                        </div>
+                           </div>
+                         </div>
                       </td>
                       <td className="px-6 py-5 text-center">
                         <div className="flex items-center justify-center gap-3">

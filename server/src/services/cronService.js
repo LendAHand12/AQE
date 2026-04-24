@@ -42,20 +42,7 @@ export const initCronJobs = () => {
                 
                 await user.save();
 
-                // Create Transaction record for the release
-                await Transaction.create({
-                    hash: '0x' + generateHash('cronRelease' + user._id),
-                    from: 'Treasury',
-                    to: user._id,
-                    amount: releasedAmount,
-                    symbol: 'AQE',
-                    type: 'TRANSFER',
-                    status: 'SUCCESS',
-                    isReleased: true,
-                    description: 'Monthly automatic checkpoint release'
-                });
-
-                // Mark all previous unreleased transactions for this user as released
+                // Mark all previous unreleased transactions for this user as released (Principal clean-up)
                 await Transaction.updateMany(
                     { 
                         $or: [{ from: user._id }, { to: user._id }], 
@@ -69,7 +56,7 @@ export const initCronJobs = () => {
                 const notif = await Notification.create({
                     userId: user._id,
                     title: 'Monthly Token Release',
-                    message: `Your ${releasedAmount.toLocaleString()} AQE tokens from last month have been released to your balance.`,
+                    message: `Your ${releasedAmount.toLocaleString()} AQE tokens from last month have been officially released to your wallet.`,
                     type: 'PAYMENT',
                     isRead: false
                 });

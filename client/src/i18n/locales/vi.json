@@ -38,7 +38,9 @@
       "invalid_credentials": "Email hoặc mật khẩu không hợp lệ",
       "unconfirmed": "Vui lòng xác nhận email trước khi đăng nhập.",
       "referral_not_qualified": "Link không hợp lệ hoặc người giới thiệu chưa đủ điều kiện (cần thanh toán ≥30%)",
-      "invalid_referral": "Mã giới thiệu không tồn tại hoặc không hợp lệ"
+      "invalid_referral": "Mã giới thiệu không tồn tại hoặc không hợp lệ",
+      "invalid_user": "Thông tin người dùng không hợp lệ",
+      "user_not_found": "Không tìm thấy người dùng"
     }
   },
   "dashboard": {
@@ -104,13 +106,20 @@
     "detail": "Chi tiết",
     "amount": "Số tiền",
     "fee": "Phí",
+    "balance_before": "Số dư trước",
     "balance_after": "Số dư sau",
     "status": "Trạng thái",
     "details": "Chi tiết",
     "id": "ID",
     "filter": "Lọc",
     "search": "Tìm kiếm giao dịch...",
-    "empty": "Không có giao dịch nào"
+    "empty": "Không có giao dịch nào",
+    "summary": {
+      "total_paid": "Tổng thanh toán (USDT)",
+      "aqe_official": "AQE Chính thức",
+      "aqe_estimated": "AQE Tạm tính",
+      "total_commissions": "Tổng hoa hồng"
+    }
   },
   "notfound": {
     "title": "404 - Không tìm thấy trang",
@@ -236,6 +245,15 @@
       "transfer": "CHUYỂN TIỀN",
       "deposit": "NẠP TIỀN",
       "buy": "MUA TOKEN"
+    },
+    "asset_filter": {
+      "all": "Tất cả",
+      "usdt": "USDT",
+      "aqe": "AQE Token"
+    },
+    "status": {
+      "official": "Chính thức",
+      "estimated": "Tạm tính"
     }
   },
   "commissions": {

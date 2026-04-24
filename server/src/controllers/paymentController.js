@@ -159,8 +159,8 @@ export const submitPreRegisterPayment = async (req, res) => {
         // --- STEP 1: PROCESS CURRENT PAYMENT ---
         await Transaction.create({
             hash,
-            from: user._id,
-            to: 'Admin_Wallet',
+            from: 'Contract_AQE',
+            to: user._id,
             amount: tokensCalculated,
             usdtAmount: amountNum,
             priceAtTime: price,
@@ -213,6 +213,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                             type: 'REWARD',
                             status: 'SUCCESS',
                             phase,
+                            isReleased: true,
                             balanceBefore: beforeBonus,
                             balanceAfter: user.preRegisterTokens,
                             description: `Full payment bonus of ${bonusPercent * 100}% on ${user.pledgeUsdt} USDT`
@@ -230,32 +231,18 @@ export const submitPreRegisterPayment = async (req, res) => {
                 }
 
                 // Immediate release since 100% reached for the first time
-                const oldAqeBalance = user.aqeBalance;
                 user.aqeBalance += user.preRegisterTokens;
-                const releasedTokens = user.preRegisterTokens;
                 user.preRegisterTokens = 0;
                 user.isPledgeCompleted = true; // Mark as completed to avoid re-triggering commission
 
-                await Transaction.create({
-                    hash: '0x' + generateHash('release' + user._id),
-                    from: 'Treasury',
-                    to: user._id,
-                    amount: releasedTokens,
-                    symbol: 'AQE',
-                    type: 'TRANSFER',
-                    status: 'SUCCESS',
-                    isReleased: true,
-                    balanceBefore: oldAqeBalance,
-                    balanceAfter: user.aqeBalance,
-                    description: 'Full payment completion release'
-                });
-
-                // Mark all unreleased tokens for this user as released (both buys and rewards/bonuses)
+                // --- STEP 4: RELEASE PREVIOUSLY HELD TOKENS ---
+                // Simply flip the status of all BUY transactions for this user.
                 await Transaction.updateMany(
                     { 
-                        $or: [{ from: user._id }, { to: user._id }], 
+                        to: user._id, 
                         isReleased: false, 
-                        status: 'SUCCESS' 
+                        status: 'SUCCESS',
+                        type: { $in: ['BUY', 'REWARD'] }
                     },
                     { isReleased: true }
                 );
@@ -312,25 +299,20 @@ export const getMyPreRegister = async (req, res) => {
                 else if (nowVN >= julyFirstVN) shouldForceRelease = true;
 
                 if (shouldForceRelease) {
-                    const oldAqe = user.aqeBalance;
                     user.aqeBalance += user.preRegisterTokens;
-                    const releasedAmount = user.preRegisterTokens;
                     user.preRegisterTokens = 0;
-                    // Note: We don't mark isPledgeCompleted = true here because they might still hit 100% later
-                    // But we release what they have so far.
 
-                    await Transaction.create({
-                        hash: '0x' + generateHash('viewCheckpointRelease' + user._id),
-                        from: 'Treasury',
-                        to: user._id,
-                        amount: releasedAmount,
-                        symbol: 'AQE',
-                        type: 'TRANSFER',
-                        status: 'SUCCESS',
-                        balanceBefore: oldAqe,
-                        balanceAfter: user.aqeBalance,
-                        description: 'Monthly checkpoint release (triggered by view)'
-                    });
+                    // Release all BUY/REWARD transactions that occurred BEFORE or DURING the month being closed
+                    await Transaction.updateMany(
+                        { 
+                            to: user._id, 
+                            isReleased: false, 
+                            status: 'SUCCESS',
+                            type: { $in: ['BUY', 'REWARD'] },
+                            createdAt: { $lte: (lastDate <= may31VN ? may31VN : (lastDate <= june30VN ? june30VN : nowVN)) }
+                        },
+                        { isReleased: true }
+                    );
                     
                     await user.save();
                 }
@@ -362,7 +344,7 @@ export const getUserPayments = async (req, res) => {
         const transactions = await Transaction.find({ 
             $or: [
                 { from: userId, type: { $in: ['BUY', 'SELL'] } },
-                { to: userId, type: 'REWARD' }
+                { to: userId, type: { $in: ['BUY', 'REWARD'] } }
             ]
         }).sort({ createdAt: -1 });
 

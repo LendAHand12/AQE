@@ -81,7 +81,7 @@ export default function RegisterForm() {
       })
 
       toast.success(t("auth.register_success_title"), {
-        description: response.data?.message || t("auth.register_success_desc"),
+        description: t(response.data?.message || "auth.register_success_desc"),
         duration: 5000,
       })
 

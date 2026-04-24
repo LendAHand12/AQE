@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
+import { useSearchParams } from "react-router-dom"
 import { 
   User, 
   CheckCircle2, 
@@ -86,6 +87,23 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: any) => {
 export default function SettingsPage() {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  
+  // Tab State handled by URL
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "personal")
+
+  useEffect(() => {
+    const tParam = searchParams.get('tab')
+    if (tParam && tParam !== activeTab) {
+      setActiveTab(tParam)
+    }
+  }, [searchParams])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    // Optional: update URL when tab changes manually to maintain deep link
+    setSearchParams({ tab: value }, { replace: true })
+  }
   
   // Profile State
   const [loading, setLoading] = useState(true)
@@ -253,7 +271,7 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="personal" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="bg-gray-100/80 p-1.5 rounded-[14px] h-auto flex w-full gap-1 mb-10 border border-gray-200/50">
           {[
             { id: "personal", label: t("settings.tabs.personal"), icon: User },

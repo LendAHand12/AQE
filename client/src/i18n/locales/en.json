@@ -38,7 +38,9 @@
       "invalid_credentials": "Invalid email or password",
       "unconfirmed": "Please confirm your email before logging in.",
       "referral_not_qualified": "Invalid referral link or referrer is not qualified (requires ≥30% payment)",
-      "invalid_referral": "Referral code does not exist or is invalid"
+      "invalid_referral": "Referral code does not exist or is invalid",
+      "invalid_user": "Invalid user information provided",
+      "user_not_found": "User account not found"
     }
   },
   "dashboard": {
@@ -182,13 +184,20 @@
     "detail": "Detail",
     "amount": "Amount",
     "fee": "Fee",
+    "balance_before": "Balance Before",
     "balance_after": "Balance After",
     "status": "Status",
     "details": "Details",
     "id": "ID",
     "filter": "Filter",
     "search": "Search transactions...",
-    "empty": "No transaction data found"
+    "empty": "No transaction data found",
+    "summary": {
+      "total_paid": "Total Paid (USDT)",
+      "aqe_official": "Official AQE",
+      "aqe_estimated": "Estimated AQE",
+      "total_commissions": "Total Commissions"
+    }
   },
   "notfound": {
     "title": "404 - Page Not Found",
@@ -325,6 +334,15 @@
       "transfer": "TRANSFER",
       "deposit": "DEPOSIT",
       "buy": "BUY TOKEN"
+    },
+    "asset_filter": {
+      "all": "All Assets",
+      "usdt": "USDT",
+      "aqe": "AQE Token"
+    },
+    "status": {
+      "official": "Official",
+      "estimated": "Estimated"
     }
   },
   "header": {
@@ -390,6 +408,7 @@
       "setup": "Activate 2FA",
       "secret_key": "Secret Key",
       "copy": "Copy Key",
+      "setup_success": "2FA activated successfully",
       "instructions": "Please save this secret key in a safe place. You will need it to recover 2FA if you lose your phone."
     },
     "errors": {

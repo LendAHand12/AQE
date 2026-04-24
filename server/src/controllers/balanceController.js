@@ -25,7 +25,7 @@ export const getUserBalanceHistory = async (req, res) => {
         // Includes: COMMISSION, REWARD, SELL, TRANSFER, WITHDRAW, DEPOSIT
         const transactions = await Transaction.find({
             $or: [{ from: userId }, { to: userId }],
-            type: { $in: ['SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
+            type: { $in: ['BUY', 'SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
         })
         .populate('from', 'username fullName')
         .populate('to', 'username fullName')
@@ -51,8 +51,11 @@ export const getUserBalanceHistory = async (req, res) => {
                 type: t.type, // COMMISSION, REWARD, SELL, etc.
                 symbol: t.symbol || 'USDT',
                 category: isOutflow ? 'OUTFLOW' : 'INFLOW',
-                amount: t.usdtAmount || t.amount,
+                amount: t.symbol === 'AQE' ? t.amount : (t.usdtAmount || t.amount),
                 status: t.status,
+                isReleased: t.isReleased,
+                balanceBefore: t.balanceBefore,
+                balanceAfter: t.balanceAfter,
                 description,
                 raw: t
             };

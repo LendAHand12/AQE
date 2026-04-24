@@ -61,9 +61,9 @@ export const registerUser = async (req, res) => {
 
         if (user) {
             await sendConfirmationEmail(user.email, confirmationToken, user.fullName);
-            res.status(201).json({ message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản.' });
+            res.status(201).json({ message: 'auth.register_success_desc' });
         } else {
-            res.status(400).json({ message: 'Thông tin người dùng không hợp lệ' });
+            res.status(400).json({ message: 'auth.errors.invalid_user' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -75,12 +75,12 @@ export const confirmEmail = async (req, res) => {
     try {
         const { token } = req.params;
         const user = await User.findOne({ confirmationToken: token });
-        if (!user) return res.status(400).json({ message: 'Mã xác nhận không hợp lệ hoặc đã hết hạn.' });
+        if (!user) return res.status(400).json({ message: 'confirm_email.error_desc' });
 
         user.isActive = true;
         user.confirmationToken = undefined;
         await user.save();
-        res.status(200).json({ message: 'Tài khoản đã được xác thực thành công!' });
+        res.status(200).json({ message: 'confirm_email.success_title' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -117,7 +117,7 @@ export const getUserProfile = async (req, res) => {
     if (req.user) {
         res.json(req.user);
     } else {
-        res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        res.status(404).json({ message: 'auth.errors.user_not_found' });
     }
 };
 
@@ -187,7 +187,7 @@ export const updateUserProfile = async (req, res) => {
                 token: generateToken(updatedUser._id),
             });
         } else {
-            res.status(404).json({ message: 'Không tìm thấy người dùng' });
+            res.status(404).json({ message: 'auth.errors.user_not_found' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -198,13 +198,13 @@ export const updateFaceTecStatus = async (req, res) => {
     try {
         const { facetecTid } = req.body;
         const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).json({ message: 'auth.errors.user_not_found' });
 
         user.faceTecTid = facetecTid;
         user.kycStatus = 'verified'; // Mark as verified upon FaceTec success
         await user.save();
 
-        res.json({ message: 'KYC FaceTec thành công', user });
+        res.json({ message: 'kyc.facescan.success', user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -220,7 +220,7 @@ export const setup2FA = async (req, res) => {
         user.isTwoFactorEnabled = true;
         await user.save();
 
-        res.json({ message: 'Kích hoạt 2FA thành công' });
+        res.json({ message: 'kyc.google_auth.setup_success' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -232,10 +232,10 @@ export const submitIdVerification = async (req, res) => {
         const { idCardFront, idCardBack, portraitPhoto } = req.body;
         const user = await User.findById(req.user._id);
 
-        if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        if (!user) return res.status(404).json({ message: 'auth.errors.user_not_found' });
 
         if (user.kycStatus === 'verified' || user.kycStatus === 'pending') {
-            return res.status(400).json({ message: 'Yêu cầu xác thực đang chờ duyệt hoặc đã thành công' });
+            return res.status(400).json({ message: 'kyc.errors.step_locked' });
         }
 
         user.idCardFront = idCardFront;
@@ -244,7 +244,7 @@ export const submitIdVerification = async (req, res) => {
         user.kycStatus = 'pending';
 
         await user.save();
-        res.json({ message: 'Gửi yêu cầu xác thực thành công. Vui lòng chờ admin phê duyệt.', user });
+        res.json({ message: 'kyc.status.pending_desc', user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

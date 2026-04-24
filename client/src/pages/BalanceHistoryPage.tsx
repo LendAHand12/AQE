@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { 
   Loader2,
   Receipt,
+  Search
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -14,8 +15,8 @@ export default function BalanceHistoryPage() {
   const { t } = useTranslation()
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm] = useState("")
-  const activeTab = "ALL" // Fixed to ALL as UI for tabs was removed
+  const [searchTerm, setSearchTerm] = useState("")
+  const [assetFilter, setAssetFilter] = useState("ALL") // ALL, USDT, AQE
 
   useEffect(() => {
     fetchData()
@@ -34,17 +35,31 @@ export default function BalanceHistoryPage() {
   }
 
   const filteredHistory = history.filter(item => {
-    const matchesSearch = item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.type.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesTab = activeTab === "ALL" || item.type === activeTab
-    return matchesSearch && matchesTab
+    // 1. Hide Commissions where the user is NOT the receiver (Inflow)
+    if (item.type === 'COMMISSION' && item.category !== 'INFLOW') return false;
+
+    const matchesSearch = (item.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (item.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (item.symbol || "").toLowerCase().includes(searchTerm.toLowerCase())
+    
+    let matchesAsset = true;
+    if (assetFilter === "USDT") matchesAsset = item.symbol === "USDT";
+    else if (assetFilter === "AQE") matchesAsset = item.symbol === "AQE";
+    
+    return matchesSearch && matchesAsset;
   })
 
   // Summary logic
-  const totalDeposit = history.filter(i => i.type === 'DEPOSIT').reduce((s, i) => s + i.amount, 0)
-  const totalWithdraw = history.filter(i => i.type === 'WITHDRAW').reduce((s, i) => s + i.amount, 0)
-  const totalReward = history.filter(i => ['COMMISSION', 'REWARD'].includes(i.type)).reduce((s, i) => s + (i.usdtAmount || i.amount), 0)
-  const totalFees = history.reduce((s, i) => s + (i.fee || 0), 0)
+  const totalDeposit = history.reduce((s, i) => {
+    if (i.type === 'DEPOSIT') return s + (i.amount || 0);
+    // For BUY transactions, we want to sum the USDT amount paid
+    if (i.type === 'BUY' && i.symbol === 'AQE') return s + (i.raw?.usdtAmount || 0);
+    return s;
+  }, 0)
+
+  const totalAQEOfficial = history.filter(i => i.symbol === 'AQE' && i.isReleased).reduce((s, i) => s + (i.amount || 0), 0)
+  const totalAQEEstimated = history.filter(i => i.symbol === 'AQE' && !i.isReleased).reduce((s, i) => s + (i.amount || 0), 0)
+  const totalCommissions = history.filter(i => i.type === 'COMMISSION' && i.category === 'INFLOW').reduce((s, i) => s + (i.amount || 0), 0)
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
@@ -66,49 +81,77 @@ export default function BalanceHistoryPage() {
       
       <div className="space-y-6">
         {/* Filters & Export */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full lg:w-auto">
-            <div className="relative flex-1 lg:w-[220px]">
-              <Input 
-                placeholder="dd/mm/yyyy" 
-                className="h-[44px] rounded-[8px] border-[#9CA3AF] pl-4 focus-visible:ring-[#276152]"
-              />
-            </div>
-            <span className="text-[#9CA3AF] font-bold">─</span>
-            <div className="relative flex-1 lg:w-[220px]">
-              <Input 
-                placeholder="dd/mm/yyyy" 
-                className="h-[44px] rounded-[8px] border-[#9CA3AF] pl-4 focus-visible:ring-[#276152]"
-              />
-            </div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-[16px] border border-[#EFEFEF]">
+          <div className="flex flex-wrap items-center gap-3">
+             <button 
+               onClick={() => setAssetFilter("ALL")}
+               className={cn(
+                 "px-6 py-2 rounded-full text-sm font-bold transition-all",
+                 assetFilter === "ALL" ? "bg-[#276152] text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+               )}
+             >
+               {t("balance_history.asset_filter.all")}
+             </button>
+             <button 
+               onClick={() => setAssetFilter("USDT")}
+               className={cn(
+                 "px-6 py-2 rounded-full text-sm font-bold transition-all",
+                 assetFilter === "USDT" ? "bg-[#16A34A] text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+               )}
+             >
+               {t("balance_history.asset_filter.usdt")}
+             </button>
+             <button 
+               onClick={() => setAssetFilter("AQE")}
+               className={cn(
+                 "px-6 py-2 rounded-full text-sm font-bold transition-all",
+                 assetFilter === "AQE" ? "bg-amber-500 text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+               )}
+             >
+               {t("balance_history.asset_filter.aqe")}
+             </button>
+          </div>
+
+          <div className="relative w-full lg:w-[350px]">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#868F9E]" strokeWidth={2.5} />
+             <Input 
+                placeholder={t("balance_history.search_placeholder")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-[44px] pl-10 rounded-[12px] border-[#EFEFEF] focus-visible:ring-[#276152]"
+             />
           </div>
         </div>
 
       {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SummaryCard 
-            label={t("balance_history.summary.total_deposit")} 
+            label={t("history.summary.total_paid")} 
             value={totalDeposit} 
+            symbol="USDT"
             bgColor="bg-[#16A34A]/10" 
             textColor="text-[#16A34A]" 
           />
           <SummaryCard 
-            label={t("balance_history.summary.total_withdraw")} 
-            value={totalWithdraw} 
-            bgColor="bg-[#EF4444]/10" 
-            textColor="text-[#EF4444]" 
+            label={t("history.summary.aqe_official")} 
+            value={totalAQEOfficial} 
+            symbol="AQE"
+            bgColor="bg-[#276152]/10" 
+            textColor="text-[#276152]" 
           />
           <SummaryCard 
-            label={t("balance_history.summary.total_profit")} 
-            value={totalReward} 
-            bgColor="bg-[#F59E0B]/10" 
-            textColor="text-[#F59E0B]" 
+            label={t("history.summary.aqe_estimated")} 
+            value={totalAQEEstimated} 
+            symbol="AQE"
+            bgColor="bg-amber-50" 
+            textColor="text-amber-600" 
           />
           <SummaryCard 
-            label={t("balance_history.summary.total_fee")} 
-            value={totalFees} 
-            bgColor="bg-[#EFEFEF]" 
-            textColor="text-[#0D1F1D]" 
+            label={t("history.summary.total_commissions")} 
+            value={totalCommissions} 
+            symbol="USDT"
+            bgColor="bg-blue-50" 
+            textColor="text-blue-700" 
           />
         </div>
 
@@ -123,6 +166,7 @@ export default function BalanceHistoryPage() {
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("history.detail")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.amount")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.fee")}</th>
+                  <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.balance_before")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.balance_after")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("history.status")}</th>
                 </tr>
@@ -157,18 +201,35 @@ export default function BalanceHistoryPage() {
                         <p className="text-[14px] text-[#111827] truncate font-medium">{item.description}</p>
                       </td>
                       <td className="px-4 py-5 text-right whitespace-nowrap">
-                        <span className={cn(
-                          "text-[14px] font-bold",
-                          item.category === 'INFLOW' ? "text-[#16A34A]" : "text-[#EF4444]"
-                        )}>
-                          {item.category === 'INFLOW' ? "+" : "-"}{item.amount.toLocaleString()} {item.symbol}
-                        </span>
+                         {item.symbol === 'AQE' ? (
+                            <div className="flex flex-col items-end">
+                               <span className={cn(
+                                 "text-[14px] font-bold",
+                                 item.isReleased ? "text-[#16A34A]" : "text-amber-600"
+                               )}>
+                                 {item.amount.toLocaleString()} AQE
+                               </span>
+                               <span className="text-[10px] font-bold uppercase opacity-60">
+                                 {item.isReleased ? t("balance_history.status.official") : t("balance_history.status.estimated")}
+                               </span>
+                            </div>
+                         ) : (
+                            <span className={cn(
+                              "text-[14px] font-bold",
+                              item.category === 'INFLOW' ? "text-[#16A34A]" : "text-[#EF4444]"
+                            )}>
+                              {item.category === 'INFLOW' ? "+" : "-"}{item.amount.toLocaleString()} USDT
+                            </span>
+                         )}
                       </td>
                       <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#0D1F1D]">
                         {item.fee ? item.fee.toLocaleString() : "0"}
                       </td>
+                      <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#868F9E]">
+                        {item.balanceBefore !== undefined ? item.balanceBefore.toLocaleString() : "---"}
+                      </td>
                       <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#111827]">
-                        {item.balanceAfter ? item.balanceAfter.toLocaleString() : "---"}
+                        {item.balanceAfter !== undefined ? item.balanceAfter.toLocaleString() : "---"}
                       </td>
                       <td className="px-4 py-5">
                         <div className="flex justify-center">
@@ -185,7 +246,7 @@ export default function BalanceHistoryPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center text-[#868F9E]">
+                    <td colSpan={8} className="px-6 py-20 text-center text-[#868F9E]">
                       <div className="flex flex-col items-center gap-2 opacity-30">
                         <Receipt size={64} />
                         <p className="text-[18px] font-medium">{t("history.empty") || "Không có giao dịch nào"}</p>
@@ -202,12 +263,12 @@ export default function BalanceHistoryPage() {
   )
 }
 
-function SummaryCard({ label, value, bgColor, textColor }: { label: string, value: number, bgColor: string, textColor: string }) {
+function SummaryCard({ label, value, bgColor, textColor, symbol }: { label: string, value: number, bgColor: string, textColor: string, symbol?: string }) {
   return (
     <div className={cn("p-4 rounded-[12px] flex flex-col gap-1 transition-transform hover:scale-[1.02]", bgColor)}>
       <p className="text-[16px] text-[#0D1F1D]">{label}</p>
       <p className={cn("text-[24px] font-bold tracking-tight", textColor)}>
-        ₫{value.toLocaleString()}
+        {value.toLocaleString()} {symbol || "USDT"}
       </p>
     </div>
   )
