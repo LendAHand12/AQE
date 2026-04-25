@@ -4,10 +4,8 @@ import {
   Search, 
   Loader2,
   ExternalLink,
-  Award,
   Zap,
-  CheckCircle,
-  Clock
+  CheckCircle
 } from "lucide-react"
 import { 
   Table, 

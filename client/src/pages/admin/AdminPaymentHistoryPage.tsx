@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react"
 import { 
-  History, 
   Search, 
-  Filter,
   Loader2,
   ExternalLink,
-  Wallet,
-  ArrowDownLeft,
-  CheckCircle2
+  Wallet
 } from "lucide-react"
 import { 
   Table, 
@@ -18,7 +14,6 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"

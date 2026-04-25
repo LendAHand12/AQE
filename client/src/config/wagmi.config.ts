@@ -1,6 +1,6 @@
 import { createConfig, http } from "wagmi";
 import { bsc } from "wagmi/chains";
-import { metaMask, walletConnect, injected } from "wagmi/connectors";
+import { walletConnect, injected } from "wagmi/connectors";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;

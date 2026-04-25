@@ -6,7 +6,6 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
-  History,
   Wallet,
   Coins
 } from "lucide-react"

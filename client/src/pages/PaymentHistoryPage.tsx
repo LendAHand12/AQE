@@ -10,7 +10,6 @@ import {
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 

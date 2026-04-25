@@ -3,9 +3,7 @@ import {
   Users, 
   Search, 
   Loader2,
-  ExternalLink,
   ArrowRight,
-  TrendingUp,
   UserPlus
 } from "lucide-react"
 import { 
