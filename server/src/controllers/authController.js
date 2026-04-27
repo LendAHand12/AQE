@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import { generateToken } from '../utils/jwt.js';
-import { sendConfirmationEmail } from '../utils/emailService.js';
+import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
@@ -28,6 +28,10 @@ export const registerUser = async (req, res) => {
         }
 
         let referrer = null;
+        if (!refId) {
+            return res.status(400).json({ message: 'auth.errors.referral_required' });
+        }
+
         if (refId) {
             // Look up by username (mặc định username làm ref)
             referrer = await User.findOne({ username: refId.toLowerCase(), isDeleted: false });
@@ -324,6 +328,60 @@ export const validateReferral = async (req, res) => {
         }
 
         res.json({ valid: true, fullName: user.fullName });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Forgot Password - Send Email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email, isDeleted: false });
+
+        if (!user) {
+            return res.status(404).json({ message: 'auth.errors.email_not_found' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        await sendResetPasswordEmail(user.email, resetToken, user.fullName);
+
+        res.json({ message: 'auth.forgot_password_success_desc' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Reset Password
+// @route   POST /api/auth/reset-password/:token
+// @access  Public
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        const user = await User.findOne({ 
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+            isDeleted: false
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'auth.errors.invalid_reset_token' });
+        }
+
+        user.password = password;
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        res.json({ message: 'auth.reset_password_success_desc' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import LoginForm from "@/components/auth/LoginForm"
 import RegisterForm from "@/components/auth/RegisterForm"
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm"
+import ResetPasswordForm from "@/components/auth/ResetPasswordForm"
 import { cn } from "@/lib/utils"
 import loginBg from "@/assets/login_bg.svg"
 
 interface AuthPageProps {
-  mode: "login" | "register"
+  mode: "login" | "register" | "forgot-password" | "reset-password"
 }
 
 export default function AuthPage({ mode }: AuthPageProps) {
@@ -45,43 +47,51 @@ export default function AuthPage({ mode }: AuthPageProps) {
           {/* Header Section */}
           <div className="space-y-2">
             <h1 className="text-[34px] font-bold tracking-tight text-[#111827] font-heading">
-              {mode === "login" ? t("auth.welcome_back") : t("auth.create_account")}
+              {mode === "login" ? t("auth.welcome_back") : 
+               mode === "register" ? t("auth.create_account") :
+               mode === "forgot-password" ? t("auth.forgot_password_title") :
+               t("auth.reset_password_title")}
             </h1>
             <p className="text-[14px] font-medium text-[#6b7280] tracking-wide">
-              {mode === "login" ? t("auth.login_desc") : t("auth.register_desc")}
+              {mode === "login" ? t("auth.login_desc") : 
+               mode === "register" ? t("auth.register_desc") :
+               mode === "forgot-password" ? t("auth.forgot_password_desc") :
+               t("auth.reset_password_desc")}
             </p>
           </div>
 
-          {/* Tab Toggle */}
-          <div className="bg-[#f8faf9] p-1 rounded-[12px] flex items-center relative border border-[#e5e7eb]">
-            <button
-              onClick={() => navigate("/login")}
-              className={cn(
-                "flex-1 py-1.5 text-[14px] font-semibold rounded-[4px] transition-all duration-300 relative z-10",
-                mode === "login" ? "text-white" : "text-[#6b7280]"
-              )}
-            >
-              {t("auth.login")}
-            </button>
-            <button
-              onClick={() => navigate("/register")}
-              className={cn(
-                "flex-1 py-1.5 text-[14px] font-semibold rounded-[4px] transition-all duration-300 relative z-10",
-                mode === "register" ? "text-white" : "text-[#6b7280]"
-              )}
-            >
-              {t("auth.register")}
-            </button>
-            
-            <motion.div
-              className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[#276152] rounded-[4px] z-0"
-              initial={false}
-              animate={{
-                x: mode === "login" ? 0 : "100%",
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
-          </div>
+          {/* Tab Toggle - Only show for Login/Register */}
+          {(mode === "login" || mode === "register") && (
+            <div className="bg-[#f8faf9] p-1 rounded-[12px] flex items-center relative border border-[#e5e7eb]">
+              <button
+                onClick={() => navigate("/login")}
+                className={cn(
+                  "flex-1 py-1.5 text-[14px] font-semibold rounded-[4px] transition-all duration-300 relative z-10",
+                  mode === "login" ? "text-white" : "text-[#6b7280]"
+                )}
+              >
+                {t("auth.login")}
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                className={cn(
+                  "flex-1 py-1.5 text-[14px] font-semibold rounded-[4px] transition-all duration-300 relative z-10",
+                  mode === "register" ? "text-white" : "text-[#6b7280]"
+                )}
+              >
+                {t("auth.register")}
+              </button>
+              
+              <motion.div
+                className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-[#276152] rounded-[4px] z-0"
+                initial={false}
+                animate={{
+                  x: mode === "login" ? 0 : "100%",
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            </div>
+          )}
 
           {/* Form Content */}
           <div className="relative overflow-hidden pt-2">
@@ -93,23 +103,28 @@ export default function AuthPage({ mode }: AuthPageProps) {
                 exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
               >
-                {mode === "login" ? <LoginForm /> : <RegisterForm />}
+                {mode === "login" && <LoginForm />}
+                {mode === "register" && <RegisterForm />}
+                {mode === "forgot-password" && <ForgotPasswordForm />}
+                {mode === "reset-password" && <ResetPasswordForm />}
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Footer - Switch Mode Link */}
-          <div className="text-center pt-2">
-            <p className="text-[14px] text-[#9ca3af]">
-              {mode === "login" ? t("auth.no_account") : t("auth.have_account")}
-              <button
-                onClick={() => navigate(mode === "login" ? "/register" : "/login")}
-                className="text-[#276152] font-bold hover:underline ml-1"
-              >
-                {mode === "login" ? t("auth.register_now") : t("auth.login")}
-              </button>
-            </p>
-          </div>
+          {(mode === "login" || mode === "register") && (
+            <div className="text-center pt-2">
+              <p className="text-[14px] text-[#9ca3af]">
+                {mode === "login" ? t("auth.no_account") : t("auth.have_account")}
+                <button
+                  onClick={() => navigate(mode === "login" ? "/register" : "/login")}
+                  className="text-[#276152] font-bold hover:underline ml-1"
+                >
+                  {mode === "login" ? t("auth.register_now") : t("auth.login")}
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

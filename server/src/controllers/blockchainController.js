@@ -54,11 +54,38 @@ export const getLatestBlocks = async (req, res) => {
 // @desc    Get Latest Transactions
 export const getLatestTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find()
-            .sort({ createdAt: -1 })
-            .limit(10)
-            .populate('from', 'username fullName')
-            .populate('to', 'username fullName');
+        const transactions = await Transaction.aggregate([
+            { $sort: { createdAt: -1 } },
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { fromId: "$from" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$fromId"] } } },
+                        { $project: { username: 1, fullName: 1 } }
+                    ],
+                    as: "fromUser"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { toId: "$to" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$toId"] } } },
+                        { $project: { username: 1, fullName: 1 } }
+                    ],
+                    as: "toUser"
+                }
+            },
+            {
+                $set: {
+                    from: { $arrayElemAt: ["$fromUser", 0] },
+                    to: { $arrayElemAt: ["$toUser", 0] }
+                }
+            }
+        ]);
         res.json(transactions);
     } catch (error) {
         res.status(500).json({ message: error.message });

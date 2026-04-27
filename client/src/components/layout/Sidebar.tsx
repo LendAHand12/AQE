@@ -140,7 +140,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-300 group"
         >
           <LogOut size={20} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[14px] font-bold tracking-tight">Đăng xuất</span>
+          <span className="text-[14px] font-bold tracking-tight">{t("sidebar.logout")}</span>
         </button>
       </div>
     </div>

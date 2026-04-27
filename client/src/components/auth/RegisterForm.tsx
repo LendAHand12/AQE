@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
+import { cn } from "@/lib/utils"
 
 export default function RegisterForm() {
   const navigate = useNavigate()
@@ -60,6 +61,11 @@ export default function RegisterForm() {
     if (formData.password !== formData.confirmPassword) {
       setError(t("auth.errors.password_mismatch"))
       return
+    }
+
+    if (!formData.refId) {
+        setError(t("auth.errors.referral_required"))
+        return
     }
 
     if (!isReferralValid) {
@@ -238,10 +244,17 @@ export default function RegisterForm() {
           type="text"
           name="refId"
           value={formData.refId}
-          onChange={handleChange}
-          readOnly
+          onChange={(e) => {
+            handleChange(e);
+            if (e.target.value) validateReferral(e.target.value);
+            else setIsReferralValid(true); // Don't block if they haven't typed yet, or let submit handle it
+          }}
+          required
           placeholder={t("auth.ref_id_placeholder")}
-          className="w-full h-[44px] pl-10 pr-4 bg-gray-50 border border-[#9ca3af] rounded-[8px] outline-none cursor-not-allowed text-[#6b7280] placeholder:text-[#9ca3af]"
+          className={cn(
+            "w-full h-[44px] pl-10 pr-4 bg-white border rounded-[8px] outline-none transition-all text-[#111827] placeholder:text-[#9ca3af]",
+            !isReferralValid ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-[#9ca3af] focus:border-[#276152] focus:ring-[#276152]"
+          )}
         />
       </div>
 

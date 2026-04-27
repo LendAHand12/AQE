@@ -1,5 +1,7 @@
 import Transaction from '../models/Transaction.js';
 import Commission from '../models/Commission.js';
+import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 // @desc    Get current user's commission history
 export const getUserCommissions = async (req, res) => {
@@ -21,16 +23,44 @@ export const getUserBalanceHistory = async (req, res) => {
     try {
         const userId = req.user._id.toString();
 
-        // 1. Fetch all transactions related to this user in the Ledger (Transaction model)
-        // Includes: COMMISSION, REWARD, SELL, TRANSFER, WITHDRAW, DEPOSIT
-        const transactions = await Transaction.find({
-            $or: [{ from: userId }, { to: userId }],
-            type: { $in: ['BUY', 'SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
-        })
-        .populate('from', 'username fullName')
-        .populate('to', 'username fullName')
-        .sort({ createdAt: -1 })
-        .lean();
+        // 1. Fetch all transactions related to this user with manual lookup since IDs are now strings
+        const transactions = await Transaction.aggregate([
+            {
+                $match: {
+                    $or: [{ from: userId }, { to: userId }],
+                    type: { $in: ['BUY', 'SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
+                }
+            },
+            { $sort: { createdAt: -1 } },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { fromId: "$from" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$fromId"] } } },
+                        { $project: { username: 1, fullName: 1 } }
+                    ],
+                    as: "fromUser"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { toId: "$to" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$toId"] } } },
+                        { $project: { username: 1, fullName: 1 } }
+                    ],
+                    as: "toUser"
+                }
+            },
+            {
+                $addFields: {
+                    from: { $arrayElemAt: ["$fromUser", 0] },
+                    to: { $arrayElemAt: ["$toUser", 0] }
+                }
+            }
+        ]);
 
         // 2. Normalize for frontend display
         const history = transactions.map(t => {

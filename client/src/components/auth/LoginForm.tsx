@@ -95,7 +95,11 @@ export default function LoginForm() {
             {t("auth.remember_me")}
           </label>
         </div>
-        <button type="button" className="text-[12px] font-semibold text-[#276152] hover:underline tracking-wide">
+        <button 
+          type="button" 
+          onClick={() => navigate("/forgot-password")}
+          className="text-[12px] font-semibold text-[#276152] hover:underline tracking-wide"
+        >
           {t("auth.forgot_password")}
         </button>
       </div>

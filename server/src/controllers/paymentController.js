@@ -17,11 +17,11 @@ const getVietnamTime = () => {
 };
 
 // Helper: Process Commissions
-async function processCommissions(buyer, totalPledge) {
+async function processCommissions(buyer, amountPaid) {
     if (!buyer.referredBy) return;
 
-    const amountF1 = totalPledge * 0.08;
-    const amountF2 = totalPledge * 0.02;
+    const amountF1 = amountPaid * 0.08;
+    const amountF2 = amountPaid * 0.02;
 
     // F1 - 8% of total pledge
     const f1 = await User.findById(buyer.referredBy);
@@ -174,6 +174,9 @@ export const submitPreRegisterPayment = async (req, res) => {
             description: `Payment in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase (from AQE Contract)`
         });
 
+        // Trigger Commission Immediately after successful payment
+        await processCommissions(user, amountNum);
+
         if (isLivePhase) {
             // Case July onwards: Instant release for everything
             user.aqeBalance += tokensCalculated;
@@ -247,7 +250,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                     { isReleased: true }
                 );
 
-                await processCommissions(user, user.pledgeUsdt);
+                // await processCommissions(user, user.pledgeUsdt); // REMOVED: Now paid on every payment
             } else if (user.isPledgeCompleted) {
                 // If they already completed but are paying more, release instantly
                 const oldBal = user.aqeBalance;
@@ -341,6 +344,7 @@ export const getMyPreRegister = async (req, res) => {
 export const getUserPayments = async (req, res) => {
     try {
         const userId = req.user._id.toString();
+        console.log(userId);
         const transactions = await Transaction.find({ 
             $or: [
                 { from: userId, type: { $in: ['BUY', 'SELL'] } },
@@ -357,10 +361,37 @@ export const getUserPayments = async (req, res) => {
 // @desc    Get ALL transactions (Admin only)
 export const getAllTransactionsForAdmin = async (req, res) => {
     try {
-        const transactions = await Transaction.find()
-            .populate('from', 'username fullName email')
-            .populate('to', 'username fullName email')
-            .sort({ createdAt: -1 });
+        const transactions = await Transaction.aggregate([
+            { $sort: { createdAt: -1 } },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { fromId: "$from" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$fromId"] } } },
+                        { $project: { username: 1, fullName: 1, email: 1 } }
+                    ],
+                    as: "fromUser"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { toId: "$to" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$toId"] } } },
+                        { $project: { username: 1, fullName: 1, email: 1 } }
+                    ],
+                    as: "toUser"
+                }
+            },
+            {
+                $set: {
+                    from: { $arrayElemAt: ["$fromUser", 0] },
+                    to: { $arrayElemAt: ["$toUser", 0] }
+                }
+            }
+        ]);
 
         res.json(transactions);
     } catch (error) {
