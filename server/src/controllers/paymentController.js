@@ -350,7 +350,7 @@ export const getUserPayments = async (req, res) => {
         const query = { 
             $or: [
                 { from: req.user._id, type: { $in: ['BUY', 'SELL'] } },
-                { to: req.user._id, type: { $in: ['BUY', 'REWARD', 'COMMISSION'] } }
+                { to: req.user._id, type: { $in: ['BUY'] } }
             ]
         };
 
@@ -362,7 +362,7 @@ export const getUserPayments = async (req, res) => {
 
         // Calculate Global Stats for summary cards
         const stats = await Transaction.aggregate([
-            { $match: { ...query, to: req.user._id, status: 'SUCCESS' } },
+            { $match: { to: req.user._id.toString(), type: 'BUY', status: 'SUCCESS' } },
             { $group: { _id: null, totalPaid: { $sum: "$usdtAmount" } } }
         ]);
 

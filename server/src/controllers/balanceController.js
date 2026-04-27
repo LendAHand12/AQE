@@ -105,19 +105,19 @@ export const getUserBalanceHistory = async (req, res) => {
             total,
             summary: {
                 totalPaid: (await Transaction.aggregate([
-                    { $match: { to: req.user._id, type: { $in: ['DEPOSIT', 'BUY'] }, status: 'SUCCESS' } },
-                    { $group: { _id: null, total: { $sum: { $ifNull: ["$usdtAmount", "$amount"] } } } }
+                    { $match: { to: req.user._id.toString(), type: 'BUY', status: 'SUCCESS' } },
+                    { $group: { _id: null, total: { $sum: "$usdtAmount" } } }
                 ]))[0]?.total || 0,
                 totalAQEOfficial: (await Transaction.aggregate([
-                    { $match: { to: req.user._id, symbol: 'AQE', isReleased: true, status: 'SUCCESS' } },
+                    { $match: { to: req.user._id.toString(), symbol: 'AQE', isReleased: true, status: 'SUCCESS' } },
                     { $group: { _id: null, total: { $sum: "$amount" } } }
                 ]))[0]?.total || 0,
                 totalAQEEstimated: (await Transaction.aggregate([
-                    { $match: { to: req.user._id, symbol: 'AQE', isReleased: false, status: 'SUCCESS' } },
+                    { $match: { to: req.user._id.toString(), symbol: 'AQE', isReleased: false, status: 'SUCCESS' } },
                     { $group: { _id: null, total: { $sum: "$amount" } } }
                 ]))[0]?.total || 0,
                 totalCommissions: (await Transaction.aggregate([
-                    { $match: { to: req.user._id, type: 'COMMISSION', status: 'SUCCESS' } },
+                    { $match: { to: req.user._id.toString(), type: 'COMMISSION', status: 'SUCCESS' } },
                     { $group: { _id: null, total: { $sum: { $ifNull: ["$usdtAmount", "$amount"] } } } }
                 ]))[0]?.total || 0
             }

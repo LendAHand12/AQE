@@ -59,8 +59,10 @@ export default function PaymentHistoryPage() {
   }, [page])
 
   const filteredPayments = payments.filter(p => 
-    p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+    p.type === 'BUY' && (
+      p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
 
   // totalPaid is now fetched from server summary stats
@@ -149,21 +151,15 @@ export default function PaymentHistoryPage() {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "size-8 rounded-lg flex items-center justify-center",
-                            p.type === 'BUY' ? "bg-emerald-100 text-emerald-600" : 
-                            p.type === 'REWARD' ? "bg-amber-100 text-amber-600" : 
-                            "bg-blue-100 text-blue-600"
+                            p.type === 'BUY' ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
                           )}>
-                             {p.type === 'BUY' ? <Wallet size={16} /> : 
-                              p.type === 'REWARD' ? <ArrowRight size={16} className="rotate-[-45deg]" /> : 
-                              <Calendar size={16} />}
+                             {p.type === 'BUY' ? <Wallet size={16} /> : <Calendar size={16} />}
                           </div>
                           <div>
                             <p className="text-[14px] font-bold text-[#111827]">
-                              {p.type === 'REWARD' 
-                                ? t("notifications.reward_received_title") || "Phần thưởng Bonus"
-                                : p.phase === 'PRE_REGISTER' 
-                                  ? t("payments.phases.pre_register") 
-                                  : t("payments.phases.direct_buy")
+                              {p.phase === 'PRE_REGISTER' 
+                                ? t("payments.phases.pre_register") 
+                                : t("payments.phases.direct_buy")
                               }
                             </p>
                             <p className="text-[12px] text-[#868F9E] font-medium">
