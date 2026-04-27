@@ -12,6 +12,7 @@ import apiClient from "@/lib/axios"
 import { Input } from "@/components/ui/input"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
+import { Pagination } from "@/components/common/Pagination"
 
 interface Transaction {
   _id: string;
@@ -32,31 +33,37 @@ export default function PaymentHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<Transaction[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-
-  useEffect(() => {
-    fetchPayments()
-  }, [])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [fetching, setFetching] = useState(false)
+  const [totalPaid, setTotalPaid] = useState(0)
 
   const fetchPayments = async () => {
-    setLoading(true)
+    if (page === 1) setLoading(true)
+    else setFetching(true)
     try {
-      const res = await apiClient.get("/payments/my-payments")
-      setPayments(res.data)
+      const res = await apiClient.get(`/payments/my-payments?page=${page}&limit=10`)
+      setPayments(res.data.transactions)
+      setTotalPages(res.data.pages)
+      setTotalPaid(res.data.summary.totalPaid)
     } catch (err) {
       console.error("Fetch payments error:", err)
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
 
+  useEffect(() => {
+    fetchPayments()
+  }, [page])
+
   const filteredPayments = payments.filter(p => 
-    p.type !== 'REWARD' && (
-      p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const totalPaid = payments.reduce((sum, p) => sum + (p.usdtAmount || 0), 0)
+  // totalPaid is now fetched from server summary stats
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
@@ -202,6 +209,13 @@ export default function PaymentHistoryPage() {
             </table>
           </div>
         </div>
+
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          disabled={fetching}
+        />
       </div>
     </div>
   )

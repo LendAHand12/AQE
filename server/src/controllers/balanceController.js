@@ -22,16 +22,23 @@ export const getUserCommissions = async (req, res) => {
 export const getUserBalanceHistory = async (req, res) => {
     try {
         const userId = req.user._id.toString();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        // 1. Fetch all transactions related to this user with manual lookup since IDs are now strings
+        const query = {
+            $or: [{ from: userId }, { to: userId }],
+            type: { $in: ['BUY', 'SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
+        };
+
+        const total = await Transaction.countDocuments(query);
+        
+        // Fetch paginated transactions with manual lookup
         const transactions = await Transaction.aggregate([
-            {
-                $match: {
-                    $or: [{ from: userId }, { to: userId }],
-                    type: { $in: ['BUY', 'SELL', 'TRANSFER', 'WITHDRAW', 'DEPOSIT', 'COMMISSION', 'REWARD'] }
-                }
-            },
+            { $match: query },
             { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
             {
                 $lookup: {
                     from: "users",
@@ -78,7 +85,7 @@ export const getUserBalanceHistory = async (req, res) => {
             return {
                 _id: t._id,
                 date: t.createdAt,
-                type: t.type, // COMMISSION, REWARD, SELL, etc.
+                type: t.type, 
                 symbol: t.symbol || 'USDT',
                 category: isOutflow ? 'OUTFLOW' : 'INFLOW',
                 amount: t.symbol === 'AQE' ? t.amount : (t.usdtAmount || t.amount),
@@ -91,7 +98,30 @@ export const getUserBalanceHistory = async (req, res) => {
             };
         });
 
-        res.json(history);
+        res.json({
+            history,
+            page,
+            pages: Math.ceil(total / limit),
+            total,
+            summary: {
+                totalPaid: (await Transaction.aggregate([
+                    { $match: { to: req.user._id, type: { $in: ['DEPOSIT', 'BUY'] }, status: 'SUCCESS' } },
+                    { $group: { _id: null, total: { $sum: { $ifNull: ["$usdtAmount", "$amount"] } } } }
+                ]))[0]?.total || 0,
+                totalAQEOfficial: (await Transaction.aggregate([
+                    { $match: { to: req.user._id, symbol: 'AQE', isReleased: true, status: 'SUCCESS' } },
+                    { $group: { _id: null, total: { $sum: "$amount" } } }
+                ]))[0]?.total || 0,
+                totalAQEEstimated: (await Transaction.aggregate([
+                    { $match: { to: req.user._id, symbol: 'AQE', isReleased: false, status: 'SUCCESS' } },
+                    { $group: { _id: null, total: { $sum: "$amount" } } }
+                ]))[0]?.total || 0,
+                totalCommissions: (await Transaction.aggregate([
+                    { $match: { to: req.user._id, type: 'COMMISSION', status: 'SUCCESS' } },
+                    { $group: { _id: null, total: { $sum: { $ifNull: ["$usdtAmount", "$amount"] } } } }
+                ]))[0]?.total || 0
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

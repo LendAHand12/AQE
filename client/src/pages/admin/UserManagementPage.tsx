@@ -38,30 +38,50 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { getImageUrl } from "@/lib/utils"
+import { Pagination } from "@/components/common/Pagination"
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [fetching, setFetching] = useState(false)
   
   // Edit State
   const [editingUser, setEditingUser] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   
   const fetchUsers = async () => {
+    if (page === 1) setLoading(true)
+    else setFetching(true)
+    
     try {
-      const response = await apiClient.get("/admin/users")
-      setUsers(response.data)
+      const response = await apiClient.get(`/admin/users?page=${page}&limit=10&search=${searchTerm}`)
+      setUsers(response.data.users)
+      setTotalPages(response.data.pages)
+      setTotalUsers(response.data.total)
     } catch (err: any) {
       toast.error("Không thể tải danh sách người dùng")
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [page])
+
+  // Reset page when search changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (page !== 1) setPage(1)
+      else fetchUsers()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này? Thao tác này sẽ cho phép người dùng đăng ký lại bằng email cũ.")) return
@@ -87,9 +107,7 @@ export default function UserManagementPage() {
     }
   }
 
-  const filteredUsers = users.filter(u => 
-    `${u.fullName} ${u.username} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredUsers = users; // Now filtered by backend
 
   if (loading) {
     return (
@@ -109,7 +127,7 @@ export default function UserManagementPage() {
           <p className="text-gray-500">Xem, chỉnh sửa và quản lý tất cả thành viên trong hệ thống.</p>
         </div>
         <Badge variant="outline" className="px-4 py-1.5 rounded-full border-gray-200 text-gray-600 bg-white font-bold h-fit shadow-sm">
-          Tổng số: {users.length} thành viên
+          Tổng số: {totalUsers} thành viên
         </Badge>
       </div>
 
@@ -204,6 +222,18 @@ export default function UserManagementPage() {
             <p className="text-gray-400 font-medium">Không tìm thấy người dùng nào phù hợp với từ khóa.</p>
           </div>
         )}
+      </div>
+
+      <div className="flex flex-col items-center gap-4">
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          disabled={fetching}
+        />
+        <p className="text-[12px] text-gray-400 font-medium">
+          Hiển thị trang {page} của {totalPages}
+        </p>
       </div>
 
       {/* Edit Dialog */}

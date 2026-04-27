@@ -19,36 +19,44 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
+import { Pagination } from "@/components/common/Pagination"
 
 export default function AdminCommissionHistoryPage() {
   const [commissions, setCommissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [fetching, setFetching] = useState(false)
 
   const fetchCommissions = async () => {
+    if (page === 1) setLoading(true)
+    else setFetching(true)
     try {
-      const response = await apiClient.get("/admin/transactions")
-      const commsOnly = response.data.filter((t: any) => t.type === 'COMMISSION')
-      setCommissions(commsOnly)
+      const response = await apiClient.get(`/admin/transactions?category=COMMISSION&page=${page}&limit=20&search=${searchTerm}`)
+      setCommissions(response.data.transactions)
+      setTotalPages(response.data.pages)
     } catch (err: any) {
       toast.error("Không thể tải danh sách hoa hồng")
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
 
   useEffect(() => {
     fetchCommissions()
-  }, [])
+  }, [page])
 
-  const filteredCommissions = commissions.filter(tx => {
-    const fromUser = tx.from?.username || tx.from?.fullName || ""
-    const toUser = tx.to?.username || tx.to?.fullName || ""
-    
-    return fromUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           toUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (tx.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-  })
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        if (page !== 1) setPage(1)
+        else fetchCommissions()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const filteredCommissions = commissions; // Now filtered by backend
 
   if (loading) {
     return (
@@ -133,6 +141,13 @@ export default function AdminCommissionHistoryPage() {
            </div>
         )}
       </div>
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        disabled={fetching}
+      />
     </div>
   )
 }

@@ -343,16 +343,38 @@ export const getMyPreRegister = async (req, res) => {
 // @desc    Get current user's payment history (USDT -> AQE)
 export const getUserPayments = async (req, res) => {
     try {
-        const userId = req.user._id.toString();
-        console.log(userId);
-        const transactions = await Transaction.find({ 
-            $or: [
-                { from: userId, type: { $in: ['BUY', 'SELL'] } },
-                { to: userId, type: { $in: ['BUY', 'REWARD'] } }
-            ]
-        }).sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        res.json(transactions);
+        const query = { 
+            $or: [
+                { from: req.user._id, type: { $in: ['BUY', 'SELL'] } },
+                { to: req.user._id, type: { $in: ['BUY', 'REWARD', 'COMMISSION'] } }
+            ]
+        };
+
+        const total = await Transaction.countDocuments(query);
+        const transactions = await Transaction.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        // Calculate Global Stats for summary cards
+        const stats = await Transaction.aggregate([
+            { $match: { ...query, to: req.user._id, status: 'SUCCESS' } },
+            { $group: { _id: null, totalPaid: { $sum: "$usdtAmount" } } }
+        ]);
+
+        res.json({
+            transactions,
+            page,
+            pages: Math.ceil(total / limit),
+            total,
+            summary: {
+                totalPaid: stats.length > 0 ? stats[0].totalPaid : 0
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -361,7 +383,55 @@ export const getUserPayments = async (req, res) => {
 // @desc    Get ALL transactions (Admin only)
 export const getAllTransactionsForAdmin = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        const category = req.query.category; // 'USDT', 'COMMISSION', 'AQE'
+        const search = req.query.search || '';
+
+        // Helper function to create Vietnamese accent-insensitive regex
+        const createVietnameseRegex = (str) => {
+            const map = {
+                'a': '[aàáảãạăằắẳẵặâầấẩẫậ]',
+                'e': '[eèéẻẽẹêềếểễệ]',
+                'i': '[iìíỉĩị]',
+                'o': '[oòóỏõọôồốổỗộơờớởỡợ]',
+                'u': '[uùúủũụưừứửữự]',
+                'y': '[yỳýỷỹỵ]',
+                'd': '[dđ]',
+                'A': '[AÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]',
+                'E': '[EÈÉẺẼẸÊỀẾỂỄỆ]',
+                'I': '[IÌÍỈĨỊ]',
+                'O': '[OÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]',
+                'U': '[UÙÚỦŨỤƯỪỨỬỮỰ]',
+                'Y': '[YỲÝỶỸỴ]',
+                'D': '[DĐ]'
+            };
+            let regexStr = str;
+            Object.keys(map).forEach(key => {
+                regexStr = regexStr.replace(new RegExp(key, 'g'), map[key]);
+            });
+            return new RegExp(regexStr, 'i');
+        };
+
+        const queryRegex = search ? createVietnameseRegex(search) : null;
+
+        let matchQuery = {};
+        if (category === 'USDT') {
+            matchQuery = { 
+                $and: [
+                    { $or: [{ symbol: 'USDT' }, { usdtAmount: { $gt: 0 } }] },
+                    { type: { $ne: 'COMMISSION' } }
+                ]
+            };
+        } else if (category === 'COMMISSION') {
+            matchQuery = { type: 'COMMISSION' };
+        } else if (category === 'AQE') {
+            matchQuery = { symbol: 'AQE', type: { $ne: 'COMMISSION' } };
+        }
+
         const transactions = await Transaction.aggregate([
+            { $match: matchQuery },
             { $sort: { createdAt: -1 } },
             {
                 $lookup: {
@@ -390,10 +460,33 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                     from: { $arrayElemAt: ["$fromUser", 0] },
                     to: { $arrayElemAt: ["$toUser", 0] }
                 }
+            },
+            // apply search filter after lookup to search by user name/email too
+            {
+                $match: {
+                    $or: [
+                        { hash: { $regex: queryRegex || /./ } },
+                        { "from.username": { $regex: queryRegex || /./ } },
+                        { "from.fullName": { $regex: queryRegex || /./ } },
+                        { "from.email": { $regex: queryRegex || /./ } },
+                        { "to.username": { $regex: queryRegex || /./ } },
+                        { "to.fullName": { $regex: queryRegex || /./ } },
+                        { "to.email": { $regex: queryRegex || /./ } },
+                        { description: { $regex: queryRegex || /./ } }
+                    ]
+                }
             }
         ]);
 
-        res.json(transactions);
+        const total = transactions.length; // Approximate total after search in memory for now or move to separate facet
+        const paginatedTransactions = transactions.slice(skip, skip + limit);
+
+        res.json({
+            transactions: paginatedTransactions,
+            page,
+            pages: Math.ceil(total / limit),
+            total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

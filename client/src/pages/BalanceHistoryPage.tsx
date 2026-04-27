@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
+import { Pagination } from "@/components/common/Pagination"
 
 export default function BalanceHistoryPage() {
   const { t } = useTranslation()
@@ -17,22 +18,39 @@ export default function BalanceHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [assetFilter, setAssetFilter] = useState("ALL") // ALL, USDT, AQE
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [fetching, setFetching] = useState(false)
+  const [summary, setSummary] = useState<any>({
+    totalPaid: 0,
+    totalAQEOfficial: 0,
+    totalAQEEstimated: 0,
+    totalCommissions: 0
+  })
 
   useEffect(() => {
     fetchData()
   }, [])
 
   const fetchData = async () => {
-    setLoading(true)
+    if (page === 1) setLoading(true)
+    else setFetching(true)
     try {
-      const historyRes = await apiClient.get("/payments/my-balance-history")
-      setHistory(historyRes.data)
+      const historyRes = await apiClient.get(`/payments/my-balance-history?page=${page}&limit=10`)
+      setHistory(historyRes.data.history)
+      setTotalPages(historyRes.data.pages)
+      setSummary(historyRes.data.summary)
     } catch (err) {
       console.error("Fetch Error:", err)
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [page])
 
   const filteredHistory = history.filter(item => {
     // 1. Hide Commissions where the user is NOT the receiver (Inflow)
@@ -49,17 +67,11 @@ export default function BalanceHistoryPage() {
     return matchesSearch && matchesAsset;
   })
 
-  // Summary logic
-  const totalDeposit = history.reduce((s, i) => {
-    if (i.type === 'DEPOSIT') return s + (i.amount || 0);
-    // For BUY transactions, we want to sum the USDT amount paid
-    if (i.type === 'BUY' && i.symbol === 'AQE') return s + (i.raw?.usdtAmount || 0);
-    return s;
-  }, 0)
-
-  const totalAQEOfficial = history.filter(i => i.symbol === 'AQE' && i.isReleased).reduce((s, i) => s + (i.amount || 0), 0)
-  const totalAQEEstimated = history.filter(i => i.symbol === 'AQE' && !i.isReleased).reduce((s, i) => s + (i.amount || 0), 0)
-  const totalCommissions = history.filter(i => i.type === 'COMMISSION' && i.category === 'INFLOW').reduce((s, i) => s + (i.amount || 0), 0)
+  // Summary logic from server
+  const totalDeposit = summary.totalPaid;
+  const totalAQEOfficial = summary.totalAQEOfficial;
+  const totalAQEEstimated = summary.totalAQEEstimated;
+  const totalCommissions = summary.totalCommissions;
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
@@ -258,6 +270,13 @@ export default function BalanceHistoryPage() {
             </table>
           </div>
         </div>
+
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          disabled={fetching}
+        />
       </div>
     </div>
   )

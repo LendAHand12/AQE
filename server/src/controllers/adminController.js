@@ -31,8 +31,62 @@ export const loginAdmin = async (req, res) => {
 // @route   GET /api/admin/users
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find({ isDeleted: false }).select('-password').sort({ createdAt: -1 });
-        res.json(users);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || '';
+
+        // Helper function to create Vietnamese accent-insensitive regex
+        const createVietnameseRegex = (str) => {
+            const map = {
+                'a': '[aàáảãạăằắẳẵặâầấẩẫậ]',
+                'e': '[eèéẻẽẹêềếểễệ]',
+                'i': '[iìíỉĩị]',
+                'o': '[oòóỏõọôồốổỗộơờớởỡợ]',
+                'u': '[uùúủũụưừứửữự]',
+                'y': '[yỳýỷỹỵ]',
+                'd': '[dđ]',
+                'A': '[AÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]',
+                'E': '[EÈÉẺẼẸÊỀẾỂỄỆ]',
+                'I': '[IÌÍỈĨỊ]',
+                'O': '[OÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]',
+                'U': '[UÙÚỦŨỤƯỪỨỬỮỰ]',
+                'Y': '[YỲÝỶỸỴ]',
+                'D': '[DĐ]'
+            };
+            let regexStr = str;
+            Object.keys(map).forEach(key => {
+                regexStr = regexStr.replace(new RegExp(key, 'g'), map[key]);
+            });
+            return new RegExp(regexStr, 'i');
+        };
+
+        const queryRegex = search ? createVietnameseRegex(search) : null;
+
+        const query = { 
+            isDeleted: false,
+            ...(queryRegex && {
+                $or: [
+                    { fullName: { $regex: queryRegex } },
+                    { email: { $regex: queryRegex } },
+                    { username: { $regex: queryRegex } }
+                ]
+            })
+        };
+
+        const total = await User.countDocuments(query);
+        const users = await User.find(query)
+            .select('-password')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            users,
+            page,
+            pages: Math.ceil(total / limit),
+            total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

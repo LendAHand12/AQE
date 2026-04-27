@@ -21,35 +21,44 @@ import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
+import { Pagination } from "@/components/common/Pagination"
 
 export default function AdminAQEHistoryPage() {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [fetching, setFetching] = useState(false)
 
   const fetchData = async () => {
+    if (page === 1) setLoading(true)
+    else setFetching(true)
     try {
-      const response = await apiClient.get("/admin/transactions")
-      // Filter for AQE that is RELEASED (Official)
-      const aqeOnly = response.data.filter((t: any) => t.symbol === 'AQE' && t.isReleased === true)
-      setData(aqeOnly)
+      const response = await apiClient.get(`/admin/transactions?category=AQE&page=${page}&limit=20&search=${searchTerm}`)
+      setData(response.data.transactions.filter((t: any) => t.isReleased === true))
+      setTotalPages(response.data.pages)
     } catch (err: any) {
       toast.error("Không thể tải danh sách trả AQE")
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [page])
 
-  const filteredData = data.filter(tx => {
-    const userDisplay = tx.to?.username || tx.to?.fullName || ""
-    return userDisplay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (tx.hash || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (tx.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-  })
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        if (page !== 1) setPage(1)
+        else fetchData()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const filteredData = data; // Now filtered by backend
 
   if (loading) {
     return (
@@ -149,6 +158,13 @@ export default function AdminAQEHistoryPage() {
            </div>
         )}
       </div>
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        disabled={fetching}
+      />
     </div>
   )
 }

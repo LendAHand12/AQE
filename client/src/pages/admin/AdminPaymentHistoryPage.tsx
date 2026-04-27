@@ -19,41 +19,44 @@ import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
+import { Pagination } from "@/components/common/Pagination"
 
 export default function AdminPaymentHistoryPage() {
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [fetching, setFetching] = useState(false)
 
   const fetchTransactions = async () => {
+    if (page === 1) setLoading(true)
+    else setFetching(true)
     try {
-      // Filter for transactions that involve USDT (Direct symbol or BUY/SELL usdtAmount)
-      const response = await apiClient.get("/admin/transactions")
-      const paymentsOnly = response.data.filter((t: any) => 
-        (t.symbol === 'USDT' || (t.usdtAmount && t.usdtAmount > 0)) && 
-        t.type !== 'COMMISSION'
-      )
-      setTransactions(paymentsOnly)
+      const response = await apiClient.get(`/admin/transactions?category=USDT&page=${page}&limit=20&search=${searchTerm}`)
+      setTransactions(response.data.transactions)
+      setTotalPages(response.data.pages)
     } catch (err: any) {
       toast.error("Không thể tải danh sách thanh toán")
     } finally {
       setLoading(false)
+      setFetching(false)
     }
   }
 
   useEffect(() => {
     fetchTransactions()
-  }, [])
+  }, [page])
 
-  const filteredTransactions = transactions.filter(tx => {
-    const fromUser = tx.from?.username || tx.from?.fullName || ""
-    const toUser = tx.to?.username || tx.to?.fullName || ""
-    
-    return fromUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           toUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (tx.hash || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (tx.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-  })
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        if (page !== 1) setPage(1)
+        else fetchTransactions()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const filteredTransactions = transactions; // Now filtered by backend
 
   if (loading) {
     return (
@@ -155,6 +158,13 @@ export default function AdminPaymentHistoryPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        disabled={fetching}
+      />
     </div>
   )
 }
