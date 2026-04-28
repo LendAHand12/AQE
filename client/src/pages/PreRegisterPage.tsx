@@ -389,7 +389,7 @@ export default function PreRegisterPage() {
                                className="h-11 border-[#9ca3af] rounded-[8px] focus:ring-0 focus:border-[#276152] font-medium text-[#0d1f1d]"
                              />
                              <div className="absolute right-2 top-1.5 px-3 py-1 bg-[#efefef]/50 rounded-[5px] text-[13.33px] font-semibold text-[#717c8d]">
-                               USDT
+                                USDT
                              </div>
                           </div>
                        </div>
@@ -408,7 +408,7 @@ export default function PreRegisterPage() {
                                className="h-11 border-[#9ca3af] rounded-[8px] focus:ring-0 focus:border-[#276152] font-medium text-[#0d1f1d]"
                              />
                              <div className="absolute right-2 top-1.5 px-3 py-1 bg-[#efefef]/50 rounded-[5px] text-[13.33px] font-semibold text-[#717c8d]">
-                               USDT
+                                USDT
                              </div>
                           </div>
                           {pledge?.paidUsdtPreRegister === 0 && (
@@ -474,6 +474,28 @@ export default function PreRegisterPage() {
                       <div className="flex-1 space-y-3">
                          {pledge?.status === 'completed' ? (
                             <div className="space-y-4">
+                              {pledge?.paidUsdtPreRegister > 0 && (
+                                 <div className="p-4 bg-[#efefef]/50 rounded-[16px] grid grid-cols-3 gap-1 mb-4 w-full">
+                                   <div className="flex flex-col items-center border-r border-[#000]/5 last:border-0 px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_total")}</p>
+                                     <p className="text-[14px] text-[#0d1f1d] font-bold tracking-tight">
+                                       {pledge.pledgeUsdt.toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                   <div className="flex flex-col items-center border-r border-[#000]/5 last:border-0 px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_paid")}</p>
+                                     <p className="text-[14px] text-[#0d1f1d] font-bold tracking-tight">
+                                       {pledge.paidUsdtPreRegister.toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                   <div className="flex flex-col items-center px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
+                                     <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
+                                       {(pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                 </div>
+                              )}
                               <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-[12px] flex items-start gap-3">
                                 <CheckCircle2 size={20} className="text-emerald-500 shrink-0 mt-0.5" />
                                 <p className="text-[14px] text-emerald-700 font-medium leading-relaxed">
@@ -487,6 +509,28 @@ export default function PreRegisterPage() {
                             </div>
                          ) : (
                             <div className="space-y-3">
+                              {pledge?.paidUsdtPreRegister > 0 && (
+                                 <div className="p-4 bg-[#efefef]/50 rounded-[16px] grid grid-cols-3 gap-1 mb-5 w-full">
+                                   <div className="flex flex-col items-center border-r border-[#000]/5 last:border-0 px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_total")}</p>
+                                     <p className="text-[14px] text-[#0d1f1d] font-bold tracking-tight">
+                                       {pledge.pledgeUsdt.toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                   <div className="flex flex-col items-center border-r border-[#000]/5 last:border-0 px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_paid")}</p>
+                                     <p className="text-[14px] text-[#0d1f1d] font-bold tracking-tight">
+                                       {pledge.paidUsdtPreRegister.toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                   <div className="flex flex-col items-center px-1">
+                                     <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
+                                     <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
+                                       {(pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                 </div>
+                              )}
                               <Button 
                                 type="button"
                                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold flex items-center justify-center gap-2"
