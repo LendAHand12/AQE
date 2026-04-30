@@ -24,15 +24,6 @@ const commissionSchema = mongoose.Schema({
         type: Number,
         required: true
     },
-    preRegisterId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'PreRegister'
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'paid'],
-        default: 'paid'
-    }
 }, {
     timestamps: true
 });

@@ -36,7 +36,9 @@ export default function PaymentHistoryPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [fetching, setFetching] = useState(false)
-  const [totalPaid, setTotalPaid] = useState(0)
+  const [summary, setSummary] = useState<any>({
+    totalPaid: 0
+  })
 
   const fetchPayments = async () => {
     if (page === 1) setLoading(true)
@@ -45,7 +47,7 @@ export default function PaymentHistoryPage() {
       const res = await apiClient.get(`/payments/my-payments?page=${page}&limit=10`)
       setPayments(res.data.transactions)
       setTotalPages(res.data.pages)
-      setTotalPaid(res.data.summary.totalPaid)
+      setSummary(res.data.summary)
     } catch (err) {
       console.error("Fetch payments error:", err)
     } finally {
@@ -59,13 +61,9 @@ export default function PaymentHistoryPage() {
   }, [page])
 
   const filteredPayments = payments.filter(p => 
-    p.type === 'BUY' && (
-      p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
-
-  // totalPaid is now fetched from server summary stats
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
@@ -91,7 +89,7 @@ export default function PaymentHistoryPage() {
           <div className="bg-[#16A34A]/10 p-4 rounded-[12px] flex flex-col gap-1 border border-[#16A34A]/20">
             <p className="text-[16px] text-[#0D1F1D] font-medium">{t("payments.summary.total_paid")}</p>
             <p className="text-[24px] font-bold text-[#16A34A] tracking-tight">
-              {totalPaid.toLocaleString()} USDT
+              {summary.totalPaid.toLocaleString()} USDT
             </p>
           </div>
         </div>
@@ -142,9 +140,7 @@ export default function PaymentHistoryPage() {
                           <span className="text-[14px] font-bold text-[#111827]">
                             {dayjs(p.createdAt).format("DD/MM/YYYY")}
                           </span>
-                          <span className="text-[12px] text-[#868F9E]">
-                            {dayjs(p.createdAt).format("HH:mm:ss")}
-                          </span>
+                          <span className="text-[12px] text-[#868F9E]">{dayjs(p.createdAt).format("HH:mm:ss")}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -156,21 +152,15 @@ export default function PaymentHistoryPage() {
                              {p.type === 'BUY' ? <Wallet size={16} /> : <Calendar size={16} />}
                           </div>
                           <div>
-                            <p className="text-[14px] font-bold text-[#111827]">
-                              {p.phase === 'PRE_REGISTER' 
-                                ? t("payments.phases.pre_register") 
-                                : t("payments.phases.direct_buy")
-                              }
-                            </p>
                             <p className="text-[12px] text-[#868F9E] font-medium">
-                              {p.type === 'REWARD' ? p.description : `${t("payments.table.phase_label")}: ${p.phase}`}
+                              {p.description}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right whitespace-nowrap">
                          <span className="text-[14px] font-bold text-[#111827]">
-                            {p.usdtAmount ? `${p.usdtAmount.toLocaleString()} USDT` : "---"}
+                            {p.amount ? `${p.amount.toLocaleString()} USDT` : "---"}
                          </span>
                       </td>
                       <td className="px-6 py-5">

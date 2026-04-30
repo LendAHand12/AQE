@@ -26,6 +26,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 import { 
   Card, 
   CardContent 
@@ -42,6 +47,7 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import KYCSection from "@/components/profile/KYCSection"
+import TwoFactorSetupModal from "@/components/profile/TwoFactorSetupModal"
 import { getImageUrl } from "@/lib/utils"
 
 // Helper function to create the cropped image
@@ -136,6 +142,13 @@ export default function SettingsPage() {
   const [isBankModalOpen, setIsBankModalOpen] = useState(false)
   const [newBank, setNewBank] = useState({ bankName: "", accountNumber: "", accountName: "", isDefault: false })
 
+  // 2FA State
+  const [qrCodeUrl, setQrCodeUrl] = useState("")
+  const [twoFactorSecret, setTwoFactorSecret] = useState("")
+  const [twoFactorCode, setTwoFactorCode] = useState("")
+  const [processing2FA, setProcessing2FA] = useState(false)
+  const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false)
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -144,7 +157,8 @@ export default function SettingsPage() {
         setFormData({
           ...data,
           birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
-          bankAccounts: data.bankAccounts || []
+          bankAccounts: data.bankAccounts || [],
+          isTwoFactorEnabled: data.isTwoFactorEnabled || false
         })
       } catch (err: any) {
         toast.error(t("settings.fetch_failed"))
@@ -213,6 +227,12 @@ export default function SettingsPage() {
   }
 
   const handleSave = async () => {
+    const usernameRegex = /^[a-z0-9]+$/;
+    if (formData.username && !usernameRegex.test(formData.username)) {
+      toast.error(t("auth.errors.invalid_username_format"));
+      return;
+    }
+
     setSaving(true)
     try {
       const response = await apiClient.put("/auth/profile", formData)
@@ -245,6 +265,60 @@ export default function SettingsPage() {
     setFormData({ ...formData, bankAccounts: newBanks })
   }
 
+  const handleGenerate2FA = async () => {
+    try {
+      setProcessing2FA(true)
+      const res = await apiClient.get("/auth/2fa/generate")
+      setQrCodeUrl(res.data.qrCodeUrl)
+      setTwoFactorSecret(res.data.secret)
+      setIsTwoFactorModalOpen(true)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Lỗi tạo 2FA")
+    } finally {
+      setProcessing2FA(false)
+    }
+  }
+
+  const handleEnable2FA = async (code: string) => {
+    if (!code || code.length !== 6) {
+      toast.error(t("settings.security_tab.enter_6_digits", "Vui lòng nhập 6 số"))
+      return
+    }
+    try {
+      setProcessing2FA(true)
+      await apiClient.post("/auth/2fa/enable", { code })
+      setFormData({ ...formData, isTwoFactorEnabled: true })
+      setQrCodeUrl("")
+      setTwoFactorSecret("")
+      setTwoFactorCode("")
+      setIsTwoFactorModalOpen(false)
+      toast.success(t("settings.security_tab.enable_success", "Bật 2FA thành công"))
+    } catch (error: any) {
+      toast.error(error.response?.data?.message ? t(error.response.data.message) : t("settings.security_tab.modal.error_6_digits", "Mã không đúng"))
+      throw error; // Let modal handle error state if needed
+    } finally {
+      setProcessing2FA(false)
+    }
+  }
+
+  const handleDisable2FA = async () => {
+    if (!twoFactorCode || twoFactorCode.length !== 6) {
+      toast.error(t("settings.security_tab.enter_6_digits", "Vui lòng nhập 6 số"))
+      return
+    }
+    try {
+      setProcessing2FA(true)
+      await apiClient.post("/auth/2fa/disable", { code: twoFactorCode })
+      setFormData({ ...formData, isTwoFactorEnabled: false })
+      setTwoFactorCode("")
+      toast.success(t("settings.security_tab.disable_success", "Tắt 2FA thành công"))
+    } catch (error: any) {
+      toast.error(error.response?.data?.message ? t(error.response.data.message) : t("settings.security_tab.modal.error_6_digits", "Mã không đúng"))
+    } finally {
+      setProcessing2FA(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -256,7 +330,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-[900px] mx-auto py-8 px-4 space-y-10">
       {/* Header */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-[#111827]">{t("settings.title")}</h1>
           <p className="text-sm text-[#6b7280]">{t("settings.subtitle")}</p>
@@ -264,7 +338,7 @@ export default function SettingsPage() {
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="bg-[#276152] hover:bg-[#1e4d41] rounded-[8px] font-bold px-8 h-11"
+          className="bg-[#276152] hover:bg-[#1e4d41] rounded-[8px] font-bold px-8 h-11 w-full sm:w-auto"
         >
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t("settings.save_changes")}
@@ -272,7 +346,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="bg-gray-100/80 p-1.5 rounded-[14px] h-auto flex w-full gap-1 mb-10 border border-gray-200/50">
+        <TabsList className="bg-transparent h-auto flex w-full justify-start gap-4 sm:gap-8 mb-10 border-b border-[#d5d7db] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden px-1 rounded-none p-0">
           {[
             { id: "personal", label: t("settings.tabs.personal"), icon: User },
             { id: "security", label: t("settings.tabs.security"), icon: ShieldCheck },
@@ -282,9 +356,9 @@ export default function SettingsPage() {
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="flex-1 px-6 py-3.5 h-full rounded-[10px] data-[state=active]:bg-[#276152] data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 flex items-center justify-center gap-2.5 text-gray-500 font-bold text-[14px] border-none shadow-none"
+              className="px-2 sm:px-4 py-3 rounded-none data-[state=active]:bg-transparent data-[state=active]:text-[#276152] data-[state=active]:font-bold data-[state=active]:border-b-2 data-[state=active]:border-[#276152] border-0 border-b-2 border-transparent transition-all duration-300 flex items-center justify-center gap-2 text-[#868f9e] font-medium text-[14px] sm:text-[16px] !shadow-none data-[state=active]:!shadow-none outline-none focus:ring-0"
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-6 h-6" />
               <span>{tab.label}</span>
             </TabsTrigger>
           ))}
@@ -319,7 +393,7 @@ export default function SettingsPage() {
               {/* Basic Info */}
               <div className="space-y-6">
                 <h3 className="text-[16px] font-bold text-[#111827] border-b border-gray-100 pb-3">{t("settings.basic_info.title")}</h3>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="text-[13px] font-medium text-gray-500">{t("settings.basic_info.full_name")}</Label>
                     <Input name="fullName" value={formData.fullName} onChange={handleChange} className="h-11 border-gray-200" />
@@ -458,16 +532,16 @@ export default function SettingsPage() {
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader><DialogTitle>{t("settings.bank.dialog_title")}</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">{t("settings.bank.bank_name")}</Label>
+                      <div className="flex flex-col sm:grid sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                        <Label className="sm:text-right">{t("settings.bank.bank_name")}</Label>
                         <Input value={newBank.bankName} onChange={(e) => setNewBank({...newBank, bankName: e.target.value})} className="col-span-3 h-10" />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">{t("settings.bank.account_holder")}</Label>
+                      <div className="flex flex-col sm:grid sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                        <Label className="sm:text-right">{t("settings.bank.account_holder")}</Label>
                         <Input value={newBank.accountName} onChange={(e) => setNewBank({...newBank, accountName: e.target.value.toUpperCase()})} className="col-span-3 h-10 uppercase" placeholder="NGUYEN VAN A" />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">{t("settings.bank.account_number")}</Label>
+                      <div className="flex flex-col sm:grid sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                        <Label className="sm:text-right">{t("settings.bank.account_number")}</Label>
                         <Input value={newBank.accountNumber} onChange={(e) => setNewBank({...newBank, accountNumber: e.target.value})} className="col-span-3 h-10" />
                       </div>
                       <div className="flex items-center gap-2 ml-auto">
@@ -489,8 +563,57 @@ export default function SettingsPage() {
 
         <TabsContent value="security" className="mt-8">
             <Card className="border border-gray-100 shadow-none rounded-[16px]">
-                <CardContent className="p-8">
-                    <p className="text-sm text-gray-500 text-center py-10">{t("settings.security_tab.dev")}</p>
+                <CardContent className="p-8 space-y-6">
+                    <div className="border-b pb-4">
+                      <h2 className="text-lg font-bold">{t("settings.security_tab.title")}</h2>
+                      <p className="text-sm text-gray-500">{t("settings.security_tab.desc")}</p>
+                    </div>
+
+                    {!(formData as any).isTwoFactorEnabled && (
+                      <div>
+                        <Button onClick={handleGenerate2FA} disabled={processing2FA} className="bg-[#276152]">
+                          {processing2FA ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
+                          {t("settings.security_tab.enable_btn")}
+                        </Button>
+                      </div>
+                    )}
+
+                    <TwoFactorSetupModal
+                      isOpen={isTwoFactorModalOpen}
+                      onClose={() => setIsTwoFactorModalOpen(false)}
+                      qrCodeUrl={qrCodeUrl}
+                      secret={twoFactorSecret}
+                      onVerify={handleEnable2FA}
+                      processing={processing2FA}
+                    />
+
+                    {(formData as any).isTwoFactorEnabled && (
+                      <div className="space-y-4 max-w-sm">
+                        <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5" />
+                          <span className="text-sm font-bold">{t("settings.security_tab.enabled_status")}</span>
+                        </div>
+                        <div className="space-y-2 pt-4">
+                          <label className="text-sm font-bold">{t("settings.security_tab.enter_code_disable")}</label>
+                          <div className="flex justify-center py-2">
+                              <InputOTP maxLength={6} value={twoFactorCode} onChange={setTwoFactorCode}>
+                                  <InputOTPGroup>
+                                      <InputOTPSlot index={0} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                      <InputOTPSlot index={1} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                      <InputOTPSlot index={2} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                      <InputOTPSlot index={3} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                      <InputOTPSlot index={4} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                      <InputOTPSlot index={5} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
+                                  </InputOTPGroup>
+                              </InputOTP>
+                          </div>
+                          <Button onClick={handleDisable2FA} disabled={processing2FA} variant="destructive" className="w-full">
+                            {processing2FA ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
+                            {t("settings.security_tab.confirm_disable")}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                 </CardContent>
             </Card>
         </TabsContent>

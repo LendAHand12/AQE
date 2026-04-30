@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, setup2FA, submitIdVerification, getReferrals, forgotPassword, resetPassword } from '../controllers/authController.js';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 
@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/login/2fa', verify2FALogin);
 router.get('/confirm/:token', confirmEmail);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
@@ -16,7 +17,9 @@ router.get('/validate-referral/:username', (req, res, next) => {
 });
 router.get('/referrals', protect, getReferrals);
 router.post('/kyc-status', protect, updateFaceTecStatus);
-router.post('/setup-2fa', protect, setup2FA);
+router.get('/2fa/generate', protect, generate2FA);
+router.post('/2fa/enable', protect, enable2FA);
+router.post('/2fa/disable', protect, disable2FA);
 router.post('/verify-id', protect, submitIdVerification);
 
 // User Profile Routes

@@ -1,9 +1,11 @@
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { TokenState } from '../models/Blockchain.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import Notification from '../models/Notification.js';
+import BalanceHistory from '../models/BalanceHistory.js';
 import { emitNotification } from '../utils/socket.js';
 
 // Helper to generate a dummy hash
@@ -23,11 +25,11 @@ async function processCommissions(buyer, amountPaid) {
     const amountF1 = amountPaid * 0.08;
     const amountF2 = amountPaid * 0.02;
 
-    // F1 - 8% of total pledge
+    // F1 - 8%
     const f1 = await User.findById(buyer.referredBy);
     if (f1) {
-        const oldBalanceF1 = f1.usdtBalance;
-        f1.usdtBalance += amountF1;
+        const balanceBeforeF1 = f1.usdtBalance || 0;
+        f1.usdtBalance = (f1.usdtBalance || 0) + amountF1;
         await f1.save();
         
         await Commission.create({
@@ -38,26 +40,25 @@ async function processCommissions(buyer, amountPaid) {
             percentage: 8
         });
 
-        // Create Ledger Entry (Transaction) for Balance History
-        await Transaction.create({
-            hash: '0x' + generateHash('commF1' + buyer._id),
-            from: buyer._id, 
-            to: f1._id,      
+        // Add to Balance History for recipient
+        await BalanceHistory.create({
+            userId: f1._id,
             amount: amountF1,
             symbol: 'USDT',
             type: 'COMMISSION',
             status: 'SUCCESS',
-            balanceBefore: oldBalanceF1,
+            isOfficial: true,
+            balanceBefore: balanceBeforeF1,
             balanceAfter: f1.usdtBalance,
-            description: `F1 Commission from ${buyer.username}`
+            description: `Commission Level 1 from ${buyer.username}`
         });
 
         // F2 - 2%
         if (f1.referredBy) {
             const f2 = await User.findById(f1.referredBy);
             if (f2) {
-                const oldBalanceF2 = f2.usdtBalance;
-                f2.usdtBalance += amountF2;
+                const balanceBeforeF2 = f2.usdtBalance || 0;
+                f2.usdtBalance = (f2.usdtBalance || 0) + amountF2;
                 await f2.save();
                 
                 await Commission.create({
@@ -68,17 +69,17 @@ async function processCommissions(buyer, amountPaid) {
                     percentage: 2
                 });
 
-                await Transaction.create({
-                    hash: '0x' + generateHash('commF2' + buyer._id),
-                    from: buyer._id,
-                    to: f2._id,
+                // Add to Balance History for recipient
+                await BalanceHistory.create({
+                    userId: f2._id,
                     amount: amountF2,
                     symbol: 'USDT',
                     type: 'COMMISSION',
                     status: 'SUCCESS',
-                    balanceBefore: oldBalanceF2,
+                    isOfficial: true,
+                    balanceBefore: balanceBeforeF2,
                     balanceAfter: f2.usdtBalance,
-                    description: `F2 Commission from ${buyer.username}`
+                    description: `Commission Level 2 from ${buyer.username}`
                 });
             }
         }
@@ -90,18 +91,18 @@ export const submitPreRegisterPledge = async (req, res) => {
     const { pledgeAmount } = req.body;
     try {
         if (pledgeAmount < 10) {
-            return res.status(400).json({ message: 'Số tiền đăng ký mua tối thiểu là 10 USDT' });
+            return res.status(400).json({ message: 'payments.errors.min_pledge' });
         }
 
         const user = await User.findById(req.user._id);
         if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister > 0) {
-            return res.status(400).json({ message: 'Bạn không thể thay đổi số tiền cam kết sau khi đã thực hiện thanh toán' });
+            return res.status(400).json({ message: 'payments.errors.cannot_change_pledge' });
         }
 
         user.pledgeUsdt = pledgeAmount;
         await user.save();
 
-        res.json({ message: 'Đăng ký số tiền mua sớm thành công', pledgeUsdt: user.pledgeUsdt });
+        res.json({ message: 'payments.pledge_success', pledgeUsdt: user.pledgeUsdt });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -117,21 +118,27 @@ export const submitPreRegisterPayment = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (user.kycStatus !== 'verified') {
-            return res.status(403).json({ message: 'Bạn cần hoàn thành và được duyệt KYC bước 1 để thực hiện thanh toán' });
+            return res.status(403).json({ message: 'payments.errors.kyc_required' });
         }
 
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
             if (!pledgeAmountNum || pledgeAmountNum < 10) {
-                return res.status(400).json({ message: 'Số tiền đăng ký mua tối thiểu là 10 USDT' });
+                return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             if (amountNum < (pledgeAmountNum * 0.3)) {
-                return res.status(400).json({ message: `Lần thanh toán đầu tiên phải tối thiểu 30% (${(pledgeAmountNum * 0.3).toLocaleString()} USDT)` });
+                return res.status(400).json({ 
+                    message: 'payments.errors.min_first_payment',
+                    minAmount: (pledgeAmountNum * 0.3)
+                });
             }
             user.pledgeUsdt = pledgeAmountNum;
         }
 
         if (user.paidUsdtPreRegister === 0 && amountNum < (user.pledgeUsdt * 0.3)) {
-            return res.status(400).json({ message: `Lần thanh toán đầu tiên phải tối thiểu 30% (${(user.pledgeUsdt * 0.3).toLocaleString()} USDT)` });
+            return res.status(400).json({ 
+                message: 'payments.errors.min_first_payment',
+                minAmount: (user.pledgeUsdt * 0.3)
+            });
         }
 
         const nowVN = getVietnamTime();
@@ -156,22 +163,31 @@ export const submitPreRegisterPayment = async (req, res) => {
         const isPostJune = nowVN > june30VN;
         const isLivePhase = nowVN >= julyFirstVN;
 
-        // --- STEP 1: PROCESS CURRENT PAYMENT ---
+        // --- STEP 1: PROCESS CURRENT PAYMENT (USDT) ---
         await Transaction.create({
             hash,
-            from: null, // System (Contract)
-            to: user._id,
-            amount: tokensCalculated,
-            usdtAmount: amountNum,
-            priceAtTime: price,
-            phase,
-            symbol: 'AQE',
-            type: 'BUY',
+            from: user._id,
+            to: 'System',
+            amount: amountNum,
+            symbol: 'USDT',
+            type: 'PAYMENT',
             status: 'SUCCESS',
-            isReleased: isLivePhase ? true : false,
-            balanceBefore: user.preRegisterTokens,
-            balanceAfter: user.preRegisterTokens + (isLivePhase ? 0 : tokensCalculated),
-            description: `Payment in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase (from AQE Contract)`
+            description: `Payment for AQE in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase`
+        });
+
+        console.log(`[Payment] User: ${user.username}, Paid: ${user.paidUsdtPreRegister}, Pledge: ${user.pledgeUsdt}, isPledgeCompleted: ${user.isPledgeCompleted}, isLivePhase: ${isLivePhase}`);
+
+        // --- STEP 2: LOG TOKEN RECEIPT (AQE) IN BALANCE HISTORY ---
+        await BalanceHistory.create({
+            userId: user._id,
+            amount: tokensCalculated,
+            symbol: 'AQE',
+            type: 'RECEIVE',
+            status: 'SUCCESS',
+            isOfficial: isLivePhase ? true : user.isPledgeCompleted ? true : false,
+            balanceBefore: user.aqeBalance + user.preRegisterTokens,
+            balanceAfter: user.aqeBalance + user.preRegisterTokens + tokensCalculated,
+            description: `Purchased AQE in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase`
         });
 
         // Trigger Commission Immediately after successful payment
@@ -207,19 +223,16 @@ export const submitPreRegisterPayment = async (req, res) => {
                         user.preRegisterTokens += bonusTokens;
                         user.hasReceivedPromotion = true;
                         
-                        await Transaction.create({
-                            hash: '0x' + generateHash('bonus' + user._id),
-                            from: null, // System (Contract)
-                            to: user._id,
+                        await BalanceHistory.create({
+                            userId: user._id,
                             amount: bonusTokens,
                             symbol: 'AQE',
                             type: 'REWARD',
                             status: 'SUCCESS',
-                            phase,
-                            isReleased: true,
+                            isOfficial: true,
                             balanceBefore: beforeBonus,
                             balanceAfter: user.preRegisterTokens,
-                            description: `Full payment bonus of ${bonusPercent * 100}% on ${user.pledgeUsdt} USDT (from AQE Contract)`
+                            description: `Full payment bonus of ${bonusPercent * 100}% for completing pledge`
                         });
 
                         const bonusNotif = await Notification.create({
@@ -236,38 +249,23 @@ export const submitPreRegisterPayment = async (req, res) => {
                 // Immediate release since 100% reached for the first time
                 user.aqeBalance += user.preRegisterTokens;
                 user.preRegisterTokens = 0;
-                user.isPledgeCompleted = true; // Mark as completed to avoid re-triggering commission
+                user.isPledgeCompleted = true; // Mark as completed
 
-                // --- STEP 4: RELEASE PREVIOUSLY HELD TOKENS ---
-                // Simply flip the status of all BUY transactions for this user.
-                await Transaction.updateMany(
-                    { 
-                        to: user._id, 
-                        isReleased: false, 
-                        status: 'SUCCESS',
-                        type: { $in: ['BUY', 'REWARD'] }
-                    },
-                    { isReleased: true }
+                // Update all previous temporary AQE entries to official
+                await BalanceHistory.updateMany(
+                    { userId: user._id, symbol: 'AQE', isOfficial: false },
+                    { isOfficial: true }
                 );
-
-                // await processCommissions(user, user.pledgeUsdt); // REMOVED: Now paid on every payment
             } else if (user.isPledgeCompleted) {
                 // If they already completed but are paying more, release instantly
-                const oldBal = user.aqeBalance;
                 user.aqeBalance += tokensCalculated;
                 user.preRegisterTokens = 0;
-
-                // For subsequent payments after 100%, those are also released instantly
-                await Transaction.updateOne(
-                    { hash: hash },
-                    { isReleased: true }
-                );
             }
         }
 
         await user.save();
         res.json({ 
-            message: 'Thanh toán thành công', 
+            message: 'payments.payment_success', 
             paidSoFar: user.paidUsdtPreRegister,
             tokensAccumulated: user.preRegisterTokens 
         });
@@ -292,7 +290,7 @@ export const getMyPreRegister = async (req, res) => {
 
         // AUTO-RELEASE CHECK (Lazy Evaluation on View)
         if (user.preRegisterTokens > 0) {
-            const lastBuy = await Transaction.findOne({ from: user._id, type: 'BUY', symbol: 'AQE' }).sort({ createdAt: -1 });
+            const lastBuy = await BalanceHistory.findOne({ userId: user._id, type: 'RECEIVE', symbol: 'AQE' }).sort({ createdAt: -1 });
             if (lastBuy) {
                 const lastDate = new Date(lastBuy.createdAt);
                 let shouldForceRelease = false;
@@ -304,19 +302,13 @@ export const getMyPreRegister = async (req, res) => {
                 if (shouldForceRelease) {
                     user.aqeBalance += user.preRegisterTokens;
                     user.preRegisterTokens = 0;
-
-                    // Release all BUY/REWARD transactions that occurred BEFORE or DURING the month being closed
-                    await Transaction.updateMany(
-                        { 
-                            to: user._id, 
-                            isReleased: false, 
-                            status: 'SUCCESS',
-                            type: { $in: ['BUY', 'REWARD'] },
-                            createdAt: { $lte: (lastDate <= may31VN ? may31VN : (lastDate <= june30VN ? june30VN : nowVN)) }
-                        },
-                        { isReleased: true }
-                    );
                     
+                    // Mark all previous temporary entries as official
+                    await BalanceHistory.updateMany(
+                        { userId: user._id, symbol: 'AQE', isOfficial: false },
+                        { isOfficial: true }
+                    );
+
                     await user.save();
                 }
             }
@@ -340,18 +332,17 @@ export const getMyPreRegister = async (req, res) => {
     }
 };
 
-// @desc    Get current user's payment history (USDT -> AQE)
+// @desc    Get current user's payment history (USDT)
 export const getUserPayments = async (req, res) => {
     try {
+        const userId = req.user._id;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
         const query = { 
-            $or: [
-                { from: req.user._id, type: { $in: ['BUY', 'SELL'] } },
-                { to: req.user._id, type: { $in: ['BUY'] } }
-            ]
+            from: new mongoose.Types.ObjectId(userId), 
+            type: 'PAYMENT'
         };
 
         const total = await Transaction.countDocuments(query);
@@ -360,10 +351,10 @@ export const getUserPayments = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        // Calculate Global Stats for summary cards
+        // Calculate total paid USDT
         const stats = await Transaction.aggregate([
-            { $match: { to: req.user._id.toString(), type: 'BUY', status: 'SUCCESS' } },
-            { $group: { _id: null, totalPaid: { $sum: "$usdtAmount" } } }
+            { $match: { from: new mongoose.Types.ObjectId(userId), type: 'PAYMENT', status: 'SUCCESS' } },
+            { $group: { _id: null, totalPaid: { $sum: "$amount" } } }
         ]);
 
         res.json({
@@ -400,12 +391,7 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                 'y': '[yỳýỷỹỵ]',
                 'd': '[dđ]',
                 'A': '[AÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]',
-                'E': '[EÈÉẺẼẸÊỀẾỂỄỆ]',
-                'I': '[IÌÍỈĨỊ]',
-                'O': '[OÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]',
-                'U': '[UÙÚỦŨỤƯỪỨỬỮỰ]',
-                'Y': '[YỲÝỶỸỴ]',
-                'D': '[DĐ]'
+'D': '[DĐ]'
             };
             let regexStr = str;
             Object.keys(map).forEach(key => {
@@ -416,73 +402,75 @@ export const getAllTransactionsForAdmin = async (req, res) => {
 
         const queryRegex = search ? createVietnameseRegex(search) : null;
 
-        let matchQuery = {};
+        let results = [];
+        let total = 0;
+
         if (category === 'USDT') {
-            matchQuery = { 
-                $and: [
-                    { $or: [{ symbol: 'USDT' }, { usdtAmount: { $gt: 0 } }] },
-                    { type: { $ne: 'COMMISSION' } }
-                ]
-            };
+            const query = { symbol: 'USDT', ...(queryRegex && { description: { $regex: queryRegex } }) };
+            total = await Transaction.countDocuments(query);
+            const data = await Transaction.find(query)
+                .populate({ path: 'from', select: 'username fullName email' })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+            
+            results = data.map(tx => ({
+                _id: tx._id,
+                hash: tx.hash,
+                from: tx.from, // populated object or raw id
+                to: tx.to,
+                amount: tx.amount,
+                symbol: tx.symbol,
+                type: tx.type,
+                status: tx.status,
+                description: tx.description,
+                createdAt: tx.createdAt
+            }));
         } else if (category === 'COMMISSION') {
-            matchQuery = { type: 'COMMISSION' };
-        } else if (category === 'AQE') {
-            matchQuery = { symbol: 'AQE', type: { $ne: 'COMMISSION' } };
+            const query = {}; // Add search if needed
+            total = await Commission.countDocuments(query);
+            const data = await Commission.find(query)
+                .populate('recipientId', 'username fullName email')
+                .populate('fromUserId', 'username fullName email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            results = data.map(c => ({
+                _id: c._id,
+                from: c.fromUserId,
+                to: c.recipientId,
+                amount: c.amountUsdt,
+                symbol: 'USDT',
+                type: 'COMMISSION',
+                status: 'SUCCESS',
+                description: `Level ${c.level} Commission (${c.percentage}%)`,
+                createdAt: c.createdAt
+            }));
+        } else {
+            // AQE or other tokens
+            const query = { ...(category !== 'ALL' && { symbol: category || 'AQE' }) };
+            total = await BalanceHistory.countDocuments(query);
+            const data = await BalanceHistory.find(query)
+                .populate('userId', 'username fullName email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            results = data.map(bh => ({
+                _id: bh._id,
+                to: bh.userId,
+                amount: bh.amount,
+                symbol: bh.symbol,
+                type: bh.type,
+                status: bh.status,
+                description: bh.description,
+                createdAt: bh.createdAt
+            }));
         }
 
-        const transactions = await Transaction.aggregate([
-            { $match: matchQuery },
-            { $sort: { createdAt: -1 } },
-            {
-                $lookup: {
-                    from: "users",
-                    let: { fromId: "$from" },
-                    pipeline: [
-                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$fromId"] } } },
-                        { $project: { username: 1, fullName: 1, email: 1 } }
-                    ],
-                    as: "fromUser"
-                }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    let: { toId: "$to" },
-                    pipeline: [
-                        { $match: { $expr: { $eq: [{ $toString: "$_id" }, "$$toId"] } } },
-                        { $project: { username: 1, fullName: 1, email: 1 } }
-                    ],
-                    as: "toUser"
-                }
-            },
-            {
-                $set: {
-                    from: { $arrayElemAt: ["$fromUser", 0] },
-                    to: { $arrayElemAt: ["$toUser", 0] }
-                }
-            },
-            // apply search filter after lookup to search by user name/email too
-            {
-                $match: {
-                    $or: [
-                        { hash: { $regex: queryRegex || /./ } },
-                        { "from.username": { $regex: queryRegex || /./ } },
-                        { "from.fullName": { $regex: queryRegex || /./ } },
-                        { "from.email": { $regex: queryRegex || /./ } },
-                        { "to.username": { $regex: queryRegex || /./ } },
-                        { "to.fullName": { $regex: queryRegex || /./ } },
-                        { "to.email": { $regex: queryRegex || /./ } },
-                        { description: { $regex: queryRegex || /./ } }
-                    ]
-                }
-            }
-        ]);
-
-        const total = transactions.length; // Approximate total after search in memory for now or move to separate facet
-        const paginatedTransactions = transactions.slice(skip, skip + limit);
-
         res.json({
-            transactions: paginatedTransactions,
+            transactions: results,
             page,
             pages: Math.ceil(total / limit),
             total

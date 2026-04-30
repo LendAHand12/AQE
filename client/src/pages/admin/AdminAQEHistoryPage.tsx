@@ -29,7 +29,9 @@ export default function AdminAQEHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
+
 
   const fetchData = async () => {
     if (page === 1) setLoading(true)
@@ -38,6 +40,8 @@ export default function AdminAQEHistoryPage() {
       const response = await apiClient.get(`/admin/transactions?category=AQE&page=${page}&limit=20&search=${searchTerm}`)
       setData(response.data.transactions.filter((t: any) => t.isReleased === true))
       setTotalPages(response.data.pages)
+      setTotalItems(response.data.total)
+
     } catch (err: any) {
       toast.error("Không thể tải danh sách trả AQE")
     } finally {
@@ -69,15 +73,8 @@ export default function AdminAQEHistoryPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="text-[32px] font-bold text-[#111827] flex items-center gap-3">
-            <Coins className="w-8 h-8 text-amber-500" /> Phân phối AQE Chính thức
-          </h1>
-          <p className="text-gray-500">Báo cáo các khoản AQE đã được chuyển vào số dư chính thức của người dùng.</p>
-        </div>
-      </div>
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+
 
       <div className="flex gap-4 items-center bg-white p-2 rounded-[16px] shadow-sm border border-gray-100">
         <div className="relative flex-1">
@@ -164,7 +161,10 @@ export default function AdminAQEHistoryPage() {
         totalPages={totalPages}
         onPageChange={setPage}
         disabled={fetching}
+        totalItems={totalItems}
+        itemsPerPage={20}
       />
+
     </div>
   )
 }

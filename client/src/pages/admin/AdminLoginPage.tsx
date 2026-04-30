@@ -21,6 +21,7 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showTwoFa, setShowTwoFa] = useState(false)
+  const [adminId, setAdminId] = useState("")
   const [twoFaCode, setTwoFaCode] = useState(["", "", "", "", "", ""])
   const navigate = useNavigate()
   
@@ -39,11 +40,11 @@ export default function AdminLoginPage() {
           return
         }
         
-        // This is where you would call the 2FA verification endpoint
-        // For now, we simulate success or provide the logic placeholder
-        // const response = await apiClient.post("/admin/verify-2fa", { otp, username })
+        const response = await apiClient.post("/admin/login/2fa", { code: otp, id: adminId })
         
-        // Simulating completion for now as requested
+        localStorage.setItem("admin_token", response.data.token)
+        localStorage.setItem("admin_info", JSON.stringify(response.data))
+        localStorage.setItem("token", response.data.token)
         toast.success("Xác thực thành công!")
         navigate("/admin/users")
         return
@@ -51,9 +52,9 @@ export default function AdminLoginPage() {
 
       const response = await apiClient.post("/admin/login", { username, password })
       
-      // If the backend indicates 2FA is required, we show the 2FA UI
-      if (response.data.requireTwoFa) {
+      if (response.data.requires2FA) {
         setShowTwoFa(true)
+        setAdminId(response.data.id)
         toast.info("Vui lòng nhập mã xác thực Google Authenticator")
       } else {
         localStorage.setItem("admin_token", response.data.token)
@@ -137,7 +138,7 @@ export default function AdminLoginPage() {
                 {[
                   { icon: '🏘', label: 'Quản lý dự án & tài sản' },
                   { icon: '👥', label: 'Phân quyền người dùng & KYC' },
-                  { icon: '⚡', label: 'Pre-sales & huy vốn thông minh' },
+                  { icon: '⚡', label: 'Pre-sales & huy động vốn thông minh' },
                   { icon: '📊', label: 'Báo cáo thời gian thực' }
                 ].map((item, idx) => (
                   <div key={idx} className="h-11 bg-white/5 border border-[#3b9a84]/30 backdrop-blur-sm rounded-[12px] flex items-center px-4 gap-4 group hover:bg-white/10 transition-all cursor-default">

@@ -2,19 +2,12 @@ import mongoose from 'mongoose';
 
 const transactionSchema = mongoose.Schema({
     hash: { type: String, required: true, unique: true },
-    from: { type: String },
-    to: { type: String },
-    amount: { type: Number, required: true },
-    symbol: { type: String, default: 'AQE' },
-    usdtAmount: { type: Number },
-    priceAtTime: { type: Number },
-    phase: { type: String, enum: ['PRE_REGISTER', 'LIVE'], default: 'LIVE' },
-    type: { type: String, enum: ['BUY', 'SELL', 'TRANSFER', 'DEPOSIT', 'REWARD', 'COMMISSION'], required: true },
+    from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    to: { type: String, default: 'System' },
+    amount: { type: Number, required: true }, // Total amount in USDT
+    symbol: { type: String, default: 'USDT' },
+    type: { type: String, enum: ['PAYMENT', 'DEPOSIT', 'WITHDRAW'], default: 'PAYMENT' },
     status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED'], default: 'SUCCESS' },
-    isReleased: { type: Boolean, default: false },
-    balanceBefore: { type: Number },
-    balanceAfter: { type: Number },
-    blockNumber: { type: Number },
     description: { type: String }
 }, { timestamps: true });
 

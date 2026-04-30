@@ -3,11 +3,17 @@ import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
-
+import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
     try {
         const { fullName, username, email, phone, password, refId } = req.body;
+
+        // Valid username: no spaces, no special chars, no accents, only lowercase alphanumeric
+        const usernameRegex = /^[a-z0-9]+$/;
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({ message: 'auth.errors.invalid_username_format' });
+        }
 
         const userExists = await User.findOne({ 
             isDeleted: false,
@@ -98,6 +104,11 @@ export const loginUser = async (req, res) => {
 
         if (user && (await user.matchPassword(password))) {
             if (!user.isActive) return res.status(401).json({ message: 'auth.errors.unconfirmed' });
+            
+            if (user.isTwoFactorEnabled) {
+                return res.json({ requires2FA: true, userId: user._id });
+            }
+
             res.json({
                 _id: user._id, 
                 fullName: user.fullName, 
@@ -108,6 +119,35 @@ export const loginUser = async (req, res) => {
             });
         } else {
             res.status(401).json({ message: 'auth.errors.invalid_credentials' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Verify 2FA for login
+export const verify2FALogin = async (req, res) => {
+    try {
+        const { userId, code } = req.body;
+        const user = await User.findById(userId);
+
+        if (!user || user.isDeleted || !user.isActive) {
+            return res.status(401).json({ message: 'auth.errors.user_not_found' });
+        }
+
+        const isVerified = verifyTwoFactorCode(user.twoFactorSecret, code);
+
+        if (isVerified) {
+            res.json({
+                _id: user._id, 
+                fullName: user.fullName, 
+                username: user.username,
+                email: user.email,
+                kycStatus: user.kycStatus,
+                token: generateToken(user._id),
+            });
+        } else {
+            res.status(400).json({ message: 'auth.errors.invalid_2fa_code' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -135,12 +175,17 @@ export const updateUserProfile = async (req, res) => {
         if (user) {
             // Check for username uniqueness if changing
             if (req.body.username && req.body.username.toLowerCase() !== user.username) {
+                const newUsername = req.body.username.toLowerCase();
+                const usernameRegex = /^[a-z0-9]+$/;
+                if (!usernameRegex.test(newUsername)) {
+                    return res.status(400).json({ message: 'auth.errors.invalid_username_format' });
+                }
                 const usernameExists = await User.findOne({ 
-                    username: req.body.username.toLowerCase(), 
+                    username: newUsername, 
                     isDeleted: false 
                 });
                 if (usernameExists) return res.status(400).json({ message: 'auth.errors.username_exists' });
-                user.username = req.body.username.toLowerCase();
+                user.username = newUsername;
             }
 
             // Check for phone uniqueness if changing
@@ -214,17 +259,57 @@ export const updateFaceTecStatus = async (req, res) => {
     }
 };
 
-// @desc    Toggle 2FA (Basic Setup)
-export const setup2FA = async (req, res) => {
+// @desc    Generate 2FA Secret
+export const generate2FA = async (req, res) => {
     try {
-        const { secret } = req.body; // In real app, generate this on server
         const user = await User.findById(req.user._id);
+        const { secret, qrCodeUrl } = await generateTwoFactorSecret(user.email);
         
         user.twoFactorSecret = secret;
-        user.isTwoFactorEnabled = true;
         await user.save();
 
-        res.json({ message: 'kyc.google_auth.setup_success' });
+        res.json({ secret, qrCodeUrl });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Enable 2FA
+export const enable2FA = async (req, res) => {
+    try {
+        const { code } = req.body;
+        const user = await User.findById(req.user._id);
+
+        const isVerified = verifyTwoFactorCode(user.twoFactorSecret, code);
+
+        if (isVerified) {
+            user.isTwoFactorEnabled = true;
+            await user.save();
+            res.json({ message: '2FA enabled successfully', isTwoFactorEnabled: true });
+        } else {
+            res.status(400).json({ message: 'auth.errors.invalid_2fa_code' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Disable 2FA
+export const disable2FA = async (req, res) => {
+    try {
+        const { code } = req.body;
+        const user = await User.findById(req.user._id);
+
+        const isVerified = verifyTwoFactorCode(user.twoFactorSecret, code);
+
+        if (isVerified) {
+            user.isTwoFactorEnabled = false;
+            // Optionally clear the secret: user.twoFactorSecret = null;
+            await user.save();
+            res.json({ message: '2FA disabled successfully', isTwoFactorEnabled: false });
+        } else {
+            res.status(400).json({ message: 'auth.errors.invalid_2fa_code' });
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

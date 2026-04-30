@@ -39,29 +39,39 @@ import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { getImageUrl } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import dayjs from "dayjs"
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, locked: 0 })
   const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [page, setPage] = useState(1)
+
   const [totalPages, setTotalPages] = useState(1)
-  const [totalUsers, setTotalUsers] = useState(0)
   const [fetching, setFetching] = useState(false)
   
   // Edit State
   const [editingUser, setEditingUser] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   
+  const fetchStats = async () => {
+    try {
+      const res = await apiClient.get('/admin/users/stats')
+      setStats(res.data)
+    } catch (err) {}
+  }
+
   const fetchUsers = async () => {
     if (page === 1) setLoading(true)
     else setFetching(true)
     
     try {
-      const response = await apiClient.get(`/admin/users?page=${page}&limit=10&search=${searchTerm}`)
+      const response = await apiClient.get(`/admin/users?page=${page}&limit=10&search=${searchTerm}&status=${statusFilter}`)
       setUsers(response.data.users)
       setTotalPages(response.data.pages)
-      setTotalUsers(response.data.total)
+
     } catch (err: any) {
       toast.error("Không thể tải danh sách người dùng")
     } finally {
@@ -72,16 +82,19 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers()
+    fetchStats()
   }, [page])
 
-  // Reset page when search changes
+
+  // Reset page when search or filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (page !== 1) setPage(1)
       else fetchUsers()
     }, 500)
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm, statusFilter])
+
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này? Thao tác này sẽ cho phép người dùng đăng ký lại bằng email cũ.")) return
@@ -118,123 +131,164 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="text-[32px] font-bold text-[#111827] flex items-center gap-3">
-            <Users className="w-8 h-8 text-[#276152]" /> Quản lý thành viên
-          </h1>
-          <p className="text-gray-500">Xem, chỉnh sửa và quản lý tất cả thành viên trong hệ thống.</p>
+
+    <div className="space-y-12 max-w-[1400px] mx-auto pb-10">
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[rgba(239,239,239,0.5)] border-[#276152] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Tổng người dùng</p>
+          <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.total.toLocaleString()}</p>
         </div>
-        <Badge variant="outline" className="px-4 py-1.5 rounded-full border-gray-200 text-gray-600 bg-white font-bold h-fit shadow-sm">
-          Tổng số: {totalUsers} thành viên
-        </Badge>
+        <div className="bg-[rgba(239,239,239,0.5)] border-[#16a34a] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Đã xác minh KYC</p>
+          <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.verified.toLocaleString()}</p>
+        </div>
+        <div className="bg-[rgba(239,239,239,0.5)] border-[#d97706] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Chờ xác minh</p>
+          <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.pending.toLocaleString()}</p>
+        </div>
+        <div className="bg-[rgba(239,239,239,0.5)] border-[#ef4444] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Chưa hoạt động</p>
+          <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.locked.toLocaleString()}</p>
+        </div>
+
       </div>
 
-      <div className="flex gap-4 items-center bg-white p-2 rounded-[16px] shadow-sm border border-gray-100">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input 
-            placeholder="Tìm kiếm theo tên hoặc email..." 
-            className="pl-12 h-12 border-none focus-visible:ring-0 text-md font-medium" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button variant="ghost" className="h-12 w-12 rounded-[12px] hover:bg-gray-100">
-          <Filter className="w-5 h-5 text-gray-500" />
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
-        <Table>
-          <TableHeader className="bg-[#f8faf9]">
-            <TableRow className="border-b border-gray-100 hover:bg-transparent">
-              <TableHead className="w-[300px] py-6 font-bold text-[#111827] h-full">Họ & Tên</TableHead>
-              <TableHead className="font-bold text-[#111827]">Email</TableHead>
-              <TableHead className="font-bold text-[#111827]">Trạng thái</TableHead>
-              <TableHead className="font-bold text-[#111827]">KYC</TableHead>
-              <TableHead className="font-bold text-[#111827]">Ngày tham gia</TableHead>
-              <TableHead className="text-right font-bold text-[#111827] pr-8">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user._id} className="border-b border-gray-50 hover:bg-[#f8faf9]/50 transition-colors">
-                <TableCell className="py-5 font-bold text-[#111827]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#276152] text-white flex items-center justify-center text-sm font-bold shadow-inner overflow-hidden border border-gray-100 uppercase">
-                      {user.avatar ? (
-                        <img src={getImageUrl(user.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{user.fullName?.charAt(0)}</span>
-                      )}
-                    </div>
-                    {user.fullName}
-                  </div>
-                </TableCell>
-                <TableCell className="text-gray-600 font-medium">{user.email}</TableCell>
-                <TableCell>
-                  {user.isActive ? (
-                    <Badge className="bg-[#d9ede8] hover:bg-[#d9ede8] text-[#1e4d40] border-none font-bold px-3 py-1">Đã kích hoạt</Badge>
-                  ) : (
-                    <Badge variant="outline" className="border-gray-200 text-gray-400 font-bold px-3 py-1">Chưa kích hoạt</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {user.kycStatus === 'verified' && <Badge className="bg-blue-50 text-blue-600 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><CheckCircle2 size={12}/> Đã duyệt</Badge>}
-                  {user.kycStatus === 'pending' && <Badge className="bg-orange-50 text-orange-600 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><Clock size={12}/> Chờ duyệt</Badge>}
-                  {user.kycStatus === 'unverified' && <Badge className="bg-gray-100 text-gray-500 border-none font-bold flex w-fit gap-1 items-center px-2 py-0.5"><AlertCircle size={12}/> Chưa KYC</Badge>}
-                </TableCell>
-                <TableCell className="text-gray-500 text-sm font-medium">
-                  {new Date(user.createdAt).toLocaleString("vi-VN")}
-                </TableCell>
-                <TableCell className="text-right pr-6">
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-9 w-9 rounded-full text-[#276152] hover:bg-[#d9ede8]"
-                      onClick={() => {
-                        setEditingUser(user)
-                        setIsEditDialogOpen(true)
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-9 w-9 rounded-full text-red-500 hover:bg-red-50"
-                      onClick={() => handleDelete(user._id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {filteredUsers.length === 0 && (
-          <div className="py-20 text-center space-y-4">
-            <Search className="w-12 h-12 text-gray-200 mx-auto" />
-            <p className="text-gray-400 font-medium">Không tìm thấy người dùng nào phù hợp với từ khóa.</p>
+      <div className="space-y-4">
+        {/* Filter Area */}
+        <div className="flex justify-between items-center">
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">Danh sách thành viên</p>
+          <div className="flex gap-3">
+            <div className="relative w-[320px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input 
+                type="text"
+                placeholder="Tìm kiếm người dùng..." 
+                className="w-full pl-10 pr-4 py-2.5 border border-[#d5d7db] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-[rgba(239,239,239,0.5)] border-none h-[44px] rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent className="rounded-[12px] border-none shadow-lg">
+                <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">Tất cả</SelectItem>
+                <SelectItem value="active" className="font-['SVN-Gilroy:Medium',sans-serif]">Đang hoạt động</SelectItem>
+                <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Chưa hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
+        </div>
+
+
+        {/* Table Section */}
+        <div className="bg-white rounded-[16px] border border-[rgba(239,239,239,0.5)] overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader className="bg-[#d9ede8]">
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Người dùng</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Email</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Thời gian đăng ký</TableHead>
+
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Số dư</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">KYC</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Trạng thái</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px] text-center">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user._id} className="border-b border-[rgba(239,239,239,0.5)] hover:bg-gray-50 transition-colors">
+                  <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#276152] text-white flex items-center justify-center text-xs font-bold overflow-hidden uppercase">
+                        {user.avatar ? (
+                          <img src={getImageUrl(user.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{user.fullName?.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{user.fullName}</span>
+                        <span className="text-[12px] text-gray-400">@{user.username}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px]">{user.email}</TableCell>
+                  <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px]">
+                    {dayjs(user.createdAt).format("DD/MM/YYYY HH:mm")}
+                  </TableCell>
+
+                  <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px] font-medium">
+                    {user.usdtBalance?.toLocaleString()} USDT
+                  </TableCell>
+                  <TableCell className="py-4 px-4">
+                    {user.kycStatus === 'verified' && (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Level 2</span>
+                    )}
+                    {user.kycStatus === 'pending' && (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#d97706] tracking-[0.48px]">Chờ duyệt</span>
+                    )}
+                    {user.kycStatus === 'unverified' && (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-gray-400 tracking-[0.48px]">Chưa xác minh</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-4 px-4">
+                    {user.isActive ? (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Đang hoạt động</span>
+                    ) : (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#ef4444] tracking-[0.48px]">Chưa hoạt động</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="py-4 px-4">
+                    <div className="flex justify-center gap-3">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-full text-[#276152] hover:bg-[#d9ede8]"
+                        onClick={() => {
+                          setEditingUser(user)
+                          setIsEditDialogOpen(true)
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                        onClick={() => handleDelete(user._id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {users.length === 0 && (
+            <div className="py-20 text-center space-y-4">
+              <Search className="w-12 h-12 text-gray-200 mx-auto" />
+              <p className="text-gray-400 font-medium">Không tìm thấy người dùng nào phù hợp với từ khóa.</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-4">
-        <Pagination 
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          disabled={fetching}
-        />
-        <p className="text-[12px] text-gray-400 font-medium">
-          Hiển thị trang {page} của {totalPages}
-        </p>
-      </div>
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        disabled={fetching}
+        totalItems={stats.total}
+        itemsPerPage={10}
+      />
+
+
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

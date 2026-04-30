@@ -58,6 +58,12 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    const usernameRegex = /^[a-z0-9]+$/;
+    if (!usernameRegex.test(formData.username)) {
+      setError(t("auth.errors.invalid_username_format"));
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError(t("auth.errors.password_mismatch"))
       return

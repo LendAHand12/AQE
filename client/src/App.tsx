@@ -8,10 +8,17 @@ import AdminLayout from "@/components/layout/AdminLayout"
 import AdminLoginPage from "@/pages/admin/AdminLoginPage"
 import UserManagementPage from "@/pages/admin/UserManagementPage"
 import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
+import AdminSettingsPage from "@/pages/admin/AdminSettingsPage"
 import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
 import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
 import AdminAQEHistoryPage from "@/pages/admin/AdminAQEHistoryPage"
+import AdminPropertyPage from "@/pages/admin/AdminPropertyPage"
+import AddPropertyPage from "@/pages/admin/AddPropertyPage"
+import EditPropertyPage from "@/pages/admin/EditPropertyPage"
+import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
+
 import ExplorerPage from "@/pages/ExplorerPage"
+
 import PreRegisterPage from "@/pages/PreRegisterPage"
 import PaymentHistoryPage from "@/pages/PaymentHistoryPage"
 import NotFoundPage from "@/pages/NotFoundPage"
@@ -59,11 +66,17 @@ export function App() {
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route element={<AdminLayout />}>
               <Route path="/admin/users" element={<UserManagementPage />} />
-              <Route path="/admin/settings" element={<TokenSettingsPage />} />
+              <Route path="/admin/properties" element={<AdminPropertyPage />} />
+              <Route path="/admin/properties/add" element={<AddPropertyPage />} />
+              <Route path="/admin/properties/edit/:id" element={<EditPropertyPage />} />
+
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+
+              <Route path="/admin/token-settings" element={<TokenSettingsPage />} />
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/transactions/aqe" element={<AdminAQEHistoryPage />} />
-              <Route path="/admin/dashboard" element={<div className="p-8"><h1 className="text-2xl font-bold">Admin Dashboard Coming Soon</h1></div>} />
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
 
             <Route path="/explorer" element={<ExplorerPage />} />

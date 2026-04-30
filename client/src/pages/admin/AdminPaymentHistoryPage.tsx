@@ -27,7 +27,9 @@ export default function AdminPaymentHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
+
 
   const fetchTransactions = async () => {
     if (page === 1) setLoading(true)
@@ -36,6 +38,8 @@ export default function AdminPaymentHistoryPage() {
       const response = await apiClient.get(`/admin/transactions?category=USDT&page=${page}&limit=20&search=${searchTerm}`)
       setTransactions(response.data.transactions)
       setTotalPages(response.data.pages)
+      setTotalItems(response.data.total)
+
     } catch (err: any) {
       toast.error("Không thể tải danh sách thanh toán")
     } finally {
@@ -67,15 +71,8 @@ export default function AdminPaymentHistoryPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="text-[32px] font-bold text-[#111827] flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-[#276152]" /> Lịch sử thanh toán USDT
-          </h1>
-          <p className="text-gray-500">Danh sách các giao dịch nạp tiền và thanh toán bằng USDT.</p>
-        </div>
-      </div>
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+
 
       <div className="flex gap-4 items-center bg-white p-2 rounded-[16px] shadow-sm border border-gray-100">
         <div className="relative flex-1">
@@ -164,7 +161,10 @@ export default function AdminPaymentHistoryPage() {
         totalPages={totalPages}
         onPageChange={setPage}
         disabled={fetching}
+        totalItems={totalItems}
+        itemsPerPage={20}
       />
+
     </div>
   )
 }

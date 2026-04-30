@@ -58,7 +58,9 @@
       "user_not_found": "Không tìm thấy người dùng",
       "email_not_found": "Không tìm thấy tài khoản với email này",
       "invalid_reset_token": "Liên kết không hợp lệ hoặc đã hết hạn",
-      "referral_required": "Vui lòng nhập mã giới thiệu"
+      "referral_required": "Vui lòng nhập mã giới thiệu",
+      "invalid_2fa_code": "Mã 2FA không đúng hoặc đã hết hạn",
+      "invalid_username_format": "Tên đăng nhập chỉ được chứa chữ cái thường (không viết hoa, không dấu) và chữ số"
     }
   },
   "dashboard": {
@@ -265,7 +267,10 @@
       "withdraw": "RÚT TIỀN",
       "transfer": "CHUYỂN TIỀN",
       "deposit": "NẠP TIỀN",
-      "buy": "MUA TOKEN"
+      "buy": "MUA TOKEN",
+      "receive": "NHẬN TOKEN",
+      "swap": "QUY ĐỔI",
+      "buy_asset": "MUA TÀI SẢN"
     },
     "asset_filter": {
       "all": "Tất cả",
@@ -382,7 +387,35 @@
       "added_note": "Tài khoản đã được thêm vào danh sách. Nhấn 'Lưu thay đổi' để hoàn tất."
     },
     "security_tab": {
-      "dev": "Tính năng bảo mật đang được phát triển..."
+      "title": "Bảo mật 2 lớp (2FA)",
+      "desc": "Sử dụng ứng dụng Google Authenticator để bảo vệ tài khoản",
+      "enable_btn": "Bật 2FA",
+      "scan_qr_prompt": "Hoặc nhập mã thủ công:",
+      "enter_code": "Nhập mã 6 số từ ứng dụng:",
+      "confirm_enable": "Xác nhận bật",
+      "cancel": "Hủy",
+      "enabled_status": "2FA đang được bật",
+      "enter_code_disable": "Nhập mã 6 số để tắt 2FA:",
+      "confirm_disable": "Xác nhận tắt",
+      "modal": {
+        "title": "Google Authenticator",
+        "step_1": "Bước 1: Scan QR Code",
+        "instruction_qr": "Mở Google Authenticator và quét mã QR",
+        "instruction_title": "Hướng dẫn",
+        "step_1_guide_1": "Tải Google Authenticator từ App Store hoặc Google Play",
+        "step_1_guide_2": "Mở ứng dụng và chọn \"+\" để thêm tài khoản",
+        "step_1_guide_3": "Quét mã QR hoặc nhập mã bí mật thủ công",
+        "step_1_guide_4": "Nhập mã 6 số hiển thị trong ứng dụng",
+        "next_btn": "Tiếp theo",
+        "step_2": "Bước 2: Nhập mã xác thực",
+        "instruction_code": "Nhập mã 6 số từ Google Authenticator",
+        "code_change_note": "Mã xác thực thay đổi sau mỗi",
+        "seconds_30": "30 giây",
+        "back_btn": "Quay lại",
+        "verify_btn": "Xác minh",
+        "error_6_digits": "Vui lòng nhập đủ 6 số",
+        "copied_secret": "Đã sao chép mã bí mật"
+      }
     },
     "support_tab": {
       "dev": "Trung tâm hỗ trợ đang được phát triển..."
@@ -451,5 +484,15 @@
     "network_list": "Danh sách mạng lưới (F1 & F2)",
     "f1_label": "Cấp độ 1 (F1)",
     "f2_label": "Cấp độ 2 (F2)"
+  },
+  "payments": {
+    "pledge_success": "Đăng ký số tiền mua sớm thành công",
+    "payment_success": "Thanh toán thành công",
+    "errors": {
+      "min_pledge": "Số tiền đăng ký mua tối thiểu là 10 USDT",
+      "cannot_change_pledge": "Bạn không thể thay đổi số tiền cam kết sau khi đã thực hiện thanh toán",
+      "kyc_required": "Bạn cần hoàn thành và được duyệt KYC bước 1 để thực hiện thanh toán",
+      "min_first_payment": "Lần thanh toán đầu tiên phải tối thiểu 30% ({{minAmount}} USDT)"
+    }
   }
 }

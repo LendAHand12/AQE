@@ -58,7 +58,9 @@
       "user_not_found": "User account not found",
       "email_not_found": "Account not found with this email",
       "invalid_reset_token": "Invalid or expired reset link",
-      "referral_required": "Referral ID is required"
+      "referral_required": "Referral ID is required",
+      "invalid_2fa_code": "Invalid or expired 2FA code",
+      "invalid_username_format": "Username can only contain lowercase letters and numbers"
     }
   },
   "dashboard": {
@@ -190,7 +192,35 @@
       "added_note": "Account added to list. Click 'Save Changes' to finalize."
     },
     "security_tab": {
-      "dev": "Security features are under development..."
+      "title": "Two-Factor Authentication (2FA)",
+      "desc": "Use Google Authenticator to protect your account",
+      "enable_btn": "Enable 2FA",
+      "scan_qr_prompt": "Or enter code manually:",
+      "enter_code": "Enter 6-digit code from app:",
+      "confirm_enable": "Confirm Enable",
+      "cancel": "Cancel",
+      "enabled_status": "2FA is enabled",
+      "enter_code_disable": "Enter 6-digit code to disable:",
+      "confirm_disable": "Confirm Disable",
+      "modal": {
+        "title": "Google Authenticator",
+        "step_1": "Step 1: Scan QR Code",
+        "instruction_qr": "Open Google Authenticator and scan the QR code",
+        "instruction_title": "Instructions",
+        "step_1_guide_1": "Download Google Authenticator from App Store or Google Play",
+        "step_1_guide_2": "Open the app and select \"+\" to add an account",
+        "step_1_guide_3": "Scan the QR code or enter the secret key manually",
+        "step_1_guide_4": "Enter the 6-digit code shown in the app",
+        "next_btn": "Next",
+        "step_2": "Step 2: Enter Verification Code",
+        "instruction_code": "Enter the 6-digit code from Google Authenticator",
+        "code_change_note": "Verification code changes every",
+        "seconds_30": "30 seconds",
+        "back_btn": "Back",
+        "verify_btn": "Verify",
+        "error_6_digits": "Please enter all 6 digits",
+        "copied_secret": "Secret key copied to clipboard"
+      }
     },
     "support_tab": {
       "dev": "Support center is under development..."
@@ -354,7 +384,10 @@
       "withdraw": "WITHDRAW",
       "transfer": "TRANSFER",
       "deposit": "DEPOSIT",
-      "buy": "BUY TOKEN"
+      "buy": "BUY TOKEN",
+      "receive": "RECEIVE",
+      "swap": "SWAP",
+      "buy_asset": "BUY ASSET"
     },
     "asset_filter": {
       "all": "All Assets",
@@ -450,5 +483,49 @@
     "network_list": "Network List (F1 & F2)",
     "f1_label": "Level 1 (F1)",
     "f2_label": "Level 2 (F2)"
+  },
+  "payments": {
+    "title": "Payment History",
+    "subtitle": "Track your AQE purchase transactions",
+    "disclaimer": "Estimated AQE will be officially released to your wallet after you complete 100% payment or at the end of each month.",
+    "export_report_excel": "Export Report to Excel",
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "amount": "Amount (USDT)",
+      "estimated": "Estimated AQE",
+      "official": "Official AQE",
+      "received": "Received (AQE)",
+      "hash": "Transaction Hash",
+      "status": "Status",
+      "details": "Details",
+      "phase_label": "Phase"
+    },
+    "desc_preregister": "Early AQE Purchase Registration",
+    "desc_buy": "Buy AQE Token",
+    "desc_sell": "Sell AQE Token",
+    "phases": {
+      "pre_register": "Pre-registration Payment",
+      "direct_buy": "Direct Token Purchase"
+    },
+    "status": {
+      "success": "Success",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "summary": {
+      "total_paid": "Total Paid",
+      "total_estimated": "Total Estimated AQE",
+      "total_official": "Total Official AQE"
+    },
+    "empty": "No transactions found",
+    "pledge_success": "Successfully registered early purchase amount",
+    "payment_success": "Payment successful",
+    "errors": {
+      "min_pledge": "Minimum purchase registration amount is 10 USDT",
+      "cannot_change_pledge": "You cannot change the pledge amount after making a payment",
+      "kyc_required": "You need to complete and have Step 1 KYC approved to make a payment",
+      "min_first_payment": "The first payment must be at least 30% ({{minAmount}} USDT)"
+    }
   }
 }

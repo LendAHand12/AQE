@@ -27,7 +27,9 @@ export default function AdminCommissionHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
+
 
   const fetchCommissions = async () => {
     if (page === 1) setLoading(true)
@@ -36,6 +38,8 @@ export default function AdminCommissionHistoryPage() {
       const response = await apiClient.get(`/admin/transactions?category=COMMISSION&page=${page}&limit=20&search=${searchTerm}`)
       setCommissions(response.data.transactions)
       setTotalPages(response.data.pages)
+      setTotalItems(response.data.total)
+
     } catch (err: any) {
       toast.error("Không thể tải danh sách hoa hồng")
     } finally {
@@ -67,15 +71,8 @@ export default function AdminCommissionHistoryPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="text-[32px] font-bold text-[#111827] flex items-center gap-3">
-            <Users className="w-8 h-8 text-[#276152]" /> Lịch sử hoa hồng hệ thống
-          </h1>
-          <p className="text-gray-500">Giám sát việc chi trả hoa hồng F1/F2 giữa các thành viên.</p>
-        </div>
-      </div>
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+
 
       <div className="flex gap-4 items-center bg-white p-2 rounded-[16px] shadow-sm border border-gray-100">
         <div className="relative flex-1">
@@ -105,7 +102,7 @@ export default function AdminCommissionHistoryPage() {
             {filteredCommissions.map((tx) => (
               <TableRow key={tx._id} className="hover:bg-amber-50/30 transition-colors">
                 <TableCell className="py-5 pl-8 text-xs text-gray-400 font-medium">
-                  {dayjs(tx.createdAt).format("DD/MM HH:mm")}
+                  {dayjs(tx.createdAt).format("DD/MM/YYYY HH:mm")}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
@@ -147,7 +144,10 @@ export default function AdminCommissionHistoryPage() {
         totalPages={totalPages}
         onPageChange={setPage}
         disabled={fetching}
+        totalItems={totalItems}
+        itemsPerPage={20}
       />
+
     </div>
   )
 }

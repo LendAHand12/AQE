@@ -4,33 +4,39 @@ import {
   LayoutDashboard, 
   Settings, 
   LogOut,
-  ChevronRight,
-  ShieldCheck,
-  Wallet,
-  Coins
+  Coins,
+  Building2,
+  HandCoins,
+  BadgePercent,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import logoGreen from "@/assets/logo_green.svg"
 
-const navItems = [
+const mainNavItems = [
   {
     title: "Dashboard",
     href: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Quản lý thành viên",
+    title: "Người dùng",
     href: "/admin/users",
     icon: Users,
   },
   {
-    title: "Lịch sử thanh toán",
-    href: "/admin/transactions/payments",
-    icon: Wallet,
+    title: "Bất động sản",
+    href: "/admin/properties",
+    icon: Building2,
   },
   {
-    title: "Lịch sử hoa hồng",
+    title: "Giao dịch",
+    href: "/admin/transactions/payments",
+    icon: HandCoins,
+  },
+  {
+    title: "Hoa hồng",
     href: "/admin/transactions/commissions",
-    icon: Users,
+    icon: BadgePercent,
   },
   {
     title: "Phân phối AQE",
@@ -38,7 +44,15 @@ const navItems = [
     icon: Coins,
   },
   {
-    title: "Cài đặt Pool & Token",
+    title: "Cài đặt Pool",
+    href: "/admin/token-settings",
+    icon: Settings,
+  },
+]
+
+const bottomNavItems = [
+  {
+    title: "Cài đặt",
     href: "/admin/settings",
     icon: Settings,
   },
@@ -55,58 +69,74 @@ export default function AdminSidebar() {
   }
 
   return (
-    <div className="w-[280px] h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 z-50">
+    <div className="w-[260px] h-screen bg-[#efefef]/50 border-r border-[#d5d7db] flex flex-col fixed left-0 top-0 z-50">
       {/* Logo Section */}
-      <div className="p-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#276152] rounded-[12px] flex items-center justify-center shadow-lg shadow-[#276152]/20">
-            <ShieldCheck className="text-white w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-[18px] font-bold text-[#111827] leading-tight">AQ Estate</h1>
-            <p className="text-[11px] font-bold text-[#276152] uppercase tracking-[1px]">Admin Panel</p>
-          </div>
+      <div className="pt-8 px-6 pb-6">
+        <div className="flex items-center">
+          <img src={logoGreen} alt="AQ Estate Logo" className="h-[40px] w-auto object-contain" />
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            className={({ isActive }) => cn(
-              "group flex items-center justify-between px-4 py-3 rounded-[12px] transition-all duration-200",
-              isActive 
-                ? "bg-[#f0f7f5] text-[#276152]" 
-                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className={cn(
-                "w-5 h-5 transition-colors",
-                location.pathname === item.href ? "text-[#276152]" : "text-gray-400 group-hover:text-gray-600"
-              )} />
-              <span className="text-[15px] font-semibold">{item.title}</span>
-            </div>
-            {location.pathname === item.href && (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </NavLink>
-        ))}
+        <div className="flex flex-col gap-2">
+          {mainNavItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "group flex items-center px-4 py-2.5 transition-all duration-200",
+                  isActive 
+                    ? "bg-[#d9ede8] text-[#276152] border-l-[3px] border-[#276152] rounded-r-[12px] -ml-4 pl-[19px]" 
+                    : "text-[#868f9e] hover:bg-white/50 hover:text-[#276152] rounded-[12px]"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn(
+                    "w-[22px] h-[22px] transition-colors",
+                    isActive ? "text-[#276152]" : "text-[#868f9e] group-hover:text-[#276152]"
+                  )} />
+                  <span className="text-[16px] font-semibold">{item.title}</span>
+                </div>
+              </NavLink>
+            )
+          })}
+        </div>
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t border-gray-100 italic text-[12px] text-gray-400 px-8 py-6">
-        <p>Phiên bản: 1.0.0</p>
-      </div>
-
-      <div className="p-4 mb-4">
+      <div className="px-4 pb-8 space-y-2 pt-4 border-t border-[#d5d7db]">
+        {bottomNavItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              className={({ isActive }) => cn(
+                "group flex items-center px-4 py-2.5 transition-all duration-200",
+                isActive 
+                  ? "bg-[#d9ede8] text-[#276152] border-l-[3px] border-[#276152] rounded-r-[12px] -ml-4 pl-[19px]" 
+                  : "text-[#868f9e] hover:bg-white/50 hover:text-[#276152] rounded-[12px]"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className={cn(
+                  "w-[22px] h-[22px] transition-colors",
+                  isActive ? "text-[#276152]" : "text-[#868f9e] group-hover:text-[#276152]"
+                )} />
+                <span className="text-[16px] font-semibold tracking-[0.48px]">{item.title}</span>
+              </div>
+            </NavLink>
+          )
+        })}
+        
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-[12px] transition-all duration-200 font-bold"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[#868f9e] hover:bg-red-50 hover:text-red-500 rounded-[12px] transition-all duration-200 font-semibold text-[16px] tracking-[0.48px]"
         >
-          <LogOut size={20} />
+          <LogOut className="w-[22px] h-[22px]" />
           <span>Đăng xuất</span>
         </button>
       </div>

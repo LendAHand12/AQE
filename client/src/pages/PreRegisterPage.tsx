@@ -41,7 +41,7 @@ export default function PreRegisterPage() {
   const { disconnect } = useDisconnect()
   const { address, isConnected } = useAccount()
 
-  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://aqe.vn'
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
   useEffect(() => {
     fetchInitialData()
@@ -135,7 +135,8 @@ export default function PreRegisterPage() {
       fetchInitialData()
     } catch (err: any) {
       console.error("Payment Error:", err)
-      toast.error(err.shortMessage || err.message || t("pre_register.pay_failed"))
+      const errorMsg = err.response?.data?.message || err.shortMessage || err.message || "pre_register.pay_failed";
+      toast.error(t(errorMsg, err.response?.data || {}));
     } finally {
       setPaying(false)
     }
@@ -491,7 +492,7 @@ export default function PreRegisterPage() {
                                    <div className="flex flex-col items-center px-1">
                                      <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
                                      <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
-                                       {(pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
                                      </p>
                                    </div>
                                  </div>
@@ -526,7 +527,7 @@ export default function PreRegisterPage() {
                                    <div className="flex flex-col items-center px-1">
                                      <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
                                      <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
-                                       {(pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
                                      </p>
                                    </div>
                                  </div>

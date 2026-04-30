@@ -22,9 +22,9 @@ export default function BalanceHistoryPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [fetching, setFetching] = useState(false)
   const [summary, setSummary] = useState<any>({
-    totalPaid: 0,
-    totalAQEOfficial: 0,
-    totalAQEEstimated: 0,
+    totalPaidUSDT: 0,
+    officialAQE: 0,
+    temporaryAQE: 0,
     totalCommissions: 0
   })
 
@@ -53,9 +53,6 @@ export default function BalanceHistoryPage() {
   }, [page])
 
   const filteredHistory = history.filter(item => {
-    // 1. Hide Commissions where the user is NOT the receiver (Inflow)
-    if (item.type === 'COMMISSION' && item.category !== 'INFLOW') return false;
-
     const matchesSearch = (item.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (item.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (item.symbol || "").toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,9 +65,9 @@ export default function BalanceHistoryPage() {
   })
 
   // Summary logic from server
-  const totalDeposit = summary.totalPaid;
-  const totalAQEOfficial = summary.totalAQEOfficial;
-  const totalAQEEstimated = summary.totalAQEEstimated;
+  const totalDeposit = summary.totalPaidUSDT;
+  const totalAQEOfficial = summary.officialAQE;
+  const totalAQEEstimated = summary.temporaryAQE;
   const totalCommissions = summary.totalCommissions;
 
   if (loading) return (
@@ -212,25 +209,25 @@ export default function BalanceHistoryPage() {
                       <td className="px-4 py-5 max-w-[250px]">
                         <p className="text-[14px] text-[#111827] truncate font-medium">{item.description}</p>
                       </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap">
+                       <td className="px-4 py-5 text-right whitespace-nowrap">
                          {item.symbol === 'AQE' ? (
                             <div className="flex flex-col items-end">
                                <span className={cn(
                                  "text-[14px] font-bold",
-                                 item.isReleased ? "text-[#16A34A]" : "text-amber-600"
+                                 item.isOfficial ? "text-[#16A34A]" : "text-amber-600"
                                )}>
                                  {item.amount.toLocaleString()} AQE
                                </span>
                                <span className="text-[10px] font-bold uppercase opacity-60">
-                                 {item.isReleased ? t("balance_history.status.official") : t("balance_history.status.estimated")}
+                                 {item.isOfficial ? t("balance_history.status.official") : t("balance_history.status.estimated")}
                                </span>
                             </div>
                          ) : (
                             <span className={cn(
                               "text-[14px] font-bold",
-                              item.category === 'INFLOW' ? "text-[#16A34A]" : "text-[#EF4444]"
+                              item.type === 'RECEIVE' || item.type === 'REWARD' || item.type === 'COMMISSION' ? "text-[#16A34A]" : "text-[#EF4444]"
                             )}>
-                              {item.category === 'INFLOW' ? "+" : "-"}{item.amount.toLocaleString()} USDT
+                              {item.type === 'RECEIVE' || item.type === 'REWARD' || item.type === 'COMMISSION' ? "+" : "-"}{item.amount.toLocaleString()} USDT
                             </span>
                          )}
                       </td>

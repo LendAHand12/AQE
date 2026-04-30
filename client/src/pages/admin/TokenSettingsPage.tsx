@@ -79,13 +79,8 @@ export default function TokenSettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-[1000px] mx-auto space-y-8">
-      <div className="space-y-1">
-        <h1 className="text-[32px] font-bold text-[#111827] flex items-center gap-3">
-          <Settings2 className="w-8 h-8 text-[#276152]" /> Cấu hình Token & Explorer
-        </h1>
-        <p className="text-gray-500">Thiết lập các thông số cơ bản cho hệ sinh thái AQE Blockchain.</p>
-      </div>
+    <div className="max-w-[1000px] mx-auto space-y-8">
+
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
