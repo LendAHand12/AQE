@@ -37,7 +37,7 @@ export default function AdminAQEHistoryPage() {
     else setFetching(true)
     try {
       const response = await apiClient.get(`/admin/transactions?category=AQE&page=${page}&limit=20&search=${searchTerm}`)
-      setData(response.data.transactions.filter((t: any) => t.isReleased === true))
+      setData(response.data.transactions.filter((t: any) => t.isOfficial === true))
       setTotalPages(response.data.pages)
       setTotalItems(response.data.total)
 
@@ -122,10 +122,13 @@ export default function AdminAQEHistoryPage() {
                 <TableCell>
                   <Badge className={cn(
                     "rounded-full text-[10px] font-bold px-3",
-                    tx.type === 'BUY' ? "bg-emerald-100 text-emerald-800" :
-                    tx.type === 'REWARD' ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-700"
+                    tx.type === 'RECEIVE' ? "bg-emerald-100 text-emerald-800" :
+                    tx.type === 'REWARD' ? "bg-purple-100 text-purple-700" : 
+                    tx.type === 'SWAP' ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
                   )}>
-                    {tx.type === 'BUY' ? "Mua Token" : "Thưởng Promotion"}
+                    {tx.type === 'RECEIVE' ? "Mua Token" : 
+                     tx.type === 'REWARD' ? "Thưởng Promotion" :
+                     tx.type === 'SWAP' ? "Quy đổi" : tx.type}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

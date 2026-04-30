@@ -464,6 +464,7 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                 symbol: bh.symbol,
                 type: bh.type,
                 status: bh.status,
+                isOfficial: bh.isOfficial,
                 description: bh.description,
                 createdAt: bh.createdAt
             }));
