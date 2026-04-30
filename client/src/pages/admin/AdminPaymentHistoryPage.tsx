@@ -2,8 +2,7 @@ import { useState, useEffect } from "react"
 import { 
   Search, 
   Loader2,
-  ExternalLink,
-  Wallet
+  ExternalLink
 } from "lucide-react"
 import { 
   Table, 

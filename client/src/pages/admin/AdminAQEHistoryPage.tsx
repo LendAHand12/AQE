@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { 
-  Coins, 
   Search, 
   Loader2,
   ExternalLink,

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import apiClient from "@/lib/axios";
 import {
@@ -25,7 +24,7 @@ export default function AdminSettingsPage() {
     const adminInfoStr = localStorage.getItem("admin_info");
     if (adminInfoStr) {
       try {
-        const adminInfo = JSON.parse(adminInfoStr);
+        JSON.parse(adminInfoStr);
         // Note: we'd need the API to return this, but let's assume we don't have it yet.
         // As a workaround, we will always show the "Enable 2FA" button unless they already have it.
         // For accurate status, we need an admin profile API. I will assume it's disabled initially.

@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
                     radius={[4, 4, 0, 0]} 
                     barSize={40}
                   >
-                    {finalChartData.map((entry, index) => (
+                    {finalChartData.map((_, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={index === now.getMonth() ? '#276152' : 'rgba(39,97,82,0.4)'} 

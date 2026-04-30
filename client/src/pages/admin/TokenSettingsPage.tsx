@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { 
   Coins, 
-  Settings2, 
   TrendingUp, 
   Database,
   Save,

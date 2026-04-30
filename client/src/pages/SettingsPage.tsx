@@ -127,7 +127,8 @@ export default function SettingsPage() {
     kycStatus: "unverified",
     avatar: null,
     walletAddress: "",
-    bankAccounts: [] as any[]
+    bankAccounts: [] as any[],
+    isTwoFactorEnabled: false
   })
 
   // Crop State

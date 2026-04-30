@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { 
-  Users, 
   Search, 
   Loader2,
   ArrowRight,

@@ -1,6 +1,5 @@
 import { Bell } from "lucide-react"
 import { useLocation } from "react-router-dom"
-import { cn } from "@/lib/utils"
 
 interface AdminHeaderProps {
   title?: string;

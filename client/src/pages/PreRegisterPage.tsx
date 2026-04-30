@@ -136,7 +136,7 @@ export default function PreRegisterPage() {
     } catch (err: any) {
       console.error("Payment Error:", err)
       const errorMsg = err.response?.data?.message || err.shortMessage || err.message || "pre_register.pay_failed";
-      toast.error(t(errorMsg, err.response?.data || {}));
+      toast.error(t(errorMsg, err.response?.data || {}) as string);
     } finally {
       setPaying(false)
     }
