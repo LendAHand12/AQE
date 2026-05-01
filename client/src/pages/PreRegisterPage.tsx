@@ -91,7 +91,7 @@ export default function PreRegisterPage() {
     e.preventDefault()
     e.stopPropagation()
 
-    if (userProfile?.kycStatus !== 'verified') {
+    if (userProfile?.kycStatus !== 'verified' && userProfile?.kycStatus !== 'pending') {
       toast.error(t("pre_register.kyc_verified_required"))
       return
     }
@@ -173,7 +173,7 @@ export default function PreRegisterPage() {
     </div>
   )
 
-  const isKycVerified = userProfile?.kycStatus === 'verified'
+  const isKycVerified = userProfile?.kycStatus === 'verified' || userProfile?.kycStatus === 'pending'
   const activeStage = getActiveBonusStage()
 
   return (
@@ -286,10 +286,10 @@ export default function PreRegisterPage() {
                </div>
 
                {/* Warning Alert */}
-               <div className="bg-[#f59e0b]/10 rounded-[12px] p-5 space-y-1 border border-[#f59e0b]/5">
+               {/* <div className="bg-[#f59e0b]/10 rounded-[12px] p-5 space-y-1 border border-[#f59e0b]/5">
                   <p className="text-[16px] font-bold text-[#d97706]">{t("pre_register.alert_title")}</p>
                   <p className="text-[13px] text-[#d97706] opacity-90">{t("pre_register.alert_desc")}</p>
-               </div>
+               </div> */}
 
                {/* Progress KYC */}
                <div className="bg-white border border-[#efefef] rounded-[16px] p-6 space-y-4">
@@ -434,9 +434,9 @@ export default function PreRegisterPage() {
                            <Button 
                              type="button"
                              onClick={handleWalletConnect}
-                             className="w-full h-11 bg-white hover:bg-gray-50 text-[#0d1f1d] border border-gray-200 rounded-[10px] shadow-sm flex items-center justify-center gap-2 font-semibold"
+                             className="w-full h-[52px] bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[12px] shadow-[0_8px_20px_rgba(39,97,82,0.25)] font-bold text-[16px] transition-all hover:scale-[1.02] active:scale-[0.98]"
                            >
-                               <Wallet size={18} className="text-[#276152]" />
+                               <Wallet size={20} />
                                {t("header.connect_wallet")}
                            </Button>
                          ) : (
@@ -555,7 +555,7 @@ export default function PreRegisterPage() {
                       <div className="w-full space-y-3">
                          <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-2.5">
                             <ShieldAlert size={16} className="text-amber-500 shrink-0 mt-0.5" />
-                            <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                            <p className="text-[14px] text-amber-700 font-medium leading-relaxed">
                               {t("pre_register.kyc_verified_required")}
                             </p>
                          </div>

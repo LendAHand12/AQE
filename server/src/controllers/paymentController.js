@@ -117,7 +117,7 @@ export const submitPreRegisterPayment = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
-        if (user.kycStatus !== 'verified') {
+        if (user.kycStatus !== 'verified' && user.kycStatus !== 'pending') {
             return res.status(403).json({ message: 'payments.errors.kyc_required' });
         }
 

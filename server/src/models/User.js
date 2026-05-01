@@ -87,7 +87,7 @@ const userSchema = mongoose.Schema({
     },
     kycStatus: {
         type: String,
-        enum: ['verified', 'pending', 'unverified'],
+        enum: ['verified', 'pending', 'unverified', 'rejected'],
         default: 'unverified'
     },
     faceTecTid: {

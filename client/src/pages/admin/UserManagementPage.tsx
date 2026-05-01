@@ -227,6 +227,9 @@ export default function UserManagementPage() {
                     {user.kycStatus === 'unverified' && (
                       <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-gray-400 tracking-[0.48px]">Chưa xác minh</span>
                     )}
+                    {user.kycStatus === 'rejected' && (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-red-400 tracking-[0.48px]">Bị từ chối</span>
+                    )}
                   </TableCell>
                   <TableCell className="py-4 px-4">
                     {user.isActive ? (
@@ -358,6 +361,7 @@ export default function UserManagementPage() {
                         <SelectItem value="unverified">Chưa KYC</SelectItem>
                         <SelectItem value="pending">Chờ xác minh</SelectItem>
                         <SelectItem value="verified">Đã xác minh</SelectItem>
+                        <SelectItem value="rejected">Từ chối (Yêu cầu làm lại)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

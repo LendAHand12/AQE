@@ -213,7 +213,7 @@ export default function KYCSection() {
                       </div>
                     )}
                     
-                    {userData.kycStatus === 'unverified' && (
+                    {(userData.kycStatus === 'unverified' || userData.kycStatus === 'rejected') && (
                       <input 
                         type="file" 
                         accept="image/*"
@@ -234,7 +234,8 @@ export default function KYCSection() {
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                       userData.kycStatus === 'verified' ? "bg-green-100 text-green-600" : 
-                      userData.kycStatus === 'pending' ? "bg-amber-100 text-amber-600" : "bg-gray-100 text-gray-400"
+                      userData.kycStatus === 'pending' ? "bg-amber-100 text-amber-600" : 
+                      userData.kycStatus === 'rejected' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"
                     )}>
                       {t(`kyc.id_verification.status_${userData.kycStatus}`)}
                     </span>
@@ -244,7 +245,7 @@ export default function KYCSection() {
               
               <Button 
                 onClick={handleSubmitID}
-                disabled={loading || userData.kycStatus !== 'unverified'}
+                disabled={loading || (userData.kycStatus !== 'unverified' && userData.kycStatus !== 'rejected')}
                 className="w-full md:w-auto px-10 h-12 rounded-xl bg-[#276152] font-bold text-sm shadow-lg shadow-[#276152]/20"
               >
                 {loading ? <Loader2 className="animate-spin" /> : t("kyc.id_verification.submit")}
