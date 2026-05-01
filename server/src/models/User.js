@@ -27,6 +27,10 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    countryCode: {
+        type: String,
+        default: '+84'
+    },
     password: {
         type: String,
         required: true

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2, Fingerprint, Link2 } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2, Fingerprint, Link2, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -7,12 +7,25 @@ import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import { cn } from "@/lib/utils"
 
+const COUNTRIES = [
+  { code: "+84", iso: "vn" },
+  { code: "+1", iso: "us" },
+  { code: "+44", iso: "gb" },
+  { code: "+81", iso: "jp" },
+  { code: "+82", iso: "kr" },
+  { code: "+86", iso: "cn" },
+  { code: "+91", iso: "in" },
+  { code: "+66", iso: "th" },
+  { code: "+65", iso: "sg" },
+];
+
 export default function RegisterForm() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
   const [checkingReferral, setCheckingReferral] = useState(false)
   const [isReferralValid, setIsReferralValid] = useState(true)
@@ -24,7 +37,8 @@ export default function RegisterForm() {
     phone: "",
     password: "",
     confirmPassword: "",
-    refId: ""
+    refId: "",
+    countryCode: i18n.language === "vi" ? "+84" : "+1"
   })
 
   // Track referral ID from URL & Validate
@@ -88,6 +102,7 @@ export default function RegisterForm() {
         username: formData.username,
         email: formData.email,
         phone: formData.phone,
+        countryCode: formData.countryCode,
         password: formData.password,
         refId: formData.refId
       })
@@ -105,7 +120,8 @@ export default function RegisterForm() {
         phone: "",
         password: "",
         confirmPassword: "",
-        refId: ""
+        refId: "",
+        countryCode: i18n.language === "vi" ? "+84" : "+1"
       })
       
       // Navigate after a short delay
@@ -181,17 +197,61 @@ export default function RegisterForm() {
 
       {/* Phone Input */}
       <div className="relative group">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#276152] transition-colors">
-          <Phone size={20} />
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-0 z-20 text-[#111827]">
+          <div className="relative">
+            <button 
+              type="button"
+              onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+              className="flex items-center gap-1 px-2 py-1 bg-transparent hover:bg-gray-100 rounded-[4px] transition-colors"
+            >
+              <img 
+                src={`https://flagcdn.com/w20/${COUNTRIES.find(c => c.code === formData.countryCode)?.iso}.png`} 
+                alt="flag" 
+                className="w-5 h-auto rounded-[2px]" 
+              />
+              <ChevronDown size={14} className="text-[#9ca3af]" />
+            </button>
+
+            {showCountryDropdown && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)} />
+                <div className="absolute top-full left-0 mt-1 w-[120px] bg-white border border-[#efefef] shadow-lg rounded-[8px] overflow-hidden z-50">
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {COUNTRIES.map((c) => (
+                      <button
+                        key={c.iso}
+                        type="button"
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#f8faf9] transition-colors text-left"
+                        onClick={() => {
+                          setFormData({...formData, countryCode: c.code});
+                          setShowCountryDropdown(false);
+                        }}
+                      >
+                        <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-auto rounded-[2px]" />
+                        <span className="font-medium text-[14px]">{c.code}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="w-[1px] h-5 bg-[#d5d7db] mx-1"></div>
         </div>
         <input
           type="tel"
           name="phone"
           value={formData.phone}
-          onChange={handleChange}
+          onChange={(e) => {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.startsWith('0')) {
+              val = val.substring(1);
+            }
+            setFormData({ ...formData, phone: val });
+          }}
           required
           placeholder={t("auth.phone_placeholder")}
-          className="w-full h-[44px] pl-10 pr-4 bg-white border border-[#9ca3af] rounded-[8px] outline-none focus:border-[#276152] focus:ring-1 focus:ring-[#276152] transition-all text-[#111827] placeholder:text-[#9ca3af]"
+          className="w-full h-[44px] pl-[70px] pr-4 bg-white border border-[#9ca3af] rounded-[8px] outline-none focus:border-[#276152] focus:ring-1 focus:ring-[#276152] transition-all text-[#111827] placeholder:text-[#9ca3af]"
         />
       </div>
 

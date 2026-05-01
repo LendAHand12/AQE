@@ -7,7 +7,7 @@ import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
     try {
-        const { fullName, username, email, phone, password, refId } = req.body;
+        const { fullName, username, email, phone, countryCode, password, refId } = req.body;
 
         // Valid username: no spaces, no special chars, no accents, only lowercase alphanumeric
         const usernameRegex = /^[a-z0-9]+$/;
@@ -64,6 +64,7 @@ export const registerUser = async (req, res) => {
             username: username.toLowerCase(), 
             email, 
             phone, 
+            countryCode,
             password,
             referredBy: referrer ? referrer._id : null,
             confirmationToken

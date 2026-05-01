@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
                         {tx.userName}
                       </td>
                       <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#111827]">
-                        {tx.usdtAmount?.toLocaleString()} USDT
+                        {tx.amount?.toLocaleString()} USDT
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={tx.status} />
