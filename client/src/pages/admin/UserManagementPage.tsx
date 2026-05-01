@@ -49,6 +49,7 @@ export default function UserManagementPage() {
   // Edit State
   const [editingUser, setEditingUser] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   
   const fetchStats = async () => {
     try {
@@ -284,7 +285,12 @@ export default function UserManagementPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] rounded-[24px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogContent 
+          className="sm:max-w-[700px] rounded-[24px] max-h-[90vh] flex flex-col p-0 overflow-hidden"
+          onInteractOutside={(e) => {
+            if (previewImage) e.preventDefault();
+          }}
+        >
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-2xl font-bold text-[#111827]">Chỉnh sửa người dùng</DialogTitle>
           </DialogHeader>
@@ -358,6 +364,58 @@ export default function UserManagementPage() {
                 </div>
               </div>
 
+              {/* KYC Images */}
+              <div className="space-y-4">
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Hình ảnh KYC</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-500">Mặt trước ID</label>
+                    <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
+                      {editingUser?.idCardFront ? (
+                        <img 
+                          src={getImageUrl(editingUser.idCardFront)} 
+                          alt="Front ID" 
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                          onClick={() => setPreviewImage(getImageUrl(editingUser.idCardFront))}
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-500">Mặt sau ID</label>
+                    <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
+                      {editingUser?.idCardBack ? (
+                        <img 
+                          src={getImageUrl(editingUser.idCardBack)} 
+                          alt="Back ID" 
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                          onClick={() => setPreviewImage(getImageUrl(editingUser.idCardBack))}
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-500">Ảnh chân dung</label>
+                    <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
+                      {editingUser?.portraitPhoto ? (
+                        <img 
+                          src={getImageUrl(editingUser.portraitPhoto)} 
+                          alt="Portrait" 
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                          onClick={() => setPreviewImage(getImageUrl(editingUser.portraitPhoto))}
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Finance */}
               <div className="space-y-4">
                 <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Tài chính</h4>
@@ -384,6 +442,34 @@ export default function UserManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Preview Overlay */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[100000] bg-black/90 flex items-center justify-center p-4 cursor-pointer backdrop-blur-sm transition-opacity pointer-events-auto"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            setPreviewImage(null)
+          }}
+        >
+          <button 
+             className="absolute top-6 right-6 text-white bg-white/20 hover:bg-white/40 rounded-full p-2 transition-colors z-[100001] pointer-events-auto"
+             onClick={(e) => {
+               e.stopPropagation();
+               setPreviewImage(null);
+             }}
+          >
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <img 
+            src={previewImage} 
+            className="max-w-full max-h-full object-contain rounded-[12px] shadow-2xl relative z-[100001]" 
+            alt="Preview" 
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
