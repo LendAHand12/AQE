@@ -90,7 +90,7 @@ async function processCommissions(buyer, amountPaid) {
 export const submitPreRegisterPledge = async (req, res) => {
     const { pledgeAmount } = req.body;
     try {
-        if (pledgeAmount < 10) {
+        if (pledgeAmount < 100) {
             return res.status(400).json({ message: 'payments.errors.min_pledge' });
         }
 
@@ -122,7 +122,7 @@ export const submitPreRegisterPayment = async (req, res) => {
         }
 
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
-            if (!pledgeAmountNum || pledgeAmountNum < 10) {
+            if (!pledgeAmountNum || pledgeAmountNum < 100) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             if (amountNum < (pledgeAmountNum * 0.3)) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Mail, Lock, Eye, EyeOff, User, Phone, Loader2, Fingerprint, Link2, ChevronDown } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User, Loader2, Fingerprint, Link2, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"

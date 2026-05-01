@@ -279,7 +279,7 @@
     "total_commission": "Total Commission",
     "reg_info_title": "Registration Details",
     "reg_amount_label": "Purchase Registration Limit (USDT)",
-    "reg_amount_min": "Minimum 10 USDT",
+    "reg_amount_min": "Minimum 100 USDT",
     "reg_initial_label": "Tier 1 Payment Amount",
     "reg_initial_hint": "Minimum 30% deposit",
     "confirm_payment_btn": "Confirm & Pay Now",
