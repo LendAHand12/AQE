@@ -12,6 +12,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import explorerRoutes from './routes/explorerRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import withdrawalRoutes from './routes/withdrawalRoutes.js';
+import kycRoutes from './routes/kycRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 
 import { createServer } from 'http';
@@ -58,6 +60,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/explorer', explorerRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/kyc', kycRoutes);
 
 // Simple Route
 app.get('/', (req, res) => {

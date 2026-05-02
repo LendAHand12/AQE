@@ -26,6 +26,8 @@ import NotFoundPage from "@/pages/NotFoundPage"
 import ReferralPage from "@/pages/ReferralPage"
 import { Toaster } from "@/components/ui/sonner"
 import BalanceHistoryPage from "@/pages/BalanceHistoryPage"
+import AssetsPage from "@/pages/AssetsPage"
+import KycCallbackPage from "@/pages/KycCallbackPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -57,6 +59,8 @@ export function App() {
                 <Route path="/pre-register" element={<PreRegisterPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
+                <Route path="/assets" element={<AssetsPage />} />
+                <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
                 <Route path="/referrals" element={<ReferralPage />} />
               </Route>
             </Route>

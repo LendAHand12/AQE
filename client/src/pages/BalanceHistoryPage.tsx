@@ -20,6 +20,7 @@ export default function BalanceHistoryPage() {
   const [assetFilter, setAssetFilter] = useState("ALL") // ALL, USDT, AQE
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
   const [summary, setSummary] = useState<any>({
     totalPaidUSDT: 0,
@@ -30,15 +31,16 @@ export default function BalanceHistoryPage() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [page, assetFilter])
 
   const fetchData = async () => {
     if (page === 1) setLoading(true)
     else setFetching(true)
     try {
-      const historyRes = await apiClient.get(`/payments/my-balance-history?page=${page}&limit=10`)
+      const historyRes = await apiClient.get(`/payments/my-balance-history?page=${page}&limit=10&symbol=${assetFilter}`)
       setHistory(historyRes.data.history)
       setTotalPages(historyRes.data.pages)
+      setTotalItems(historyRes.data.total)
       setSummary(historyRes.data.summary)
     } catch (err) {
       console.error("Fetch Error:", err)
@@ -48,20 +50,11 @@ export default function BalanceHistoryPage() {
     }
   }
 
-  useEffect(() => {
-    fetchData()
-  }, [page])
-
   const filteredHistory = history.filter(item => {
     const matchesSearch = (item.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (item.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (item.symbol || "").toLowerCase().includes(searchTerm.toLowerCase())
-    
-    let matchesAsset = true;
-    if (assetFilter === "USDT") matchesAsset = item.symbol === "USDT";
-    else if (assetFilter === "AQE") matchesAsset = item.symbol === "AQE";
-    
-    return matchesSearch && matchesAsset;
+    return matchesSearch;
   })
 
   // Summary logic from server
@@ -91,7 +84,7 @@ export default function BalanceHistoryPage() {
       <div className="space-y-6">
         {/* Filters & Export */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-[16px] border border-[#EFEFEF]">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
              <button 
                onClick={() => setAssetFilter("ALL")}
                className={cn(
@@ -271,6 +264,7 @@ export default function BalanceHistoryPage() {
         <Pagination 
           currentPage={page}
           totalPages={totalPages}
+          totalItems={totalItems}
           onPageChange={setPage}
           disabled={fetching}
         />

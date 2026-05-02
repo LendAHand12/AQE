@@ -27,7 +27,17 @@ export const getUserBalanceHistory = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
+        const { symbol } = req.query;
         const query = { userId };
+        
+        if (symbol && symbol !== 'ALL') {
+            if (symbol === 'WITHDRAW') {
+                query.type = 'WITHDRAW';
+            } else {
+                query.symbol = symbol;
+            }
+        }
+
         const total = await BalanceHistory.countDocuments(query);
         
         const history = await BalanceHistory.find(query)
@@ -36,7 +46,7 @@ export const getUserBalanceHistory = async (req, res) => {
             .limit(limit);
 
         // 1. Fetch current user balances from DB for ground truth
-        const user = await User.findById(userId).select('aqeBalance preRegisterTokens');
+        const user = await User.findById(userId).select('aqeBalance preRegisterTokens usdtBalance');
 
         // 2. Fetch Summary Stats for Commissions and Payments via Aggregate
         const totalCommissions = await Commission.aggregate([
@@ -55,6 +65,7 @@ export const getUserBalanceHistory = async (req, res) => {
             pages: Math.ceil(total / limit),
             total,
             summary: {
+                usdtBalance: user.usdtBalance || 0,
                 officialAQE: user.aqeBalance || 0,
                 temporaryAQE: user.preRegisterTokens || 0,
                 totalCommissions: totalCommissions.length > 0 ? totalCommissions[0].total : 0,

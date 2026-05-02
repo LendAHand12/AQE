@@ -8,7 +8,8 @@ import {
   CreditCard,
   History,
   Users,
-  X
+  X,
+  Wallet
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logo from "@/assets/logo_green.svg"
@@ -35,6 +36,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
     { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
+    { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
     { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },

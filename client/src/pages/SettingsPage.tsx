@@ -168,7 +168,7 @@ export default function SettingsPage() {
       }
     }
     fetchProfile()
-  }, [t])
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -559,7 +559,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="kyc" className="mt-8">
-          <KYCSection />
+          <KYCSection initialData={formData} />
         </TabsContent>
 
         <TabsContent value="security" className="mt-8">

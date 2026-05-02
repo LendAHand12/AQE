@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { 
   ShieldCheck, 
-  Fingerprint, 
+  ScanFace, 
   Key, 
   CheckCircle2, 
   ShieldAlert,
@@ -19,22 +19,45 @@ import { useTranslation } from "react-i18next"
 import { QRCodeCanvas } from "qrcode.react"
 import { cn } from "@/lib/utils"
 
-export default function KYCSection() {
+export default function KYCSection({ initialData }: { initialData?: any }) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [userData, setUserData] = useState<any>(null)
+  const [userData, setUserData] = useState<any>(initialData || null)
   const [idPhotos, setIdPhotos] = useState({
-    front: "",
-    back: "",
-    portrait: ""
+    front: initialData?.idCardFront || "",
+    back: initialData?.idCardBack || "",
+    portrait: initialData?.portraitPhoto || ""
   })
   const [isUploading, setIsUploading] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    if (!initialData) {
+      fetchProfile()
+    } else {
+       setUserData(initialData)
+       setIdPhotos({
+         front: initialData.idCardFront || "",
+         back: initialData.idCardBack || "",
+         portrait: initialData.portraitPhoto || ""
+       })
+       updateStep(initialData)
+    }
+  }, [initialData])
+
+  const updateStep = (data: any) => {
+    // Determine current step based on sequential logic
+    if (data.kycStatus === 'verified') {
+      if (data.faceTecTid) {
+         setStep(3)
+      } else {
+         setStep(2)
+      }
+    } else {
+      setStep(1)
+    }
+  }
 
   const fetchProfile = async () => {
     try {
@@ -46,16 +69,7 @@ export default function KYCSection() {
         portrait: res.data.portraitPhoto || ""
       })
       
-      // Determine current step based on sequential logic
-      if (res.data.kycStatus === 'verified') {
-        if (res.data.faceTecTid) {
-           setStep(3)
-        } else {
-           setStep(2)
-        }
-      } else {
-        setStep(1)
-      }
+      updateStep(res.data)
     } catch (err) {
       toast.error(t("kyc.fetch_error"))
     }
@@ -105,13 +119,14 @@ export default function KYCSection() {
   const handleFaceScan = async () => {
     setLoading(true)
     try {
-      // Mocking FaceTec success for now
-      const mockTid = "FT-" + Math.random().toString(36).substr(2, 9).toUpperCase()
-      await apiClient.post("/auth/kyc-status", { facetecTid: mockTid })
-      toast.success(t("kyc.facescan.success"))
-      fetchProfile()
-    } catch (err) {
-      toast.error(t("kyc.facescan.failed"))
+      const res = await apiClient.post("/kyc/start-face-scan")
+      if (res.data.url) {
+        window.location.href = res.data.url
+      } else {
+        toast.error("Không nhận được URL đăng ký từ hệ thống")
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t("kyc.facescan.failed"))
     } finally {
       setLoading(false)
     }
@@ -166,7 +181,7 @@ export default function KYCSection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           { id: 1, key: "step_1", icon: ShieldCheck },
-          { id: 2, key: "step_2", icon: Fingerprint },
+          { id: 2, key: "step_2", icon: ScanFace },
           { id: 3, key: "step_3", icon: Key }
         ].map((s) => (
           <button 
@@ -256,9 +271,9 @@ export default function KYCSection() {
 
         {step === 2 && (
           <div className="space-y-6">
-            <Card className="border border-gray-100 overflow-hidden rounded-[24px]">
-              <CardContent className="p-0 flex flex-col md:flex-row">
-                <div className="md:w-1/2 p-10 space-y-6 flex flex-col justify-center">
+            <Card className="border border-gray-100 overflow-hidden rounded-[24px] p-0 py-0">
+              <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
+                <div className="md:flex-1 p-10 space-y-6 flex flex-col justify-center">
                   <div className="space-y-2">
                     <h3 className="text-2xl font-bold text-gray-800">{t("kyc.facescan.title")}</h3>
                     <p className="text-sm text-gray-500 leading-relaxed">{t("kyc.facescan.standard")}</p>
@@ -287,8 +302,8 @@ export default function KYCSection() {
                     </Button>
                   )}
                 </div>
-                <div className="md:w-1/2 bg-[#276152] flex items-center justify-center p-12 text-white/10">
-                   <Fingerprint size={200} />
+                <div className="md:flex-1 bg-[#276152] flex items-center justify-center p-12 text-white/10">
+                   <ScanFace size={240} />
                 </div>
               </CardContent>
             </Card>
@@ -297,8 +312,8 @@ export default function KYCSection() {
 
         {step === 3 && (
           <div className="space-y-6">
-            <Card className="border border-gray-100 overflow-hidden rounded-[24px]">
-              <CardContent className="p-0 flex flex-col md:flex-row">
+            <Card className="border border-gray-100 overflow-hidden rounded-[24px] p-0 py-0">
+              <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
                 <div className="md:w-[40%] bg-gray-50 flex flex-col items-center justify-center p-10 gap-6">
                   <div className="bg-white p-4 rounded-3xl shadow-xl shadow-gray-200/50">
                     <QRCodeCanvas 

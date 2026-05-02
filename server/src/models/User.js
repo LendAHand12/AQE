@@ -103,6 +103,10 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    ageEstimate: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     isTwoFactorEnabled: {
         type: Boolean,
         default: false
