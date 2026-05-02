@@ -42,6 +42,7 @@ export default function UserManagementPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [page, setPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
 
   const [totalPages, setTotalPages] = useState(1)
   const [fetching, setFetching] = useState(false)
@@ -63,7 +64,7 @@ export default function UserManagementPage() {
     else setFetching(true)
     
     try {
-      const response = await apiClient.get(`/admin/users?page=${page}&limit=10&search=${searchTerm}&status=${statusFilter}`)
+      const response = await apiClient.get(`/admin/users?page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}&status=${statusFilter}`)
       setUsers(response.data.users)
       setTotalPages(response.data.pages)
 
@@ -281,7 +282,7 @@ export default function UserManagementPage() {
         onPageChange={setPage}
         disabled={fetching}
         totalItems={stats.total}
-        itemsPerPage={10}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
 

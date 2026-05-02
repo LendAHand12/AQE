@@ -28,13 +28,14 @@ export default function AdminPaymentHistoryPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
+  const ITEMS_PER_PAGE = 10
 
 
   const fetchTransactions = async () => {
     if (page === 1) setLoading(true)
     else setFetching(true)
     try {
-      const response = await apiClient.get(`/admin/transactions?category=USDT&page=${page}&limit=20&search=${searchTerm}`)
+      const response = await apiClient.get(`/admin/transactions?category=USDT&page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}`)
       setTransactions(response.data.transactions)
       setTotalPages(response.data.pages)
       setTotalItems(response.data.total)
@@ -161,7 +162,7 @@ export default function AdminPaymentHistoryPage() {
         onPageChange={setPage}
         disabled={fetching}
         totalItems={totalItems}
-        itemsPerPage={20}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
     </div>
