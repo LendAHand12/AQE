@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
         localStorage.setItem("admin_info", JSON.stringify(response.data))
         localStorage.setItem("token", response.data.token)
         toast.success("Xác thực thành công!")
-        navigate("/admin/users")
+        navigate("/admin/dashboard")
         return
       }
 
@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
         localStorage.setItem("admin_info", JSON.stringify(response.data))
         localStorage.setItem("token", response.data.token)
         toast.success("Đăng nhập hệ thống quản trị thành công!")
-        navigate("/admin/users")
+        navigate("/admin/dashboard")
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Thông tin đăng nhập không chính xác")

@@ -6,7 +6,7 @@ import {
     getUserStats,
     updateUserByAdmin, 
     deleteUser,
-
+    getUserById,
     generate2FA,
     enable2FA,
     disable2FA,
@@ -40,6 +40,7 @@ router.get('/dashboard-stats', adminProtect, getDashboardStats);
 
 
 router.route('/users/:id')
+    .get(adminProtect, getUserById)
     .put(adminProtect, updateUserByAdmin)
     .delete(adminProtect, deleteUser);
 

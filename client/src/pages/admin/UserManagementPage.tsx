@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { 
   Search, 
   Trash2, 
@@ -36,6 +37,7 @@ import { Pagination } from "@/components/common/Pagination"
 import dayjs from "dayjs"
 
 export default function UserManagementPage() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, locked: 0 })
@@ -246,10 +248,7 @@ export default function UserManagementPage() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 rounded-full text-[#276152] hover:bg-[#d9ede8]"
-                        onClick={() => {
-                          setEditingUser(user)
-                          setIsEditDialogOpen(true)
-                        }}
+                        onClick={() => navigate(`/admin/users/${user._id}`)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>

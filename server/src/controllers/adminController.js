@@ -4,6 +4,8 @@ import AdminLog from '../models/AdminLog.js';
 import Notification from '../models/Notification.js';
 import Transaction from '../models/Transaction.js';
 import Property from '../models/Property.js';
+import Commission from '../models/Commission.js';
+import BalanceHistory from '../models/BalanceHistory.js';
 import { generateToken } from '../utils/jwt.js';
 import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
@@ -124,6 +126,47 @@ export const getUsers = async (req, res) => {
             page,
             pages: Math.ceil(total / limit),
             total
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user by ID with full details
+// @route   GET /api/admin/users/:id
+export const getUserById = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false }).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+
+        // Fetch transactions (USDT payments, deposits, withdrawals)
+        const transactions = await Transaction.find({
+            $or: [{ from: user._id }, { to: user._id }]
+        }).sort({ createdAt: -1 }).limit(100);
+
+        // Fetch commissions (received from referrals)
+        const commissions = await Commission.find({
+            recipientId: user._id
+        }).populate('fromUserId', 'username fullName email').sort({ createdAt: -1 });
+
+        // Fetch token balance history (AQE, etc)
+        const tokenHistory = await BalanceHistory.find({
+            userId: user._id
+        }).sort({ createdAt: -1 }).limit(100);
+
+        // Fetch referrals (users referred by this user)
+        const referrals = await User.find({ referredBy: user._id, isDeleted: false })
+            .select('fullName username email createdAt kycStatus isActive usdtBalance');
+
+        res.json({
+            user,
+            transactions,
+            commissions,
+            tokenHistory,
+            referrals
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

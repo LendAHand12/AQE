@@ -16,6 +16,7 @@ import AdminPropertyPage from "@/pages/admin/AdminPropertyPage"
 import AddPropertyPage from "@/pages/admin/AddPropertyPage"
 import EditPropertyPage from "@/pages/admin/EditPropertyPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
+import AdminUserProfilePage from "@/pages/admin/AdminUserProfilePage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
@@ -66,6 +67,7 @@ export function App() {
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route element={<AdminLayout />}>
               <Route path="/admin/users" element={<UserManagementPage />} />
+              <Route path="/admin/users/:id" element={<AdminUserProfilePage />} />
               <Route path="/admin/properties" element={<AdminPropertyPage />} />
               <Route path="/admin/properties/add" element={<AddPropertyPage />} />
               <Route path="/admin/properties/edit/:id" element={<EditPropertyPage />} />

@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-[#efefef]/50">
                   {recentTransactions.map((tx: any) => (
                     <tr key={tx._id} className="hover:bg-[#f8faf9] transition-colors">
-                      <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#111827]">
+                      <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#276152] font-semibold cursor-pointer hover:underline" onClick={() => navigate(`/admin/users/${tx.from}`)}>
                         {tx.userName}
                       </td>
                       <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#111827]">
@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <button 
-                    onClick={() => navigate('/admin/users')}
+                    onClick={() => navigate(`/admin/users/${user._id}`)}
                     className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[11px] text-[#276152] hover:underline"
                   >
                     Xem
