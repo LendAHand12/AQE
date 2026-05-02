@@ -14,7 +14,6 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
@@ -93,8 +92,9 @@ export default function AdminCommissionHistoryPage() {
               <TableHead className="font-bold text-[#111827]">Người được giới thiệu (F)</TableHead>
               <TableHead className="w-10"></TableHead>
               <TableHead className="font-bold text-[#111827]">Người nhận hoa hồng</TableHead>
-              <TableHead className="font-bold text-[#111827] text-right">Số tiền (USDT)</TableHead>
-              <TableHead className="font-bold text-[#111827] pr-8 text-right">Nội dung</TableHead>
+              <TableHead className="font-bold text-[#111827] text-right">Doanh số</TableHead>
+              <TableHead className="font-bold text-[#111827] text-right">Hoa hồng</TableHead>
+              <TableHead className="font-bold text-[#111827] pr-8 text-right">Mô tả</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -106,7 +106,6 @@ export default function AdminCommissionHistoryPage() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold text-[#111827]">{tx.from?.username}</span>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Người phát sinh doanh số</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -115,10 +114,10 @@ export default function AdminCommissionHistoryPage() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold text-[#276152]">{tx.to?.username}</span>
-                    <Badge variant="outline" className="w-fit text-[9px] mt-1 bg-green-50 text-green-700 border-none font-bold">
-                       {tx.description?.includes("F1") ? "HOA HỒNG F1" : "HOA HỒNG F2"}
-                    </Badge>
                   </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="text-[14px] font-medium text-gray-600">{tx.salesAmount?.toLocaleString()} USDT</span>
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="text-[16px] font-bold text-amber-600">+{tx.amount?.toLocaleString()} USDT</span>

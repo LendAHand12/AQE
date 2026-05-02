@@ -24,6 +24,10 @@ const commissionSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    salesAmount: {
+        type: Number,
+        required: true
+    },
 }, {
     timestamps: true
 });

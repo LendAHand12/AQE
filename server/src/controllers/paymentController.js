@@ -37,7 +37,8 @@ async function processCommissions(buyer, amountPaid) {
             fromUserId: buyer._id,
             amountUsdt: amountF1,
             level: 1,
-            percentage: 8
+            percentage: 8,
+            salesAmount: amountPaid
         });
 
         // Add to Balance History for recipient
@@ -66,7 +67,8 @@ async function processCommissions(buyer, amountPaid) {
                     fromUserId: buyer._id,
                     amountUsdt: amountF2,
                     level: 2,
-                    percentage: 2
+                    percentage: 2,
+                    salesAmount: amountPaid
                 });
 
                 // Add to Balance History for recipient
@@ -95,11 +97,39 @@ export const submitPreRegisterPledge = async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister > 0) {
-            return res.status(400).json({ message: 'payments.errors.cannot_change_pledge' });
+        
+        // If they already have a pledge
+        if (user.pledgeUsdt > 0) {
+            // If current round is not finished, they can only change if they haven't paid anything
+            if (!user.isPledgeCompleted) {
+                if (user.paidUsdtPreRegister > 0) {
+                    return res.status(400).json({ message: 'payments.errors.cannot_change_pledge' });
+                }
+                // If they haven't paid, just update the pledge amount
+                user.pledgeUsdt = pledgeAmount;
+            } else {
+                // Current round IS finished. ARCHIVE it and start new round.
+                user.pledgeRounds.push({
+                    roundNumber: user.pledgeRounds.length + 1,
+                    pledgeUsdt: user.pledgeUsdt,
+                    paidUsdt: user.paidUsdtPreRegister,
+                    tokensReceived: user.preRegisterTokens,
+                    bonusPercent: user.hasReceivedPromotion ? (new Date() <= new Date('2026-05-31') ? 0.10 : 0.05) : 0, // rough estimate or we can store the actual
+                    completedAt: new Date()
+                });
+
+                // Reset for new round
+                user.pledgeUsdt = pledgeAmount;
+                user.paidUsdtPreRegister = 0;
+                user.preRegisterTokens = 0;
+                user.hasReceivedPromotion = false;
+                user.isPledgeCompleted = false;
+            }
+        } else {
+            // First time ever registering
+            user.pledgeUsdt = pledgeAmount;
         }
 
-        user.pledgeUsdt = pledgeAmount;
         await user.save();
 
         res.json({ message: 'payments.pledge_success', pledgeUsdt: user.pledgeUsdt });
@@ -117,11 +147,35 @@ export const submitPreRegisterPayment = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
+        const nowVN = getVietnamTime();
+        const may31VN = new Date('2026-05-31T23:59:59+07:00');
+        const june30VN = new Date('2026-06-30T23:59:59+07:00');
+        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+
         if (user.kycStatus !== 'verified' && user.kycStatus !== 'pending') {
             return res.status(403).json({ message: 'payments.errors.kyc_required' });
         }
 
-        if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
+        // If no pledge OR previous pledge is completed, allow starting a new one
+        if (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted) {
+            if (user.isPledgeCompleted) {
+                // Archive previous round
+                user.pledgeRounds.push({
+                    roundNumber: user.pledgeRounds.length + 1,
+                    pledgeUsdt: user.pledgeUsdt,
+                    paidUsdt: user.paidUsdtPreRegister,
+                    tokensReceived: user.preRegisterTokens,
+                    bonusPercent: user.hasReceivedPromotion ? (nowVN <= may31VN ? 0.10 : 0.05) : 0,
+                    completedAt: new Date()
+                });
+                
+                // Reset for new round
+                user.paidUsdtPreRegister = 0;
+                user.preRegisterTokens = 0;
+                user.hasReceivedPromotion = false;
+                user.isPledgeCompleted = false;
+            }
+
             if (!pledgeAmountNum || pledgeAmountNum < 100) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
@@ -141,11 +195,6 @@ export const submitPreRegisterPayment = async (req, res) => {
             });
         }
 
-        const nowVN = getVietnamTime();
-        const may31VN = new Date('2026-05-31T23:59:59+07:00');
-        const june30VN = new Date('2026-06-30T23:59:59+07:00');
-        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
-        
         let phase = 'PRE_REGISTER';
         let price = 1.0;
 
@@ -156,7 +205,6 @@ export const submitPreRegisterPayment = async (req, res) => {
         }
 
         const tokensCalculated = amountNum / price;
-        const oldPreRegisterTokens = user.preRegisterTokens;
         
         // Define Month End Deadlines
         const isPostMay = nowVN > may31VN;
@@ -278,7 +326,7 @@ export const submitPreRegisterPayment = async (req, res) => {
 // @desc    Get current user's pre-register status
 export const getMyPreRegister = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('username pledgeUsdt paidUsdtPreRegister preRegisterTokens hasReceivedPromotion aqeBalance isPledgeCompleted');
+        const user = await User.findById(req.user._id).select('username pledgeUsdt paidUsdtPreRegister preRegisterTokens hasReceivedPromotion aqeBalance isPledgeCompleted pledgeRounds');
         
         // Return null if no pledge made
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) return res.json(null);
@@ -325,7 +373,8 @@ export const getMyPreRegister = async (req, res) => {
             preRegisterTokens: user.preRegisterTokens,
             hasReceivedPromotion: user.hasReceivedPromotion,
             status: user.paidUsdtPreRegister >= user.pledgeUsdt ? 'completed' : (user.paidUsdtPreRegister > 0 ? 'partial' : 'pending'),
-            transactions
+            transactions,
+            pledgeRounds: user.pledgeRounds
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -441,6 +490,9 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                 from: c.fromUserId,
                 to: c.recipientId,
                 amount: c.amountUsdt,
+                salesAmount: c.salesAmount || Math.round(c.amountUsdt / (c.percentage / 100)),
+                level: c.level,
+                percentage: c.percentage,
                 symbol: 'USDT',
                 type: 'COMMISSION',
                 status: 'SUCCESS',

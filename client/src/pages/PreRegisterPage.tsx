@@ -26,6 +26,7 @@ import { transferUSDT } from "@/lib/payment"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import dayjs from "dayjs"
 
 export default function PreRegisterPage() {
   const { t } = useTranslation()
@@ -36,6 +37,7 @@ export default function PreRegisterPage() {
   const [referralStats, setReferralStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
+  const [isNewRound, setIsNewRound] = useState(false)
 
   const { open } = useWeb3Modal()
   const { disconnect } = useDisconnect()
@@ -67,6 +69,9 @@ export default function PreRegisterPage() {
         } else {
           setPaymentAmount(Math.max(1, pledgeRes.data.pledgeUsdt - pledgeRes.data.paidUsdtPreRegister))
         }
+      }
+      if (pledgeRes.data?.status !== 'completed') {
+        setIsNewRound(false)
       }
     } catch (err) {
       console.error("Fetch Error:", err)
@@ -127,7 +132,7 @@ export default function PreRegisterPage() {
       await apiClient.post("/payments/payment", { 
         hash, 
         amount: paymentAmount,
-        pledgeAmount: !pledge ? pledgeAmount : undefined
+        pledgeAmount: (!pledge || isNewRound) ? pledgeAmount : undefined
       })
 
       toast.success(t("pre_register.pay_success"))
@@ -139,6 +144,12 @@ export default function PreRegisterPage() {
     } finally {
       setPaying(false)
     }
+  }
+
+  const handleStartNewRound = () => {
+    setIsNewRound(true)
+    setPledgeAmount(0)
+    setPaymentAmount(0)
   }
 
   const copyToClipboard = (text: string) => {
@@ -313,11 +324,11 @@ export default function PreRegisterPage() {
             </div>
           </div>
 
-          {/* Right Column - Action Card */}
-          <div className="xl:sticky xl:top-[137px] z-20">
-            <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100 space-y-10">
-              
-              {/* Referral Section */}
+          {/* Right Column - Action Cards */}
+          <div className="xl:sticky xl:top-[137px] z-20 space-y-6">
+            
+            {/* Referral Card */}
+            <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100">
               <div className="space-y-4">
                 <div className="flex gap-3 items-center">
                    <div className="size-10 bg-[#d9ede8] rounded-full flex items-center justify-center">
@@ -361,8 +372,10 @@ export default function PreRegisterPage() {
                    </div>
                 </div>
               </div>
+            </div>
 
-              {/* Registration Form */}
+            {/* Registration Card */}
+            <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100">
               <div className="space-y-4">
                  <div className="flex gap-3 items-center">
                    <div className="size-10 bg-[#d9ede8] rounded-full flex items-center justify-center">
@@ -371,7 +384,7 @@ export default function PreRegisterPage() {
                    <p className="text-[18px] font-bold text-[#111827]">{t("pre_register.reg_info_title")}</p>
                  </div>
 
-                 {pledge?.status !== 'completed' && (
+                 {(pledge?.status !== 'completed' || isNewRound) && (
                     <div className="space-y-4 pt-2">
                        <div className="space-y-2.5">
                           <div className="flex justify-between items-center text-[14px]">
@@ -384,7 +397,7 @@ export default function PreRegisterPage() {
                                min={100}
                                value={pledgeAmount === 0 ? "" : pledgeAmount}
                                placeholder="0"
-                               disabled={pledge?.paidUsdtPreRegister > 0}
+                               disabled={pledge?.paidUsdtPreRegister > 0 && !isNewRound}
                                onChange={(e) => setPledgeAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                                className="h-11 border-[#9ca3af] rounded-[8px] focus:ring-0 focus:border-[#276152] font-medium text-[#0d1f1d]"
                              />
@@ -472,7 +485,7 @@ export default function PreRegisterPage() {
                  <div className="flex gap-3 pt-4">
                     {isKycVerified ? (
                       <div className="flex-1 space-y-3">
-                         {pledge?.status === 'completed' ? (
+                         {(pledge?.status === 'completed' && !isNewRound) ? (
                             <div className="space-y-4">
                               {pledge?.paidUsdtPreRegister > 0 && (
                                  <div className="p-4 bg-[#efefef]/50 rounded-[16px] grid grid-cols-3 gap-1 mb-4 w-full">
@@ -505,6 +518,15 @@ export default function PreRegisterPage() {
                               <Button className="w-full h-11 bg-emerald-500 text-white rounded-[12px] font-bold" disabled>
                                  <CheckCircle2 size={18} className="mr-2" />
                                  {t("pre_register.pay_success")}
+                              </Button>
+                              <Button 
+                                type="button"
+                                variant="outline"
+                                className="w-full h-11 border-[#276152] text-[#276152] hover:bg-[#276152]/5 rounded-[12px] font-bold"
+                                onClick={handleStartNewRound}
+                              >
+                                 <RefreshCw size={18} className="mr-2" />
+                                 {t("pre_register.new_purchase_round")}
                               </Button>
                             </div>
                          ) : (
@@ -574,6 +596,54 @@ export default function PreRegisterPage() {
                  </div>
               </div>
             </div>
+
+            {/* Pledge Rounds History Card */}
+            {pledge?.pledgeRounds?.length > 0 && (
+              <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100">
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 bg-[#fef3c7] rounded-full flex items-center justify-center">
+                      <Calendar size={20} className="text-[#d97706]" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[18px] font-bold text-[#111827]">{t("pre_register.history_title")}</p>
+                      <p className="text-[14px] text-[#6b7280]">{t("pre_register.history_desc") || "Review your completed registration cycles"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {pledge.pledgeRounds.map((round: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-[#f8fafc] rounded-[14px] border border-slate-100 flex justify-between items-center transition-all hover:border-amber-200 hover:bg-amber-50/30 group">
+                        <div className="space-y-1.5">
+                           <div className="flex items-center gap-2">
+                             <p className="text-[14px] font-bold text-[#111827]">
+                               {t("pre_register.round_label", { num: round.roundNumber || idx + 1 })}
+                             </p>
+                             <div className="size-1.5 rounded-full bg-emerald-500" />
+                           </div>
+                           <p className="text-[11px] text-[#636d7d] font-medium flex items-center gap-1">
+                             <Calendar size={12} />
+                             {dayjs(round.completedAt).format('DD/MM/YYYY HH:mm')}
+                           </p>
+                        </div>
+                        <div className="text-right space-y-1.5">
+                           <p className="text-[16px] font-bold text-[#276152]">
+                             {round.pledgeUsdt?.toLocaleString()} <span className="text-[11px] opacity-60">USDT</span>
+                           </p>
+                           {round.bonusPercent > 0 && (
+                             <div className="flex justify-end">
+                               <Badge className="bg-emerald-100 text-emerald-700 border-none text-[10px] h-5 px-2 font-bold rounded-full">
+                                 +{Math.round(round.bonusPercent * 100)}% Bonus
+                               </Badge>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,15 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+const pledgeRoundSchema = new mongoose.Schema({
+    roundNumber: { type: Number },
+    pledgeUsdt: { type: Number },
+    paidUsdt: { type: Number },
+    tokensReceived: { type: Number },
+    bonusPercent: { type: Number, default: 0 },
+    completedAt: { type: Date }
+}, { _id: false });
+
 const bankAccountSchema = mongoose.Schema({
     bankName: { type: String, required: true },
     accountNumber: { type: String, required: true },
@@ -126,6 +135,10 @@ const userSchema = mongoose.Schema({
     isPledgeCompleted: {
         type: Boolean,
         default: false
+    },
+    pledgeRounds: {
+        type: [pledgeRoundSchema],
+        default: []
     },
     walletAddress: {
         type: String,
