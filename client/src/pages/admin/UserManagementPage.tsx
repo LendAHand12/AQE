@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { 
   Search, 
   Trash2, 
-  Edit, 
+  Eye, 
   Loader2
 } from "lucide-react"
 import { 
@@ -250,7 +250,7 @@ export default function UserManagementPage() {
                         className="h-8 w-8 rounded-full text-[#276152] hover:bg-[#d9ede8]"
                         onClick={() => navigate(`/admin/users/${user._id}`)}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="ghost" 

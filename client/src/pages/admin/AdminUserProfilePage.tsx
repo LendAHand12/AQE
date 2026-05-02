@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { 
   User, 
   Mail, 
-  Phone, 
-  Calendar, 
+  Phone,
   ShieldCheck, 
   Wallet, 
   ArrowLeft,
   ArrowRight,
   Loader2,
-  CheckCircle2,
   XCircle,
   Clock,
   History,
@@ -19,8 +17,10 @@ import {
   CreditCard,
   Building2,
   ExternalLink,
-  MapPin,
-  Flag
+  MapPin, 
+  Flag,
+  Image as ImageIcon,
+  Eye
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -65,6 +65,9 @@ export default function AdminUserProfilePage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
+  
+  // Image preview state
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchUserDetails()
@@ -348,6 +351,91 @@ export default function AdminUserProfilePage() {
                     </CardContent>
                  </Card>
               </div>
+
+              {/* Hồ sơ KYC */}
+              <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                    <ShieldCheck size={20} className="text-[#276152]" />
+                    Hồ sơ KYC & Giấy tờ tùy thân
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Mặt trước CCCD/Passport</p>
+                      <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
+                        {user.idCardFront ? (
+                          <>
+                            <img src={getImageUrl(user.idCardFront)} alt="Front ID" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                            <div 
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                              onClick={() => setPreviewImage(getImageUrl(user.idCardFront))}
+                            >
+                              <div className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white">
+                                <Eye size={24} />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <ImageIcon size={32} strokeWidth={1} />
+                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Mặt sau CCCD/Passport</p>
+                      <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
+                        {user.idCardBack ? (
+                          <>
+                            <img src={getImageUrl(user.idCardBack)} alt="Back ID" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                            <div 
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                              onClick={() => setPreviewImage(getImageUrl(user.idCardBack))}
+                            >
+                              <div className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white">
+                                <Eye size={24} />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <ImageIcon size={32} strokeWidth={1} />
+                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Ảnh chân dung</p>
+                      <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
+                        {user.portraitPhoto ? (
+                          <>
+                            <img src={getImageUrl(user.portraitPhoto)} alt="Portrait" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                            <div 
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                              onClick={() => setPreviewImage(getImageUrl(user.portraitPhoto))}
+                            >
+                              <div className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white">
+                                <Eye size={24} />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <ImageIcon size={32} strokeWidth={1} />
+                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Lịch sử các đợt mua */}
               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
@@ -769,6 +857,30 @@ export default function AdminUserProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Preview Overlay */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[100000] bg-black/95 flex items-center justify-center p-4 cursor-pointer backdrop-blur-md transition-all duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+             className="absolute top-8 right-8 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[100001]"
+             onClick={(e) => {
+               e.stopPropagation();
+               setPreviewImage(null);
+             }}
+          >
+             <XCircle size={32} />
+          </button>
+          <img 
+            src={previewImage} 
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-[16px] shadow-2xl relative z-[100001] animate-in zoom-in-95 duration-300" 
+            alt="Preview" 
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
