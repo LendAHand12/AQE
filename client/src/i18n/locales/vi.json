@@ -4,7 +4,8 @@
     "good_afternoon": "Chào buổi chiều",
     "good_evening": "Chào buổi tối",
     "select_language": "Chọn ngôn ngữ",
-    "select_language_desc": "Vui lòng chọn ngôn ngữ hiển thị bạn muốn sử dụng cho hệ thống."
+    "select_language_desc": "Vui lòng chọn ngôn ngữ hiển thị bạn muốn sử dụng cho hệ thống.",
+    "connect_wallet": "Kết nối ví"
   },
   "auth": {
     "login": "Đăng nhập",
@@ -274,7 +275,10 @@
     "history_title": "Lịch sử các lượt mua",
     "history_desc": "Xem lại các lượt mua sớm đã hoàn tất",
     "round_label": "Lượt mua #{{num}}",
-    "copied": "Đã sao chép liên kết"
+    "copied": "Đã sao chép liên kết",
+    "pay_confirm_toast": "Vui lòng xác nhận giao dịch trên ví của bạn",
+    "pay_sent_toast": "Giao dịch đã được gửi. Đang chờ xác nhận từ mạng lưới...",
+    "pay_failed": "Thanh toán thất bại. Vui lòng thử lại"
   },
   "assets": {
     "title": "Tài sản của tôi",

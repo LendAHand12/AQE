@@ -275,7 +275,10 @@
     "history_title": "Purchase History",
     "history_desc": "Review your completed registration cycles",
     "round_label": "Round #{{num}}",
-    "copied": "Link copied to clipboard"
+    "copied": "Link copied to clipboard",
+    "pay_confirm_toast": "Please confirm the transaction in your wallet",
+    "pay_sent_toast": "Transaction sent. Waiting for network confirmation...",
+    "pay_failed": "Payment failed. Please try again"
   },
   "assets": {
     "title": "My Assets",
