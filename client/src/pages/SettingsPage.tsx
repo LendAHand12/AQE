@@ -47,7 +47,6 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import KYCSection from "@/components/profile/KYCSection"
-import TwoFactorSetupModal from "@/components/profile/TwoFactorSetupModal"
 import { getImageUrl } from "@/lib/utils"
 
 // Helper function to create the cropped image
@@ -142,13 +141,6 @@ export default function SettingsPage() {
   // Bank Modal State
   const [isBankModalOpen, setIsBankModalOpen] = useState(false)
   const [newBank, setNewBank] = useState({ bankName: "", accountNumber: "", accountName: "", isDefault: false })
-
-  // 2FA State
-  const [qrCodeUrl, setQrCodeUrl] = useState("")
-  const [twoFactorSecret, setTwoFactorSecret] = useState("")
-  const [twoFactorCode, setTwoFactorCode] = useState("")
-  const [processing2FA, setProcessing2FA] = useState(false)
-  const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -266,60 +258,6 @@ export default function SettingsPage() {
     setFormData({ ...formData, bankAccounts: newBanks })
   }
 
-  const handleGenerate2FA = async () => {
-    try {
-      setProcessing2FA(true)
-      const res = await apiClient.get("/auth/2fa/generate")
-      setQrCodeUrl(res.data.qrCodeUrl)
-      setTwoFactorSecret(res.data.secret)
-      setIsTwoFactorModalOpen(true)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Lỗi tạo 2FA")
-    } finally {
-      setProcessing2FA(false)
-    }
-  }
-
-  const handleEnable2FA = async (code: string) => {
-    if (!code || code.length !== 6) {
-      toast.error(t("settings.security_tab.enter_6_digits", "Vui lòng nhập 6 số"))
-      return
-    }
-    try {
-      setProcessing2FA(true)
-      await apiClient.post("/auth/2fa/enable", { code })
-      setFormData({ ...formData, isTwoFactorEnabled: true })
-      setQrCodeUrl("")
-      setTwoFactorSecret("")
-      setTwoFactorCode("")
-      setIsTwoFactorModalOpen(false)
-      toast.success(t("settings.security_tab.enable_success", "Bật 2FA thành công"))
-    } catch (error: any) {
-      toast.error(error.response?.data?.message ? t(error.response.data.message) : t("settings.security_tab.modal.error_6_digits", "Mã không đúng"))
-      throw error; // Let modal handle error state if needed
-    } finally {
-      setProcessing2FA(false)
-    }
-  }
-
-  const handleDisable2FA = async () => {
-    if (!twoFactorCode || twoFactorCode.length !== 6) {
-      toast.error(t("settings.security_tab.enter_6_digits", "Vui lòng nhập 6 số"))
-      return
-    }
-    try {
-      setProcessing2FA(true)
-      await apiClient.post("/auth/2fa/disable", { code: twoFactorCode })
-      setFormData({ ...formData, isTwoFactorEnabled: false })
-      setTwoFactorCode("")
-      toast.success(t("settings.security_tab.disable_success", "Tắt 2FA thành công"))
-    } catch (error: any) {
-      toast.error(error.response?.data?.message ? t(error.response.data.message) : t("settings.security_tab.modal.error_6_digits", "Mã không đúng"))
-    } finally {
-      setProcessing2FA(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -350,7 +288,6 @@ export default function SettingsPage() {
         <TabsList className="bg-transparent h-auto flex w-full justify-start gap-4 sm:gap-8 mb-10 border-b border-[#d5d7db] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden px-1 rounded-none p-0">
           {[
             { id: "personal", label: t("settings.tabs.personal"), icon: User },
-            { id: "security", label: t("settings.tabs.security"), icon: ShieldCheck },
             { id: "kyc", label: t("settings.tabs.kyc"), icon: ShieldAlert },
             { id: "support", label: t("settings.tabs.support"), icon: HelpCircle },
           ].map((tab) => (
@@ -560,63 +497,6 @@ export default function SettingsPage() {
 
         <TabsContent value="kyc" className="mt-8">
           <KYCSection initialData={formData} />
-        </TabsContent>
-
-        <TabsContent value="security" className="mt-8">
-            <Card className="border border-gray-100 shadow-none rounded-[16px]">
-                <CardContent className="p-8 space-y-6">
-                    <div className="border-b pb-4">
-                      <h2 className="text-lg font-bold">{t("settings.security_tab.title")}</h2>
-                      <p className="text-sm text-gray-500">{t("settings.security_tab.desc")}</p>
-                    </div>
-
-                    {!(formData as any).isTwoFactorEnabled && (
-                      <div>
-                        <Button onClick={handleGenerate2FA} disabled={processing2FA} className="bg-[#276152]">
-                          {processing2FA ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
-                          {t("settings.security_tab.enable_btn")}
-                        </Button>
-                      </div>
-                    )}
-
-                    <TwoFactorSetupModal
-                      isOpen={isTwoFactorModalOpen}
-                      onClose={() => setIsTwoFactorModalOpen(false)}
-                      qrCodeUrl={qrCodeUrl}
-                      secret={twoFactorSecret}
-                      onVerify={handleEnable2FA}
-                      processing={processing2FA}
-                    />
-
-                    {(formData as any).isTwoFactorEnabled && (
-                      <div className="space-y-4 max-w-sm">
-                        <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
-                          <ShieldCheck className="w-5 h-5" />
-                          <span className="text-sm font-bold">{t("settings.security_tab.enabled_status")}</span>
-                        </div>
-                        <div className="space-y-2 pt-4">
-                          <label className="text-sm font-bold">{t("settings.security_tab.enter_code_disable")}</label>
-                          <div className="flex justify-center py-2">
-                              <InputOTP maxLength={6} value={twoFactorCode} onChange={setTwoFactorCode}>
-                                  <InputOTPGroup>
-                                      <InputOTPSlot index={0} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                      <InputOTPSlot index={1} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                      <InputOTPSlot index={2} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                      <InputOTPSlot index={3} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                      <InputOTPSlot index={4} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                      <InputOTPSlot index={5} className="w-10 h-12 sm:w-14 sm:h-16 text-lg sm:text-2xl bg-white" />
-                                  </InputOTPGroup>
-                              </InputOTP>
-                          </div>
-                          <Button onClick={handleDisable2FA} disabled={processing2FA} variant="destructive" className="w-full">
-                            {processing2FA ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
-                            {t("settings.security_tab.confirm_disable")}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                </CardContent>
-            </Card>
         </TabsContent>
 
         <TabsContent value="support" className="mt-8">

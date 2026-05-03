@@ -4,7 +4,8 @@
     "good_afternoon": "Good afternoon",
     "good_evening": "Good evening",
     "select_language": "Select Language",
-    "select_language_desc": "Please choose the display language you would like to use for the system."
+    "select_language_desc": "Please choose the display language you would like to use for the system.",
+    "connect_wallet": "Connect wallet"
   },
   "auth": {
     "login": "Login",
@@ -12,13 +13,42 @@
     "forgot_password": "Forgot Password?",
     "no_account": "Don't have an account?",
     "have_account": "Already have an account?",
+    "welcome_back": "Welcome Back",
+    "create_account": "Create Account",
+    "forgot_password_title": "Forgot Password",
+    "reset_password_title": "Reset Password",
+    "login_desc": "Enter your credentials to access your account",
+    "register_desc": "Join us and start your journey today",
+    "forgot_password_desc": "Enter your email to receive a reset link",
+    "reset_password_desc": "Enter your new password",
+    "register_now": "Register Now",
+    "processing": "Processing...",
     "email": "Email",
+    "email_placeholder": "Enter your email",
     "password": "Password",
+    "password_placeholder": "Enter your password",
+    "password_only": "Password",
     "confirm_password": "Confirm Password",
+    "remember_me": "Remember me",
     "full_name": "Full Name",
+    "full_name_placeholder": "Full Name",
     "username": "Username",
+    "username_placeholder": "Username",
     "phone": "Phone Number",
+    "phone_placeholder": "Phone Number",
     "referral_code": "Referral Code",
+    "ref_id_placeholder": "Referral ID (Required)",
+    "agree_terms": "I agree to the",
+    "terms": "Terms & Conditions",
+    "and": "and",
+    "policy": "Privacy Policy",
+    "checking_referral": "Checking referral...",
+    "register_success_title": "Registration Successful",
+    "register_success_desc": "Your account has been created. Redirecting to login...",
+    "two_fa_title": "Two-Factor Authentication",
+    "two_fa_desc": "Open Google Authenticator and enter the 6-digit code.",
+    "confirm": "Confirm",
+    "back": "Back",
     "errors": {
       "invalid_email": "Invalid email address",
       "password_mismatch": "Passwords do not match",
@@ -26,7 +56,11 @@
       "login_failed": "Login failed. Please check your credentials.",
       "register_failed": "Registration failed. Please try again later.",
       "unknown": "An error occurred. Please try again.",
-      "invalid_username_format": "Username must be lowercase and contain only letters and numbers (no spaces, no accents)"
+      "invalid_username_format": "Username must be lowercase and contain only letters and numbers (no spaces, no accents)",
+      "invalid_2fa": "Please enter all 6 digits",
+      "referral_required": "Referral ID is required",
+      "referral_not_qualified": "This referral code is not qualified",
+      "invalid_referral": "Invalid referral code"
     }
   },
   "dashboard": {
@@ -37,7 +71,10 @@
       "total_usdt": "Total USDT Balance",
       "referrals": "Total Referrals",
       "active_packages": "Active Packages"
-    }
+    },
+    "coming_soon_title": "Coming Soon",
+    "coming_soon_msg": "We are perfecting the Dashboard with the most advanced investment features. Please come back later!",
+    "go_to_pre_register": "Join Pre-register Now"
   },
   "settings": {
     "title": "Account Settings",
@@ -132,7 +169,7 @@
   },
   "kyc": {
     "title": "Account Verification",
-    "subtitle": "Complete verification steps to increase limits and secure your account.",
+    "subtitle": "Complete verification steps to secure your account.",
     "steps": {
       "step_1": "Step 1: ID",
       "step_1_desc": "Upload ID/Passport photos",
@@ -183,7 +220,7 @@
       "step_locked": "Please complete previous steps first"
     },
     "security_note": "Security Note",
-    "security_note_desc": "We are committed to absolute security of your personal information. KYC data is used only for identification purposes as required by regulations."
+    "security_note_desc": "We are committed to absolute security of your personal information. KYC data is used only for identification purposes."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -211,7 +248,7 @@
     "referral_title": "Referral Rewards (Commission)",
     "f1_label": "Direct (F1)",
     "f2_label": "Indirect (F2)",
-    "comm_note": "* Commissions will be added to your USDT balance immediately upon referral payment.",
+    "comm_note": "* Commissions will be added immediately upon referral payment.",
     "ref_card_title": "Invite Friends",
     "ref_card_desc": "Share your link and earn 10% commission (8% F1 + 2% F2)",
     "copy_btn": "Copy",
@@ -226,7 +263,7 @@
     "summary_total": "Total Pledge",
     "summary_paid": "Paid",
     "summary_remaining": "Remaining",
-    "pay_completed_msg": "Congratulations! You have fulfilled 100% of your payment obligation for this campaign.",
+    "pay_completed_msg": "Congratulations! You have fulfilled 100% of your payment obligation.",
     "pay_success": "Success!",
     "new_purchase_round": "Start New Purchase Round",
     "confirm_payment_btn": "Confirm & Pay",
@@ -241,59 +278,61 @@
   },
   "assets": {
     "title": "My Assets",
-    "subtitle": "Manage your USDT and AQE balances in your account",
+    "subtitle": "Manage your USDT and AQE balances",
     "usdt_available": "Available USDT Balance",
     "aqe_total": "Total AQE Assets",
     "withdraw_btn": "Withdraw USDT",
     "withdraw_history": "Withdrawal History",
     "table": {
       "time": "Time",
-      "detail": "Detail",
+      "wallet": "Wallet",
       "amount": "Amount",
       "fee": "Fee",
+      "hash": "Hash",
       "status": "Status"
     },
     "withdraw_dialog": {
       "title": "Withdraw USDT",
-      "desc": "You will withdraw your entire available balance to your registered BEP20 wallet address.",
+      "desc": "Withdraw entire available balance to your registered BEP20 wallet.",
       "amount_label": "Current Balance",
       "available": "Total",
       "min_amount": "Min 10 USDT to withdraw",
       "fee_note": "Withdrawal Fee: 1 USDT",
       "total_deduct": "Amount to Receive",
-      "wallet_label": "Recipient Wallet Address (BEP20)",
+      "wallet_label": "Recipient Wallet (BEP20)",
       "wallet_placeholder": "0x...",
-      "note": "Note: Withdrawals under 200 USDT will be processed automatically. Amounts over 200 USDT require manual approval by Admin within 24 hours.",
+      "note": "Note: Withdrawals under 200 USDT are auto-processed. Over 200 USDT require Admin approval within 24h.",
       "confirm_btn": "Confirm Withdrawal",
       "processing": "Processing...",
       "no_wallet_title": "Missing Withdrawal Address",
-      "no_wallet_desc": "You need to update your USDT (BEP20) wallet address in settings before making a withdrawal.",
+      "no_wallet_desc": "You need to update your USDT (BEP20) wallet address in settings.",
       "go_to_settings": "Go to Settings",
-      "insufficient_balance": "Insufficient USDT balance to complete this transaction"
+      "insufficient_balance": "Insufficient USDT balance"
     },
     "empty_history": "No withdrawal history yet",
     "status": {
       "success": "Success",
-      "pending": "Pending"
+      "pending": "Pending",
+      "failed": "Failed"
     },
     "kyc_callback": {
       "verifying": "Verifying results...",
-      "failed_desc": "Face verification failed or was cancelled.",
+      "failed_desc": "Face verification failed.",
       "success_msg": "Face enrollment successful!",
       "success_toast": "Face verification successful",
       "loading_title": "Please Wait",
       "success_title": "Success!",
-      "redirect_note": "System will redirect automatically in a few seconds...",
+      "redirect_note": "Redirecting automatically...",
       "back_to_settings": "Back to Settings",
       "error_title": "Failed",
-      "process_error": "An error occurred while processing the result.",
+      "process_error": "An error occurred.",
       "try_again": "Try Again",
       "back_to_dashboard": "Back to Dashboard"
     }
   },
   "referrals": {
     "title": "Referral System",
-    "subtitle": "Invite friends and earn commissions from AQEstate",
+    "subtitle": "Invite friends and earn commissions",
     "referral_link": "Your Referral Link",
     "copy_btn": "Copy Link",
     "stats": {
@@ -315,17 +354,87 @@
     "f2_label": "Level 2 (F2)",
     "network_list": "Network Member List"
   },
-  "commissions": {
-    "empty": "No data to display"
+  "withdrawals": {
+    "errors": {
+      "wallet_required": "Please provide a receiving wallet address",
+      "insufficient_balance": "Insufficient balance to withdraw (Min 10 USDT after fee)",
+      "not_found": "Withdrawal request not found",
+      "kyc_required": "FaceID verification required before withdrawing",
+      "min_payment_required": "Total payment of at least 100 USDT required to withdraw",
+      "invalid_token": "Invalid or expired verification token",
+      "invalid_token_or_expired": "Session expired. Please try again"
+    },
+    "history_desc": "USDT withdrawal to {{wallet}} (Fee: 1 USDT)",
+    "success_auto": "Withdrawal successful and sent automatically",
+    "success_manual_needed": "Request recorded. Admin will process manually.",
+    "pending_approval": "Withdrawal pending Admin approval (> 200 USDT)",
+    "approved": "Withdrawal approved",
+    "rejected_refund": "Withdrawal rejected and refunded",
+    "refund_desc": "Withdrawal refund (Rejected)"
+  },
+  "balance_history": {
+    "subtitle": "Track all balance changes in your account",
+    "search_placeholder": "Search by description, type...",
+    "asset_filter": {
+      "all": "All Assets",
+      "usdt": "USDT Only",
+      "aqe": "AQE Only"
+    },
+    "types": {
+      "deposit": "Deposit",
+      "withdraw": "Withdrawal",
+      "commission": "Commission",
+      "buy": "Buy Token",
+      "reward": "Reward",
+      "receive": "Receive"
+    },
+    "status": {
+      "official": "Official",
+      "estimated": "Estimated"
+    }
+  },
+  "history": {
+    "date": "Transaction Date",
+    "type": "Type",
+    "detail": "Detail",
+    "amount": "Amount",
+    "fee": "Fee",
+    "balance_before": "Balance Before",
+    "balance_after": "Balance After",
+    "status": "Status",
+    "empty": "No transaction history",
+    "summary": {
+      "total_paid": "Total Paid USDT",
+      "aqe_official": "AQE Official",
+      "aqe_estimated": "AQE Estimated",
+      "total_commissions": "Total Commissions"
+    }
   },
   "payments": {
+    "title": "Payment History",
+    "subtitle": "Track your early AQE purchase payments",
+    "empty": "No payment transactions yet",
+    "summary": {
+      "total_paid": "Total Paid"
+    },
+    "table": {
+      "date": "Payment Date",
+      "description": "Content",
+      "amount": "Amount",
+      "status": "Status",
+      "details": "Transaction Hash"
+    },
+    "status": {
+      "success": "Success",
+      "pending": "Pending"
+    },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",
     "errors": {
-      "min_pledge": "Minimum pledge amount is 10 USDT",
-      "cannot_change_pledge": "You cannot change the pledge amount after payment has been made",
-      "kyc_required": "You need to complete and have Step 1 KYC approved to make a payment",
-      "min_first_payment": "The first payment must be at least 30% ({{minAmount}} USDT)"
+      "min_pledge": "Minimum pledge is 10 USDT",
+      "cannot_change_pledge": "Pledge amount cannot be changed after payment",
+      "kyc_required": "Step 1 KYC required for payment",
+      "min_first_payment": "First payment must be at least 30% ({{minAmount}} USDT)"
     }
   }
 }

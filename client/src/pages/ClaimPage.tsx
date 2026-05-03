@@ -7,7 +7,7 @@ import apiClient from "@/lib/axios"
 import { useAuth } from "@/providers/AuthProvider"
 import { useTranslation } from "react-i18next"
 
-export default function KycCallbackPage() {
+export default function ClaimPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -22,9 +22,7 @@ export default function KycCallbackPage() {
       hasCalled.current = true
 
       const token = searchParams.get("token")
-      const facetecTid = searchParams.get("facetect_tid")
       const facetecStatus = searchParams.get("status")
-      const ageEstimate = searchParams.get("age_estimate")
 
       if (!token || facetecStatus !== "success") {
         setStatus('error')
@@ -33,27 +31,24 @@ export default function KycCallbackPage() {
       }
 
       try {
-        const response = await apiClient.post("/kyc/complete-face-scan", {
-          token,
-          facetecTid,
-          status: facetecStatus,
-          ageEstimate
+        const response = await apiClient.post("/withdrawals/complete", {
+          token
         })
 
         if (response.data.success) {
           setStatus('success')
-          setMessage(t("assets.kyc_callback.success_msg"))
+          setMessage(t("withdrawals.success_auto"))
           await syncProfile() // Refresh user data
           
-          toast.success(t("assets.kyc_callback.success_toast"))
+          toast.success(t("withdrawals.success_auto"))
           
-          // Auto redirect after 3 seconds
+          // Auto redirect after 5 seconds
           setTimeout(() => {
-            navigate("/settings?tab=kyc")
-          }, 3000)
+            navigate("/assets")
+          }, 5000)
         }
       } catch (error: any) {
-        console.error("Callback Error:", error)
+        console.error("Claim Error:", error)
         setStatus('error')
         setMessage(error.response?.data?.message || t("assets.kyc_callback.process_error"))
       }
@@ -86,10 +81,10 @@ export default function KycCallbackPage() {
             </div>
             <p className="text-[14px] text-gray-400">{t("assets.kyc_callback.redirect_note")}</p>
             <Button 
-               onClick={() => navigate("/settings?tab=kyc")}
+               onClick={() => navigate("/assets")}
                className="w-full h-[56px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold"
             >
-               {t("assets.kyc_callback.back_to_settings")}
+               {t("assets.kyc_callback.back_to_dashboard")}
             </Button>
           </div>
         )}
@@ -105,7 +100,7 @@ export default function KycCallbackPage() {
             </div>
             <div className="flex flex-col w-full gap-3">
                <Button 
-                  onClick={() => navigate("/settings?tab=kyc")}
+                  onClick={() => navigate("/assets")}
                   className="w-full h-[56px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold"
                >
                   {t("assets.kyc_callback.try_again")}

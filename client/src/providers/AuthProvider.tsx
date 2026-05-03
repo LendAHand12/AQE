@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 interface AuthContextType {
   user: any
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const syncProfile = async () => {
+  const syncProfile = useCallback(async () => {
     if (!token) return
     try {
       const response = await import("@/lib/axios").then(m => m.default.get("/auth/profile"))
@@ -44,22 +44,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Failed to sync profile", err)
     }
-  }
+  }, [token])
 
-  const login = (userData: any, authToken: string) => {
+  const login = useCallback((userData: any, authToken: string) => {
     setUser(userData)
     setToken(authToken)
     localStorage.setItem("user", JSON.stringify(userData))
     localStorage.setItem("token", authToken)
-  }
+  }, [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null)
     setToken(null)
     localStorage.removeItem("user")
     localStorage.removeItem("token")
     // Note: We don't necessarily redirect here, the guards will handle it
-  }
+  }, [])
 
   const value = {
     user,

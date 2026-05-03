@@ -45,6 +45,11 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
           title: "Phân phối AQE", 
           description: "Quản lý lịch sử phân phối và trả thưởng token AQE" 
         };
+      case "/admin/withdrawals":
+        return { 
+          title: "Quản lý Rút tiền", 
+          description: "Duyệt và theo dõi các yêu cầu rút tiền USDT của người dùng" 
+        };
       case "/admin/token-settings":
         return { 
           title: "Cài đặt Pool & Token", 

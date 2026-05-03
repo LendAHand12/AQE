@@ -12,13 +12,42 @@
     "forgot_password": "Quên mật khẩu?",
     "no_account": "Chưa có tài khoản?",
     "have_account": "Đã có tài khoản?",
+    "welcome_back": "Chào mừng trở lại",
+    "create_account": "Tạo tài khoản",
+    "forgot_password_title": "Quên mật khẩu",
+    "reset_password_title": "Đặt lại mật khẩu",
+    "login_desc": "Nhập thông tin của bạn để truy cập tài khoản",
+    "register_desc": "Tham gia cùng chúng tôi ngay hôm nay",
+    "forgot_password_desc": "Nhập email của bạn để nhận liên kết đặt lại mật khẩu",
+    "reset_password_desc": "Nhập mật khẩu mới của bạn",
+    "register_now": "Đăng ký ngay",
+    "processing": "Đang xử lý...",
     "email": "Email",
+    "email_placeholder": "Nhập địa chỉ email",
     "password": "Mật khẩu",
+    "password_placeholder": "Nhập mật khẩu",
+    "password_only": "Mật khẩu",
     "confirm_password": "Xác nhận mật khẩu",
+    "remember_me": "Ghi nhớ đăng nhập",
     "full_name": "Họ và tên",
+    "full_name_placeholder": "Họ và tên",
     "username": "Tên đăng nhập",
+    "username_placeholder": "Tên đăng nhập",
     "phone": "Số điện thoại",
+    "phone_placeholder": "Số điện thoại",
     "referral_code": "Mã giới thiệu",
+    "ref_id_placeholder": "Mã giới thiệu (Bắt buộc)",
+    "agree_terms": "Tôi đồng ý với",
+    "terms": "Điều khoản & Điều kiện",
+    "and": "và",
+    "policy": "Chính sách bảo mật",
+    "checking_referral": "Đang kiểm tra mã giới thiệu...",
+    "register_success_title": "Đăng ký thành công",
+    "register_success_desc": "Tài khoản của bạn đã được tạo. Đang chuyển hướng đăng nhập...",
+    "two_fa_title": "Xác thực 2 lớp",
+    "two_fa_desc": "Mở ứng dụng Google Authenticator và nhập mã 6 số để tiếp tục.",
+    "confirm": "Xác nhận",
+    "back": "Quay lại",
     "errors": {
       "invalid_email": "Email không hợp lệ",
       "password_mismatch": "Mật khẩu không khớp",
@@ -26,7 +55,11 @@
       "login_failed": "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.",
       "register_failed": "Đăng ký thất bại. Vui lòng thử lại sau.",
       "unknown": "Đã có lỗi xảy ra. Vui lòng thử lại.",
-      "invalid_username_format": "Tên đăng nhập chỉ được chứa chữ cái viết thường và số (không có dấu, không có khoảng trắng)"
+      "invalid_username_format": "Tên đăng nhập chỉ được chứa chữ cái viết thường và số (không có dấu, không có khoảng trắng)",
+      "invalid_2fa": "Vui lòng nhập đủ 6 số",
+      "referral_required": "Mã giới thiệu là bắt buộc",
+      "referral_not_qualified": "Mã giới thiệu này không đủ điều kiện",
+      "invalid_referral": "Mã giới thiệu không hợp lệ"
     }
   },
   "dashboard": {
@@ -37,7 +70,10 @@
       "total_usdt": "Tổng số dư USDT",
       "referrals": "Số người giới thiệu",
       "active_packages": "Gói đang hoạt động"
-    }
+    },
+    "coming_soon_title": "Sắp ra mắt",
+    "coming_soon_msg": "Chúng tôi đang hoàn thiện trang Dashboard với những tính năng đầu tư cao cấp nhất. Vui lòng quay lại sau!",
+    "go_to_pre_register": "Tham gia Pre-register ngay"
   },
   "settings": {
     "title": "Cài đặt tài khoản",
@@ -248,9 +284,10 @@
     "withdraw_history": "Lịch sử rút tiền",
     "table": {
       "time": "Thời gian",
-      "detail": "Chi tiết",
+      "wallet": "Ví rút về",
       "amount": "Số tiền",
       "fee": "Phí",
+      "hash": "Mã hash",
       "status": "Trạng thái"
     },
     "withdraw_dialog": {
@@ -274,7 +311,8 @@
     "empty_history": "Chưa có lịch sử rút tiền",
     "status": {
       "success": "Thành công",
-      "pending": "Đang chờ"
+      "pending": "Đang chờ",
+      "failed": "Thất bại"
     },
     "kyc_callback": {
       "verifying": "Đang xác thực kết quả...",
@@ -315,10 +353,80 @@
     "f2_label": "Cấp độ 2 (F2)",
     "network_list": "Danh sách thành viên trong mạng lưới"
   },
-  "commissions": {
-    "empty": "Chưa có dữ liệu hiển thị"
+  "withdrawals": {
+    "errors": {
+      "wallet_required": "Vui lòng cung cấp địa chỉ ví nhận tiền",
+      "insufficient_balance": "Số dư không đủ để rút (Tối thiểu 10 USDT sau khi trừ phí)",
+      "not_found": "Không tìm thấy yêu cầu rút tiền",
+      "kyc_required": "Bạn cần xác thực khuôn mặt (FaceID) trước khi rút tiền",
+      "min_payment_required": "Bạn cần có tổng nạp tối thiểu 100 USDT để thực hiện rút tiền",
+      "invalid_token": "Mã xác thực không hợp lệ hoặc đã hết hạn",
+      "invalid_token_or_expired": "Phiên xác thực đã hết hạn. Vui lòng thử lại"
+    },
+    "history_desc": "Rút tiền USDT về ví {{wallet}} (Phí: 1 USDT)",
+    "success_auto": "Rút tiền thành công và đã được gửi tự động",
+    "success_manual_needed": "Yêu cầu đã được ghi nhận nhưng gặp lỗi khi chuyển tự động. Admin sẽ xử lý thủ công.",
+    "pending_approval": "Yêu cầu rút tiền đã được gửi và đang chờ Admin duyệt (Số tiền > 200 USDT)",
+    "approved": "Đã phê duyệt yêu cầu rút tiền",
+    "rejected_refund": "Đã từ chối yêu cầu rút tiền và hoàn tiền cho người dùng",
+    "refund_desc": "Hoàn tiền rút (Yêu cầu bị từ chối)"
+  },
+  "balance_history": {
+    "subtitle": "Theo dõi tất cả các biến động số dư trong tài khoản của bạn",
+    "search_placeholder": "Tìm kiếm theo mô tả, loại giao dịch...",
+    "asset_filter": {
+      "all": "Tất cả tài sản",
+      "usdt": "Chỉ USDT",
+      "aqe": "Chỉ AQE"
+    },
+    "types": {
+      "deposit": "Nạp tiền",
+      "withdraw": "Rút tiền",
+      "commission": "Hoa hồng",
+      "buy": "Mua Token",
+      "reward": "Thưởng",
+      "receive": "Nhận tiền"
+    },
+    "status": {
+      "official": "Chính thức",
+      "estimated": "Tạm tính"
+    }
+  },
+  "history": {
+    "date": "Ngày giao dịch",
+    "type": "Loại",
+    "detail": "Chi tiết",
+    "amount": "Số tiền",
+    "fee": "Phí",
+    "balance_before": "Số dư trước",
+    "balance_after": "Số dư sau",
+    "status": "Trạng thái",
+    "empty": "Không có lịch sử giao dịch nào",
+    "summary": {
+      "total_paid": "Tổng nạp USDT",
+      "aqe_official": "AQE Chính thức",
+      "aqe_estimated": "AQE Tạm tính",
+      "total_commissions": "Tổng hoa hồng"
+    }
   },
   "payments": {
+    "title": "Lịch sử thanh toán",
+    "subtitle": "Theo dõi các giao dịch thanh toán mua AQE sớm của bạn",
+    "empty": "Chưa có giao dịch thanh toán nào",
+    "summary": {
+      "total_paid": "Tổng đã thanh toán"
+    },
+    "table": {
+      "date": "Ngày thanh toán",
+      "description": "Nội dung",
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "details": "Mã giao dịch"
+    },
+    "status": {
+      "success": "Thành công",
+      "pending": "Đang chờ"
+    },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",
     "errors": {

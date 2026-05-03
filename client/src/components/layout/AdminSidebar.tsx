@@ -44,6 +44,11 @@ const mainNavItems = [
     icon: Coins,
   },
   {
+    title: "Quản lý Rút tiền",
+    href: "/admin/withdrawals",
+    icon: HandCoins,
+  },
+  {
     title: "Cài đặt Pool",
     href: "/admin/token-settings",
     icon: Settings,

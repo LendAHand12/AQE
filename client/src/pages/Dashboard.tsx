@@ -13,7 +13,7 @@ export default function Dashboard() {
           <Calendar className="text-white" size={40} />
         </div>
         <div className="space-y-2">
-          <h1 className="text-[32px] font-bold text-[#111827]">Coming Soon</h1>
+          <h1 className="text-[32px] font-bold text-[#111827]">{t("dashboard.coming_soon_title") || "Coming Soon"}</h1>
           <p className="text-[#636D7D] text-[18px]">
             {t("dashboard.coming_soon_msg") || "Chúng tôi đang hoàn thiện trang Dashboard với những tính năng đầu tư cao cấp nhất. Vui lòng quay lại sau!"}
           </p>

@@ -17,6 +17,7 @@ import AddPropertyPage from "@/pages/admin/AddPropertyPage"
 import EditPropertyPage from "@/pages/admin/EditPropertyPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminUserProfilePage from "@/pages/admin/AdminUserProfilePage"
+import AdminWithdrawalsPage from "@/pages/admin/AdminWithdrawalsPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
@@ -28,6 +29,7 @@ import { Toaster } from "@/components/ui/sonner"
 import BalanceHistoryPage from "@/pages/BalanceHistoryPage"
 import AssetsPage from "@/pages/AssetsPage"
 import KycCallbackPage from "@/pages/KycCallbackPage"
+import ClaimPage from "@/pages/ClaimPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -61,6 +63,7 @@ export function App() {
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
                 <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
+                <Route path="/user/claim" element={<ClaimPage />} />
                 <Route path="/referrals" element={<ReferralPage />} />
               </Route>
             </Route>
@@ -82,6 +85,7 @@ export function App() {
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/transactions/aqe" element={<AdminAQEHistoryPage />} />
+              <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
 

@@ -6,9 +6,11 @@ import Transaction from '../models/Transaction.js';
 import Property from '../models/Property.js';
 import Commission from '../models/Commission.js';
 import BalanceHistory from '../models/BalanceHistory.js';
+import Withdrawal from '../models/Withdrawal.js';
 import { generateToken } from '../utils/jwt.js';
 import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
+import mongoose from 'mongoose';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -142,10 +144,15 @@ export const getUserById = async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });
         }
 
-        // Fetch transactions (USDT payments, deposits, withdrawals)
+        // Fetch transactions (USDT payments, deposits)
         const transactions = await Transaction.find({
             $or: [{ from: user._id }, { to: user._id }]
-        }).sort({ createdAt: -1 }).limit(100);
+        }).sort({ createdAt: -1 }).limit(50);
+
+        // Fetch withdrawals separately from new model
+        const withdrawals = await Withdrawal.find({
+            userId: user._id
+        }).sort({ createdAt: -1 }).limit(50);
 
         // Fetch commissions (received from referrals)
         const commissions = await Commission.find({
@@ -164,6 +171,7 @@ export const getUserById = async (req, res) => {
         res.json({
             user,
             transactions,
+            withdrawals,
             commissions,
             tokenHistory,
             referrals
@@ -447,6 +455,147 @@ export const getDashboardStats = async (req, res) => {
             monthlyRevenue,
             recentTransactions,
             pendingKYC
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get ALL transactions (Admin only)
+export const getAllTransactionsForAdmin = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        const category = req.query.category; // 'USDT', 'COMMISSION', 'AQE', 'WITHDRAW'
+        const search = req.query.search || '';
+
+        // Helper function to create Vietnamese accent-insensitive regex
+        const createVietnameseRegex = (str) => {
+            const map = {
+                'a': '[aàáảãạăằắẳẵặâầấẩẫậ]',
+                'e': '[eèéẻẽẹêềếểễệ]',
+                'i': '[iìíỉĩị]',
+                'o': '[oòóỏõọôồốổỗộơờớởỡợ]',
+                'u': '[uùúủũụưừứửữự]',
+                'y': '[yỳýỷỹỵ]',
+                'd': '[dđ]',
+                'A': '[AÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]',
+                'E': '[EÈÉẺẼẸÊỀẾỂỄỆ]',
+                'I': '[IÌÍỈĨỊ]',
+                'O': '[OÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]',
+                'U': '[UÙÚỦŨỤƯỪỨỬỮỰ]',
+                'Y': '[YỲÝỶỸỴ]',
+                'D': '[DĐ]'
+            };
+            let regexStr = str;
+            Object.keys(map).forEach(key => {
+                regexStr = regexStr.replace(new RegExp(key, 'g'), map[key]);
+            });
+            return new RegExp(regexStr, 'i');
+        };
+
+        const queryRegex = search ? createVietnameseRegex(search) : null;
+
+        let results = [];
+        let total = 0;
+
+        if (category === 'USDT') {
+            const query = { symbol: 'USDT', ...(queryRegex && { description: { $regex: queryRegex } }) };
+            total = await Transaction.countDocuments(query);
+            const data = await Transaction.find(query)
+                .populate({ path: 'from', select: 'username fullName email' })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+            
+            results = data.map(tx => ({
+                _id: tx._id,
+                hash: tx.hash,
+                from: tx.from,
+                to: tx.to,
+                amount: tx.amount,
+                symbol: tx.symbol,
+                type: tx.type,
+                status: tx.status,
+                description: tx.description,
+                createdAt: tx.createdAt
+            }));
+        } else if (category === 'COMMISSION') {
+            const query = {};
+            total = await Commission.countDocuments(query);
+            const data = await Commission.find(query)
+                .populate('recipientId', 'username fullName email')
+                .populate('fromUserId', 'username fullName email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            results = data.map(c => ({
+                _id: c._id,
+                from: c.fromUserId,
+                to: c.recipientId,
+                amount: c.amountUsdt,
+                salesAmount: c.salesAmount || Math.round(c.amountUsdt / (c.percentage / 100)),
+                level: c.level,
+                percentage: c.percentage,
+                symbol: 'USDT',
+                type: 'COMMISSION',
+                status: 'SUCCESS',
+                description: `Level ${c.level} Commission (${c.percentage}%)`,
+                createdAt: c.createdAt
+            }));
+        } else if (category === 'WITHDRAW') {
+            const query = { ...(queryRegex && { description: { $regex: queryRegex } }) };
+            total = await Withdrawal.countDocuments(query);
+            const data = await Withdrawal.find(query)
+                .populate('userId', 'username fullName email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            results = data.map(w => ({
+                _id: w._id,
+                from: w.userId,
+                to: w.walletAddress,
+                amount: w.amount,
+                fee: w.fee,
+                symbol: w.symbol,
+                type: 'WITHDRAW',
+                status: w.status,
+                method: w.method,
+                hash: w.hash,
+                description: w.description,
+                createdAt: w.createdAt
+            }));
+        } else {
+            // AQE or other tokens from BalanceHistory
+            const query = { ...(category !== 'ALL' && { symbol: category || 'AQE' }) };
+            total = await BalanceHistory.countDocuments(query);
+            const data = await BalanceHistory.find(query)
+                .populate('userId', 'username fullName email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            results = data.map(bh => ({
+                _id: bh._id,
+                to: bh.userId,
+                amount: bh.amount,
+                symbol: bh.symbol,
+                type: bh.type,
+                status: bh.status,
+                isOfficial: bh.isOfficial,
+                description: bh.description,
+                createdAt: bh.createdAt
+            }));
+        }
+
+        res.json({
+            transactions: results,
+            page,
+            pages: Math.ceil(total / limit),
+            total
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

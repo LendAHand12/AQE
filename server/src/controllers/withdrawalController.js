@@ -1,36 +1,98 @@
-import Transaction from '../models/Transaction.js';
+import Withdrawal from '../models/Withdrawal.js';
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import { sendUsdt } from '../services/blockchainService.js';
+import jwt from 'jsonwebtoken';
+import Transaction from '../models/Transaction.js';
 import mongoose from 'mongoose';
 
 /**
- * @desc    Request a withdrawal
+ * @desc    Get Withdrawal Verification URL (FaceID)
  * @route   POST /api/withdrawals/request
  * @access  Private
  */
 export const requestWithdrawal = async (req, res) => {
     const { walletAddress } = req.body;
+    const { user } = req;
     const fee = 1.0;
 
     try {
         if (!walletAddress) {
-            return res.status(400).json({ message: 'Vui lòng cung cấp địa chỉ ví nhận tiền' });
+            return res.status(400).json({ message: 'withdrawals.errors.wallet_required' });
         }
 
-        const user = await User.findById(req.user._id);
-        const totalBalance = user.usdtBalance;
-        
-        // Calculate withdrawal amount (total balance minus fee)
-        const withdrawalAmount = totalBalance - fee;
-
+        // 1. Check Balance (Withdraw ALL)
+        const withdrawalAmount = user.usdtBalance - fee;
         if (withdrawalAmount < 10) {
-            return res.status(400).json({ message: 'Số dư không đủ để rút (Tối thiểu 10 USDT sau khi trừ phí)' });
+            return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
         }
 
-        const totalDeduction = totalBalance; // Withdrawing everything
+        // 2. Check Prerequisites
+        // - FaceID Registered (kycStatus verified and has faceTecTid)
+        if (user.kycStatus !== 'verified' || !user.faceTecTid) {
+            return res.status(400).json({ message: 'withdrawals.errors.kyc_required' });
+        }
 
-        // 1. Deduct balance and create BalanceHistory
+        // - Total Paid >= 100 USDT
+        const totalPaid = user.paidUsdtPreRegister || 0;
+        if (totalPaid < 100) {
+            return res.status(400).json({ message: 'withdrawals.errors.min_payment_required' });
+        }
+
+        // 3. Generate Callback Token
+        const token = jwt.sign(
+            { 
+                userId: user._id, 
+                walletAddress, 
+                amount: withdrawalAmount 
+            }, 
+            process.env.JWT_SECRET || 'secret_key', 
+            { expiresIn: '15m' }
+        );
+
+        // 4. Generate Facetec Redirect URL
+        const callbackUrl = `${process.env.FRONTEND_URL}/user/claim?token=${token}`;
+        const facetecUrl = `${process.env.FACETEC_BASE_URL}/verify.html?callback=${encodeURIComponent(callbackUrl)}&user_id=${user._id}`;
+
+        res.json({ url: facetecUrl });
+
+    } catch (error) {
+        console.error('Withdrawal Request Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Complete withdrawal after FaceID success
+ * @route   POST /api/withdrawals/complete
+ * @access  Private
+ */
+export const completeWithdrawal = async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        if (!token) {
+            return res.status(400).json({ message: 'withdrawals.errors.invalid_token' });
+        }
+
+        // 1. Verify Token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const { userId, walletAddress, amount } = decoded;
+
+        if (userId !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'withdrawals.errors.invalid_token' });
+        }
+
+        const user = await User.findById(userId);
+        const withdrawalAmount = parseFloat(amount);
+        const fee = 1.0;
+        const totalDeduction = withdrawalAmount + fee;
+
+        if (user.usdtBalance < totalDeduction) {
+            return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
+        }
+
+        // 2. Process Withdrawal (same as before)
         const balanceBefore = user.usdtBalance;
         user.usdtBalance -= totalDeduction;
         await user.save();
@@ -44,57 +106,51 @@ export const requestWithdrawal = async (req, res) => {
             status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
             balanceBefore: balanceBefore,
             balanceAfter: user.usdtBalance,
-            description: `Rút tiền USDT về ví ${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)} (Phí: 1 USDT)`
+            description: `USDT withdrawal to wallet ${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)} (Fee: 1 USDT)`
         });
 
-        // 2. Create Transaction record
-        const transaction = await Transaction.create({
-            from: user._id,
-            to: walletAddress,
+        const withdrawal = await Withdrawal.create({
+            userId: user._id,
+            walletAddress: walletAddress,
             amount: withdrawalAmount,
+            fee: fee,
             symbol: 'USDT',
-            type: 'WITHDRAW',
+            method: withdrawalAmount <= 200 ? 'AUTO' : 'MANUAL',
             status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
             description: `Withdrawal request to ${walletAddress}`
         });
 
-        // 3. If amount <= 200, process automatically
         if (withdrawalAmount <= 200) {
             try {
                 const hash = await sendUsdt(walletAddress, withdrawalAmount);
-                transaction.hash = hash;
-                transaction.status = 'SUCCESS';
-                await transaction.save();
+                withdrawal.hash = hash;
+                withdrawal.status = 'SUCCESS';
+                await withdrawal.save();
                 
                 return res.json({ 
                     success: true, 
-                    message: 'Rút tiền thành công và đã được gửi tự động', 
+                    message: 'withdrawals.success_auto', 
                     hash 
                 });
             } catch (blockchainError) {
                 console.error('Auto Withdrawal Failed:', blockchainError);
-                // Even if blockchain fails, the record stays, but maybe mark as failed or alert admin
-                // For now, let's keep it as SUCCESS in DB if we want to trust the user doesn't get a double refund, 
-                // but usually we should revert or mark as FAILED.
-                // However, the user is already deducted. Admin can check later.
                 return res.json({ 
                     success: true, 
-                    message: 'Yêu cầu đã được ghi nhận nhưng gặp lỗi khi chuyển tự động. Admin sẽ xử lý thủ công.',
+                    message: 'withdrawals.success_manual_needed',
                     status: 'PENDING' 
                 });
             }
         }
 
-        // 4. If amount > 200, return pending status
         res.json({ 
             success: true, 
-            message: 'Yêu cầu rút tiền đã được gửi và đang chờ Admin duyệt (Số tiền > 200 USDT)', 
+            message: 'withdrawals.pending_approval', 
             status: 'PENDING' 
         });
 
     } catch (error) {
-        console.error('Withdrawal Error:', error);
-        res.status(500).json({ message: error.message });
+        console.error('Complete Withdrawal Error:', error);
+        res.status(400).json({ message: 'withdrawals.errors.invalid_token_or_expired' });
     }
 };
 
@@ -105,12 +161,24 @@ export const requestWithdrawal = async (req, res) => {
  */
 export const getMyWithdrawalHistory = async (req, res) => {
     try {
-        const history = await Transaction.find({ 
-            from: req.user._id, 
-            type: 'WITHDRAW' 
-        }).sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        res.json(history);
+        const total = await Withdrawal.countDocuments({ userId: req.user._id });
+        const history = await Withdrawal.find({ 
+            userId: req.user._id
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+        res.json({
+            history,
+            page,
+            pages: Math.ceil(total / limit),
+            total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -123,12 +191,53 @@ export const getMyWithdrawalHistory = async (req, res) => {
  */
 export const getPendingWithdrawals = async (req, res) => {
     try {
-        const pending = await Transaction.find({ 
-            type: 'WITHDRAW', 
+        const pending = await Withdrawal.find({ 
             status: 'PENDING' 
-        }).populate('from', 'fullName email username').sort({ createdAt: -1 });
+        }).populate('userId', 'fullName email username').sort({ createdAt: -1 });
 
         res.json(pending);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Get all withdrawals (Admin only)
+ * @route   GET /api/withdrawals/admin/all
+ * @access  Private/Admin
+ */
+export const getAllWithdrawals = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        const status = req.query.status;
+        const search = req.query.search;
+
+        let query = {};
+        if (status) query.status = status;
+        
+        // Search by wallet address or hash
+        if (search) {
+            query.$or = [
+                { walletAddress: { $regex: search, $options: 'i' } },
+                { hash: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const total = await Withdrawal.countDocuments(query);
+        const withdrawals = await Withdrawal.find(query)
+            .populate('userId', 'fullName email username')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            withdrawals,
+            page,
+            pages: Math.ceil(total / limit),
+            total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -142,22 +251,22 @@ export const getPendingWithdrawals = async (req, res) => {
 export const approveWithdrawal = async (req, res) => {
     const { hash } = req.body;
     try {
-        const transaction = await Transaction.findById(req.params.id);
-        if (!transaction || transaction.type !== 'WITHDRAW') {
-            return res.status(404).json({ message: 'Không tìm thấy yêu cầu rút tiền' });
+        const withdrawal = await Withdrawal.findById(req.params.id);
+        if (!withdrawal) {
+            return res.status(404).json({ message: 'withdrawals.errors.not_found' });
         }
 
-        transaction.status = 'SUCCESS';
-        if (hash) transaction.hash = hash;
-        await transaction.save();
+        withdrawal.status = 'SUCCESS';
+        if (hash) withdrawal.hash = hash;
+        await withdrawal.save();
 
         // Update BalanceHistory status if found
         await BalanceHistory.findOneAndUpdate(
-            { userId: transaction.from, type: 'WITHDRAW', amount: transaction.amount, status: 'PENDING' },
+            { userId: withdrawal.userId, type: 'WITHDRAW', amount: withdrawal.amount, status: 'PENDING' },
             { status: 'SUCCESS' }
         );
 
-        res.json({ message: 'Đã phê duyệt yêu cầu rút tiền' });
+        res.json({ message: 'withdrawals.approved' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -170,18 +279,18 @@ export const approveWithdrawal = async (req, res) => {
  */
 export const rejectWithdrawal = async (req, res) => {
     try {
-        const transaction = await Transaction.findById(req.params.id);
-        if (!transaction || transaction.type !== 'WITHDRAW') {
-            return res.status(404).json({ message: 'Không tìm thấy yêu cầu rút tiền' });
+        const withdrawal = await Withdrawal.findById(req.params.id);
+        if (!withdrawal) {
+            return res.status(404).json({ message: 'withdrawals.errors.not_found' });
         }
 
-        transaction.status = 'FAILED';
-        await transaction.save();
+        withdrawal.status = 'FAILED';
+        await withdrawal.save();
 
         // Refund user balance
-        const user = await User.findById(transaction.from);
+        const user = await User.findById(withdrawal.userId);
         const fee = 1.0;
-        const totalRefund = transaction.amount + fee;
+        const totalRefund = withdrawal.amount + fee;
         
         const balanceBefore = user.usdtBalance;
         user.usdtBalance += totalRefund;
@@ -192,20 +301,20 @@ export const rejectWithdrawal = async (req, res) => {
             userId: user._id,
             amount: totalRefund,
             symbol: 'USDT',
-            type: 'DEPOSIT', // Or a new type REFUND
+            type: 'REFUND',
             status: 'SUCCESS',
             balanceBefore: balanceBefore,
             balanceAfter: user.usdtBalance,
-            description: `Hoàn tiền rút (Yêu cầu bị từ chối)`
+            description: `Withdrawal Refund (Rejected)`
         });
 
         // Update original BalanceHistory record to FAILED
         await BalanceHistory.findOneAndUpdate(
-            { userId: transaction.from, type: 'WITHDRAW', amount: transaction.amount, status: 'PENDING' },
+            { userId: withdrawal.userId, type: 'WITHDRAW', amount: withdrawal.amount, status: 'PENDING' },
             { status: 'FAILED' }
         );
 
-        res.json({ message: 'Đã từ chối yêu cầu rút tiền và hoàn tiền cho người dùng' });
+        res.json({ message: 'withdrawals.rejected_refund' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

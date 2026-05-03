@@ -38,7 +38,7 @@ export default function LoginForm() {
     try {
       if (requires2FA) {
         if (!twoFactorCode || twoFactorCode.length !== 6) {
-          setError(t("auth.errors.invalid_2fa", "Vui lòng nhập đủ 6 số"));
+          setError(t("auth.errors.invalid_2fa"));
           setLoading(false);
           return;
         }
@@ -76,8 +76,8 @@ export default function LoginForm() {
             <div className="w-12 h-12 bg-[#276152]/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldCheck className="w-6 h-6 text-[#276152]" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900">Xác thực 2 lớp</h3>
-            <p className="text-sm text-gray-500">Mở ứng dụng Google Authenticator và nhập mã 6 số để tiếp tục.</p>
+            <h3 className="text-lg font-bold text-gray-900">{t("auth.two_fa_title")}</h3>
+            <p className="text-sm text-gray-500">{t("auth.two_fa_desc")}</p>
           </div>
           <div className="flex justify-center py-4">
               <InputOTP maxLength={6} value={twoFactorCode} onChange={setTwoFactorCode}>
@@ -96,14 +96,14 @@ export default function LoginForm() {
             disabled={loading}
             className="w-full h-[44px] bg-[#276152] hover:bg-[#1e4d41] text-white font-semibold rounded-[12px] transition-all duration-300 shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? <><Loader2 className="animate-spin" size={20} />{t("auth.processing")}</> : "Xác nhận"}
+            {loading ? <><Loader2 className="animate-spin" size={20} />{t("auth.processing")}</> : t("auth.confirm")}
           </button>
           <button 
             type="button"
             onClick={() => setRequires2FA(false)}
             className="w-full h-[44px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-[12px] transition-all duration-300"
           >
-            Quay lại
+            {t("auth.back")}
           </button>
         </div>
       ) : (
