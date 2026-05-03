@@ -20,9 +20,9 @@ const createUser = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB Connected...');
 
-        const email = 'anhkiet@gmail.com';
-        const password = 'Anhkiet1010!';
-        const username = 'anhkiet';
+        const email = 'test1@gmail.com';
+        const password = 'Pierre@@1968@@!!';
+        const username = 'test1';
 
         const userExists = await User.findOne({ 
             $or: [
@@ -40,10 +40,10 @@ const createUser = async () => {
             console.log('User updated successfully!');
         } else {
             await User.create({
-                fullName: 'Anh Kiet Root',
+                fullName: 'Test',
                 username: username,
                 email: email,
-                phone: '0987654321',
+                phone: '123456789',
                 password: password,
                 isActive: true,
                 kycStatus: 'verified'
