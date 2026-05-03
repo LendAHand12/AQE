@@ -59,7 +59,8 @@
       "invalid_2fa": "Vui lòng nhập đủ 6 số",
       "referral_required": "Mã giới thiệu là bắt buộc",
       "referral_not_qualified": "Mã giới thiệu này không đủ điều kiện",
-      "invalid_referral": "Mã giới thiệu không hợp lệ"
+      "invalid_referral": "Mã giới thiệu không hợp lệ",
+      "invalid_credentials": "Email hoặc mật khẩu không chính xác"
     }
   },
   "dashboard": {
