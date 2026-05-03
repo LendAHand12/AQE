@@ -59,7 +59,6 @@ export default function AdminUserProfilePage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState("info")
   
   // Edit state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -236,7 +235,7 @@ export default function AdminUserProfilePage() {
 
         {/* Right Column - Tabs */}
         <div className="lg:col-span-8">
-          <Tabs defaultValue="info" className="w-full space-y-6" onValueChange={setActiveTab}>
+          <Tabs defaultValue="info" className="w-full space-y-6">
             <TabsList className="bg-white p-1 rounded-full border border-gray-100 h-14 shadow-sm">
               <TabsTrigger 
                 value="info" 

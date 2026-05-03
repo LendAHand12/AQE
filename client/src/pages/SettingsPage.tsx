@@ -5,7 +5,6 @@ import {
   User, 
   CheckCircle2, 
   Plus, 
-  ShieldCheck, 
   ShieldAlert, 
   HelpCircle,
   Loader2,
@@ -26,11 +25,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
 import { 
   Card, 
   CardContent 
