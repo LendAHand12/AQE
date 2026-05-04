@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { 
   Search, 
   Trash2, 
@@ -40,12 +40,17 @@ import dayjs from "dayjs"
 
 export default function UserManagementPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, locked: 0 })
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [page, setPage] = useState(1)
+  
+  // Initialize from search params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all")
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"))
+  
   const ITEMS_PER_PAGE = 10
 
   const [totalPages, setTotalPages] = useState(1)
@@ -82,6 +87,14 @@ export default function UserManagementPage() {
     }
   }
 
+  // Update search params when state changes
+  useEffect(() => {
+    const params: any = { page: page.toString() }
+    if (searchTerm) params.search = searchTerm
+    if (statusFilter !== 'all') params.status = statusFilter
+    setSearchParams(params, { replace: true })
+  }, [page, searchTerm, statusFilter])
+
   useEffect(() => {
     fetchUsers()
     fetchStats()
@@ -91,8 +104,12 @@ export default function UserManagementPage() {
   // Reset page when search or filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (page !== 1) setPage(1)
-      else fetchUsers()
+      // Only reset to page 1 if we're not on page 1
+      if (page !== 1) {
+        setPage(1)
+      } else {
+        fetchUsers()
+      }
     }, 500)
     return () => clearTimeout(timer)
   }, [searchTerm, statusFilter])

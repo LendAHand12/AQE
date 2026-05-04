@@ -12,7 +12,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
-import { useAdminPermissions, type AdminPermission } from "@/hooks/useAdminPermissions"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
+import type { AdminPermission } from "@/hooks/useAdminPermissions"
 
 interface NavItem {
   title: string

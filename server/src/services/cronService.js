@@ -9,6 +9,8 @@ const generateHash = (input) => {
     return crypto.createHash('sha256').update(input + Date.now()).digest('hex');
 };
 
+import { updateLeaderboard } from './leaderboardService.js';
+
 /**
  * Initialize all cron jobs
  */
@@ -31,18 +33,14 @@ export const initCronJobs = () => {
 
             for (const user of usersToRelease) {
                 const releasedAmount = user.preRegisterTokens;
-                const oldAqeBalance = user.aqeBalance;
-
+                
                 // Update User Balance
                 user.aqeBalance += releasedAmount;
                 user.preRegisterTokens = 0;
-                // If they completed their pledge during this interval, reset their status for next cycle
-                // or just keep it. Usually pre-register logic is per-campaign.
-                // For simplicity, we just clear the accumulated tokens.
                 
                 await user.save();
 
-                // Mark all previous unreleased transactions for this user as released (Principal clean-up)
+                // Mark all previous unreleased transactions for this user as released
                 await Transaction.updateMany(
                     { 
                         $or: [{ from: user._id }, { to: user._id }], 
@@ -61,12 +59,10 @@ export const initCronJobs = () => {
                     isRead: false
                 });
 
-                // Emit socket event if possible
+                // Emit socket event
                 try {
                     emitNotification(user._id, notif);
-                } catch (e) {
-                    // socket not available or user offline
-                }
+                } catch (e) {}
             }
 
             console.log('[CRON] Monthly Token Release completed successfully.');
@@ -75,5 +71,10 @@ export const initCronJobs = () => {
         }
     });
 
-    console.log('[CRON] Automatic Release Jobs Scheduled.');
+    // Leaderboard Update - Every 1 hour
+    cron.schedule('0 * * * *', async () => {
+        await updateLeaderboard();
+    });
+
+    console.log('[CRON] Automatic Release & Leaderboard Jobs Scheduled.');
 };

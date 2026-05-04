@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { 
   Search, 
   Loader2, 
@@ -37,13 +38,17 @@ import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 export default function AdminWithdrawalsPage() {
   const { hasPermission } = useAdminPermissions()
+  const [searchParams, setSearchParams] = useSearchParams()
   const canApprove = hasPermission('WITHDRAWALS_APPROVE')
 
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
-  const [page, setPage] = useState(1)
+  
+  // Initialize from search params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "")
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"))
+  
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
@@ -79,6 +84,14 @@ export default function AdminWithdrawalsPage() {
       setFetching(false)
     }
   }
+
+  // Update search params when state changes
+  useEffect(() => {
+    const params: any = { page: page.toString() }
+    if (searchTerm) params.search = searchTerm
+    if (statusFilter) params.status = statusFilter
+    setSearchParams(params, { replace: true })
+  }, [page, searchTerm, statusFilter])
 
   useEffect(() => {
     fetchWithdrawals()

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { 
   Search, 
   Loader2,
@@ -21,10 +22,14 @@ import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
 
 export default function AdminPaymentHistoryPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [page, setPage] = useState(1)
+  
+  // Initialize from search params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"))
+  
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
@@ -47,6 +52,13 @@ export default function AdminPaymentHistoryPage() {
       setFetching(false)
     }
   }
+
+  // Update search params when state changes
+  useEffect(() => {
+    const params: any = { page: page.toString() }
+    if (searchTerm) params.search = searchTerm
+    setSearchParams(params, { replace: true })
+  }, [page, searchTerm])
 
   useEffect(() => {
     fetchTransactions()

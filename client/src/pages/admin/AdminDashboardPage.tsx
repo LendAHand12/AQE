@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
     )
   }
 
-  const { stats, monthlyRevenue, recentTransactions, pendingKYC } = data
+  const { stats, monthlyRevenue, recentTransactions, pendingKYC, leaderboard } = data
 
   // Format chart data
   const chartData = monthlyRevenue.map((item: any) => ({
@@ -186,6 +186,68 @@ export default function AdminDashboardPage() {
 
         {/* Right Column */}
         <div className="lg:col-span-4 space-y-6">
+          {/* Sales Leaderboard */}
+          <section className="bg-white border border-[#efefef] rounded-[16px] overflow-hidden shadow-sm">
+            <div className="bg-[#276152] p-4">
+              <h2 className="font-['SVN-Gilroy:Bold',sans-serif] text-[18px] text-white tracking-[0.54px]">
+                Bảng xếp hạng doanh số
+              </h2>
+              <p className="text-white/70 text-[12px]">Cập nhật mỗi giờ</p>
+            </div>
+            <div className="p-0">
+              <div className="divide-y divide-[#efefef] max-h-[420px] overflow-y-auto custom-scrollbar">
+                {data.leaderboard?.length > 0 ? data.leaderboard.map((item: any, idx: number) => {
+                  const rankDiff = item.previousRank ? item.previousRank - item.rank : 0;
+                  return (
+                    <div key={item._id} className="p-4 flex items-center justify-between hover:bg-[#f8faf9] transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center font-bold text-[14px]",
+                          item.rank === 1 ? "bg-yellow-100 text-yellow-700" :
+                          item.rank === 2 ? "bg-gray-100 text-gray-700" :
+                          item.rank === 3 ? "bg-orange-100 text-orange-700" :
+                          "bg-blue-50 text-blue-600"
+                        )}>
+                          {item.rank}
+                        </div>
+                        <div>
+                          <p 
+                            className={cn(
+                              "font-['SVN-Gilroy:SemiBold',sans-serif] text-[14px] text-[#0d1f1d]",
+                              canViewUsers && "cursor-pointer hover:text-[#276152] hover:underline"
+                            )}
+                            onClick={() => canViewUsers && navigate(`/admin/users/${item.userId}`)}
+                          >
+                            {item.fullName || item.username}
+                          </p>
+                          <p className="text-[12px] text-[#636d7d]">{item.totalSales?.toLocaleString()} USDT</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        {rankDiff > 0 ? (
+                          <div className="flex items-center text-green-600 text-[11px] font-bold">
+                            <ArrowUpCircle className="w-3 h-3 mr-0.5" />
+                            {rankDiff}
+                          </div>
+                        ) : rankDiff < 0 ? (
+                          <div className="flex items-center text-red-600 text-[11px] font-bold">
+                            <ArrowDownCircle className="w-3 h-3 mr-0.5" />
+                            {Math.abs(rankDiff)}
+                          </div>
+                        ) : (
+                          <div className="text-gray-300 text-[11px] font-bold">-</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <p className="text-center py-10 text-gray-400 text-sm italic">Chưa có dữ liệu xếp hạng</p>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* KYC Pending */}
           <section className="bg-[rgba(239,239,239,0.5)] border border-white rounded-[16px] p-4 space-y-4">
             <div className="flex justify-between items-center">

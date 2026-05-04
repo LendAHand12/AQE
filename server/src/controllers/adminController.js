@@ -7,10 +7,12 @@ import Property from '../models/Property.js';
 import Commission from '../models/Commission.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import Withdrawal from '../models/Withdrawal.js';
+import Leaderboard from '../models/Leaderboard.js';
 import { generateToken } from '../utils/jwt.js';
 import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
+import { calculateUserSystemSales } from '../utils/sales.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -167,8 +169,24 @@ export const getUserById = async (req, res) => {
         }).sort({ createdAt: -1 }).limit(100);
 
         // Fetch referrals (users referred by this user)
-        const referrals = await User.find({ referredBy: user._id, isDeleted: false })
-            .select('fullName username email createdAt kycStatus isActive usdtBalance');
+        const referralsRaw = await User.find({ referredBy: user._id, isDeleted: false })
+            .select('fullName username email createdAt kycStatus isActive usdtBalance paidUsdtPreRegister pledgeRounds');
+        
+        const referrals = await Promise.all(referralsRaw.map(async (ref) => {
+            const sales = await calculateUserSystemSales(ref._id);
+            // Calculate personal paid: current round + archived rounds
+            const personalPaid = (ref.paidUsdtPreRegister || 0) + 
+                (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
+                
+            return {
+                ...ref.toObject(),
+                totalSales: sales,
+                personalPaid: personalPaid
+            };
+        }));
+
+        // Calculate Total Sales
+        const totalSales = await calculateUserSystemSales(user._id);
 
         res.json({
             user,
@@ -176,7 +194,8 @@ export const getUserById = async (req, res) => {
             withdrawals,
             commissions,
             tokenHistory,
-            referrals
+            referrals,
+            totalSales
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -414,6 +433,9 @@ export const getDashboardStats = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(5);
 
+        // Fetch Leaderboard
+        const leaderboard = await Leaderboard.find({}).sort({ rank: 1 });
+
         // Helpers for Comparison
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
@@ -456,7 +478,8 @@ export const getDashboardStats = async (req, res) => {
             },
             monthlyRevenue,
             recentTransactions,
-            pendingKYC
+            pendingKYC,
+            leaderboard
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

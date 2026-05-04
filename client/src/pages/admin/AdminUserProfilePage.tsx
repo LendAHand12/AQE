@@ -185,13 +185,21 @@ export default function AdminUserProfilePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-8">
-                <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left">
+                <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left border border-gray-100">
                   <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">Số dư USDT</p>
                   <p className="text-[18px] font-extrabold text-[#276152]">{user.usdtBalance?.toLocaleString()} <span className="text-xs">USDT</span></p>
                 </div>
-                <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left">
+                <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left border border-gray-100">
                   <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">Số dư AQE</p>
                   <p className="text-[18px] font-extrabold text-amber-600">{user.aqeBalance?.toLocaleString()} <span className="text-xs">AQE</span></p>
+                </div>
+              </div>
+
+              <div className="mt-3 bg-[#276152] p-4 rounded-[16px] text-left shadow-md shadow-[#276152]/10 border border-[#276152]/20">
+                <p className="text-[11px] text-white/70 font-bold uppercase tracking-wider mb-1">Doanh số hệ thống (Toàn cấp)</p>
+                <div className="flex justify-between items-end">
+                  <p className="text-[20px] font-black text-white">{data.totalSales?.toLocaleString() || 0} <span className="text-xs font-bold">USDT</span></p>
+                  <TrendingUp className="text-white/40 w-5 h-5" />
                 </div>
               </div>
             </CardContent>
@@ -629,6 +637,8 @@ export default function AdminUserProfilePage() {
                           <TableHead className="font-bold">Ngày đăng ký</TableHead>
                           <TableHead className="font-bold">KYC</TableHead>
                           <TableHead className="font-bold text-right">Số dư USDT</TableHead>
+                          <TableHead className="font-bold text-right">Cá nhân nạp</TableHead>
+                          <TableHead className="font-bold text-right">Doanh số</TableHead>
                           <TableHead className="pr-6 font-bold text-right">Thao tác</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -656,6 +666,12 @@ export default function AdminUserProfilePage() {
                               <TableCell className="text-right font-medium">
                                 {ref.usdtBalance?.toLocaleString()} USDT
                               </TableCell>
+                              <TableCell className="text-right font-bold text-blue-600">
+                                {ref.personalPaid?.toLocaleString()} USDT
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-[#276152]">
+                                {ref.totalSales?.toLocaleString()} USDT
+                              </TableCell>
                               <TableCell className="pr-6 text-right">
                                 <Button 
                                   variant="ghost" 
@@ -670,7 +686,7 @@ export default function AdminUserProfilePage() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={5} className="py-12 text-center text-gray-400">
+                            <TableCell colSpan={7} className="py-12 text-center text-gray-400">
                                Người dùng này chưa giới thiệu ai
                             </TableCell>
                           </TableRow>
