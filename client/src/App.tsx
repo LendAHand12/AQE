@@ -11,13 +11,13 @@ import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage"
 import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
 import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
-import AdminAQEHistoryPage from "@/pages/admin/AdminAQEHistoryPage"
 import AdminPropertyPage from "@/pages/admin/AdminPropertyPage"
 import AddPropertyPage from "@/pages/admin/AddPropertyPage"
 import EditPropertyPage from "@/pages/admin/EditPropertyPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminUserProfilePage from "@/pages/admin/AdminUserProfilePage"
 import AdminWithdrawalsPage from "@/pages/admin/AdminWithdrawalsPage"
+import AdminManagementPage from "@/pages/admin/AdminManagementPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
@@ -84,8 +84,8 @@ export function App() {
               <Route path="/admin/token-settings" element={<TokenSettingsPage />} />
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
-              <Route path="/admin/transactions/aqe" element={<AdminAQEHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
+              <Route path="/admin/accounts" element={<AdminManagementPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
 

@@ -40,11 +40,6 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
           title: "Lịch sử hoa hồng", 
           description: "Theo dõi các giao dịch trả thưởng hoa hồng hệ thống" 
         };
-      case "/admin/transactions/aqe":
-        return { 
-          title: "Phân phối AQE", 
-          description: "Quản lý lịch sử phân phối và trả thưởng token AQE" 
-        };
       case "/admin/withdrawals":
         return { 
           title: "Quản lý Rút tiền", 

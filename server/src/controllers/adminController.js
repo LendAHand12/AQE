@@ -28,6 +28,7 @@ export const loginAdmin = async (req, res) => {
                 _id: admin._id,
                 username: admin.username,
                 role: admin.role,
+                permissions: admin.permissions,
                 token: generateToken(admin._id),
             });
         } else {
@@ -55,6 +56,7 @@ export const verify2FALogin = async (req, res) => {
                 _id: admin._id,
                 username: admin.username,
                 role: admin.role,
+                permissions: admin.permissions,
                 token: generateToken(admin._id),
             });
         } else {
@@ -605,4 +607,95 @@ export const getAllTransactionsForAdmin = async (req, res) => {
 const calculateChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return parseFloat(((current - previous) / previous * 100).toFixed(1));
+};
+
+// @desc    Get all admins
+// @route   GET /api/admin/accounts
+export const getAllAdmins = async (req, res) => {
+    try {
+        const admins = await Admin.find({}).select('-password');
+        res.json(admins);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Create new subadmin
+// @route   POST /api/admin/accounts
+export const createSubadmin = async (req, res) => {
+    try {
+        const { username, password, permissions, role } = req.body;
+
+        const adminExists = await Admin.findOne({ username });
+        if (adminExists) {
+            return res.status(400).json({ message: 'Tên đăng nhập đã tồn tại' });
+        }
+
+        const admin = await Admin.create({
+            username,
+            password,
+            role: role || 'subadmin',
+            permissions: permissions || []
+        });
+
+        res.status(201).json({
+            _id: admin._id,
+            username: admin.username,
+            role: admin.role,
+            permissions: admin.permissions
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update subadmin
+// @route   PUT /api/admin/accounts/:id
+export const updateSubadmin = async (req, res) => {
+    try {
+        const { username, permissions, role, password } = req.body;
+        const admin = await Admin.findById(req.params.id);
+
+        if (admin) {
+            admin.username = username || admin.username;
+            admin.role = role || admin.role;
+            admin.permissions = permissions || admin.permissions;
+            
+            if (password) {
+                admin.password = password;
+            }
+
+            const updatedAdmin = await admin.save();
+            res.json({
+                _id: updatedAdmin._id,
+                username: updatedAdmin.username,
+                role: updatedAdmin.role,
+                permissions: updatedAdmin.permissions
+            });
+        } else {
+            res.status(404).json({ message: 'Không tìm thấy tài khoản admin' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete admin
+// @route   DELETE /api/admin/accounts/:id
+export const deleteAdminAccount = async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.params.id);
+
+        if (admin) {
+            if (admin.role === 'superadmin') {
+                return res.status(400).json({ message: 'Không thể xóa tài khoản Superadmin' });
+            }
+            await Admin.deleteOne({ _id: admin._id });
+            res.json({ message: 'Đã xóa tài khoản admin' });
+        } else {
+            res.status(404).json({ message: 'Không tìm thấy tài khoản admin' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };

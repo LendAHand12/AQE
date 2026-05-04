@@ -701,9 +701,11 @@ export default function AdminUserProfilePage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {data.tokenHistory?.length > 0 ? (
-                          data.tokenHistory.map((bh: any) => (
-                            <TableRow key={bh._id}>
+                        {data.tokenHistory?.filter((bh: any) => bh.symbol === 'AQE').length > 0 ? (
+                          data.tokenHistory
+                            .filter((bh: any) => bh.symbol === 'AQE')
+                            .map((bh: any) => (
+                              <TableRow key={bh._id}>
                               <TableCell className="pl-6 text-xs text-gray-500">
                                 {dayjs(bh.createdAt).format("DD/MM/YYYY HH:mm")}
                               </TableCell>

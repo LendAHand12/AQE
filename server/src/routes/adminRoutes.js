@@ -10,7 +10,11 @@ import {
     generate2FA,
     enable2FA,
     disable2FA,
-    getDashboardStats
+    getDashboardStats,
+    getAllAdmins,
+    createSubadmin,
+    updateSubadmin,
+    deleteAdminAccount
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
@@ -65,5 +69,14 @@ router.route('/properties/:id')
     .put(adminProtect, upload.array('images', 10), updateProperty)
     .delete(adminProtect, deleteProperty);
 
+
+// Admin Accounts Management
+router.route('/accounts')
+    .get(adminProtect, getAllAdmins)
+    .post(adminProtect, createSubadmin);
+
+router.route('/accounts/:id')
+    .put(adminProtect, updateSubadmin)
+    .delete(adminProtect, deleteAdminAccount);
 
 export default router;

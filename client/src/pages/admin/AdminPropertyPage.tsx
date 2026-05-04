@@ -21,9 +21,12 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { cn, getImageUrl } from "@/lib/utils"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 export default function AdminPropertyPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAdminPermissions()
+
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -87,13 +90,15 @@ export default function AdminPropertyPage() {
           />
         </div>
 
-        <Button 
-          onClick={() => navigate('/admin/properties/add')}
-          className="bg-[#276152] hover:bg-[#1e4a3f] text-white h-[40px] px-6 rounded-[12px] flex items-center gap-2 border-none shadow-md font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] transition-all active:scale-95"
-        >
-          <span>Thêm dự án</span>
-          <Plus className="w-5 h-5" />
-        </Button>
+        {hasPermission('PROPERTIES_ADD') && (
+          <Button 
+            onClick={() => navigate('/admin/properties/add')}
+            className="bg-[#276152] hover:bg-[#1e4a3f] text-white h-[40px] px-6 rounded-[12px] flex items-center gap-2 border-none shadow-md font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] transition-all active:scale-95"
+          >
+            <span>Thêm dự án</span>
+            <Plus className="w-5 h-5" />
+          </Button>
+        )}
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[140px] bg-[rgba(239,239,239,0.5)] border-none h-[40px] py-0 rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
@@ -133,6 +138,9 @@ export default function AdminPropertyPage() {
 
 function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete: () => void, onEdit: () => void }) {
   const fundingPercent = Math.min(100, Math.round((property.currentFunding / property.totalFunding) * 100))
+  const { hasPermission } = useAdminPermissions()
+  const canEdit = hasPermission('PROPERTIES_EDIT')
+  const canDelete = hasPermission('PROPERTIES_DELETE')
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
@@ -221,28 +229,36 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
       <div className="h-0 border-t-[1.5px] border-dashed border-[#d5d7db] mx-auto w-[90%]" />
 
       {/* Actions */}
-      <div className="flex items-center gap-[10px]">
-        <Button 
-          onClick={onEdit}
-          className="flex-1 bg-[#d9ede8] hover:bg-[#c4e3db] text-[#276152] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
-        >
-          <Pencil className="w-5 h-5" />
-          <span>Chỉnh sửa</span>
-        </Button>
-        <Button 
-          className="flex-1 bg-[rgba(245,158,11,0.1)] hover:bg-[rgba(245,158,11,0.2)] text-[#d97706] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
-        >
-          <Star className="w-5 h-5" />
-          <span>Pre-sales</span>
-        </Button>
-        <Button 
-          onClick={onDelete}
-          className="flex-1 bg-[rgba(239,68,68,0.1)] hover:bg-[rgba(239,68,68,0.2)] text-[#ef4444] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
-        >
-          <Trash2 className="w-5 h-5" />
-          <span>Xóa</span>
-        </Button>
-      </div>
+      {(canEdit || canDelete) && (
+        <div className="flex items-center gap-[10px]">
+          {canEdit && (
+            <Button 
+              onClick={onEdit}
+              className="flex-1 bg-[#d9ede8] hover:bg-[#c4e3db] text-[#276152] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
+            >
+              <Pencil className="w-5 h-5" />
+              <span>Chỉnh sửa</span>
+            </Button>
+          )}
+          
+          <Button 
+            className="flex-1 bg-[rgba(245,158,11,0.1)] hover:bg-[rgba(245,158,11,0.2)] text-[#d97706] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
+          >
+            <Star className="w-5 h-5" />
+            <span>Pre-sales</span>
+          </Button>
+
+          {canDelete && (
+            <Button 
+              onClick={onDelete}
+              className="flex-1 bg-[rgba(239,68,68,0.1)] hover:bg-[rgba(239,68,68,0.2)] text-[#ef4444] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Xóa</span>
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

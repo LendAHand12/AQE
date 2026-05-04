@@ -8,11 +8,21 @@ import {
   Building2,
   HandCoins,
   BadgePercent,
+  ShieldAlert,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
+import { useAdminPermissions, type AdminPermission } from "@/hooks/useAdminPermissions"
 
-const mainNavItems = [
+interface NavItem {
+  title: string
+  href: string
+  icon: any
+  superOnly?: boolean
+  requiredPermission?: AdminPermission
+}
+
+const mainNavItems: NavItem[] = [
   {
     title: "Dashboard",
     href: "/admin/dashboard",
@@ -22,42 +32,49 @@ const mainNavItems = [
     title: "Người dùng",
     href: "/admin/users",
     icon: Users,
+    requiredPermission: "USERS_VIEW"
   },
   {
     title: "Bất động sản",
     href: "/admin/properties",
     icon: Building2,
+    requiredPermission: "PROPERTIES_VIEW"
   },
   {
     title: "Giao dịch",
     href: "/admin/transactions/payments",
     icon: HandCoins,
+    requiredPermission: "TRANSACTIONS_VIEW"
   },
   {
     title: "Hoa hồng",
     href: "/admin/transactions/commissions",
     icon: BadgePercent,
-  },
-  {
-    title: "Phân phối AQE",
-    href: "/admin/transactions/aqe",
-    icon: Coins,
+    requiredPermission: "TRANSACTIONS_VIEW"
   },
   {
     title: "Quản lý Rút tiền",
     href: "/admin/withdrawals",
     icon: HandCoins,
+    requiredPermission: "WITHDRAWALS_VIEW"
   },
   {
     title: "Cài đặt Pool",
     href: "/admin/token-settings",
     icon: Settings,
+    requiredPermission: "SETTINGS_VIEW"
+  },
+  {
+    title: "Quản lý Admin",
+    href: "/admin/accounts",
+    icon: ShieldAlert,
+    superOnly: true,
   },
 ]
 
 const bottomNavItems = [
   {
-    title: "Cài đặt",
+    title: "Cài đặt cá nhân",
     href: "/admin/settings",
     icon: Settings,
   },
@@ -65,6 +82,7 @@ const bottomNavItems = [
 
 export default function AdminSidebar() {
   const location = useLocation()
+  const { hasPermission, isSuperAdmin } = useAdminPermissions()
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token")
@@ -83,9 +101,12 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <div className="flex flex-col gap-2">
           {mainNavItems.map((item) => {
+            if (item.superOnly && !isSuperAdmin) return null;
+            if (item.requiredPermission && !hasPermission(item.requiredPermission)) return null;
+            
             const isActive = location.pathname === item.href;
             return (
               <NavLink

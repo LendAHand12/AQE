@@ -20,6 +20,7 @@ import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 dayjs.extend(relativeTime)
 
@@ -27,6 +28,9 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
   const navigate = useNavigate()
+  const { hasPermission } = useAdminPermissions()
+  const canViewUsers = hasPermission('USERS_VIEW')
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -110,9 +114,15 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#efefef]/50">
-                  {recentTransactions.map((tx: any) => (
+                   {recentTransactions.map((tx: any) => (
                     <tr key={tx._id} className="hover:bg-[#f8faf9] transition-colors">
-                      <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#276152] font-semibold cursor-pointer hover:underline" onClick={() => navigate(`/admin/users/${tx.from}`)}>
+                      <td 
+                        className={cn(
+                          "px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] font-semibold",
+                          canViewUsers ? "text-[#276152] cursor-pointer hover:underline" : "text-gray-500"
+                        )}
+                        onClick={() => canViewUsers && navigate(`/admin/users/${tx.from}`)}
+                      >
                         {tx.userName}
                       </td>
                       <td className="px-4 py-3 font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#111827]">
@@ -192,12 +202,14 @@ export default function AdminDashboardPage() {
                       {user.fullName || user.email}
                     </span>
                   </div>
-                  <button 
-                    onClick={() => navigate(`/admin/users/${user._id}`)}
-                    className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[11px] text-[#276152] hover:underline"
-                  >
-                    Xem
-                  </button>
+                  {canViewUsers && (
+                    <button 
+                      onClick={() => navigate(`/admin/users/${user._id}`)}
+                      className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[11px] text-[#276152] hover:underline"
+                    >
+                      Xem
+                    </button>
+                  )}
                 </div>
               )) : (
                 <p className="text-center py-4 text-gray-500 text-sm">Không có yêu cầu chờ duyệt</p>

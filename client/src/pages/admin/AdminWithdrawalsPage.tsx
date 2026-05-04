@@ -33,8 +33,12 @@ import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 export default function AdminWithdrawalsPage() {
+  const { hasPermission } = useAdminPermissions()
+  const canApprove = hasPermission('WITHDRAWALS_APPROVE')
+
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -246,29 +250,33 @@ export default function AdminWithdrawalsPage() {
                     </TableCell>
                     <TableCell className="text-right pr-8">
                       {item.status === 'PENDING' ? (
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            size="sm" 
-                            onClick={() => {
-                              setSelectedWithdrawal(item)
-                              setIsApproveOpen(true)
-                            }}
-                            className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-full size-8 p-0"
-                          >
-                            <CheckCircle2 size={16} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedWithdrawal(item)
-                              setIsRejectOpen(true)
-                            }}
-                            className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-full size-8 p-0"
-                          >
-                            <XCircle size={16} />
-                          </Button>
-                        </div>
+                        canApprove ? (
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => {
+                                setSelectedWithdrawal(item)
+                                setIsApproveOpen(true)
+                              }}
+                              className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-full size-8 p-0"
+                            >
+                              <CheckCircle2 size={16} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedWithdrawal(item)
+                                setIsRejectOpen(true)
+                              }}
+                              className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-full size-8 p-0"
+                            >
+                              <XCircle size={16} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No Permission</span>
+                        )
                       ) : (
                         <span className="text-xs text-gray-300 font-bold italic">N/A</span>
                       )}

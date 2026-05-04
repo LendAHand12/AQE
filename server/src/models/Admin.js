@@ -15,6 +15,10 @@ const adminSchema = mongoose.Schema({
         type: String,
         default: 'superadmin'
     },
+    permissions: {
+        type: [String],
+        default: []
+    },
     isTwoFactorEnabled: {
         type: Boolean,
         default: false

@@ -4,8 +4,10 @@ import {
   Search, 
   Trash2, 
   Eye, 
-  Loader2
+  Loader2,
+  Pencil
 } from "lucide-react"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 import { 
   Table, 
   TableBody, 
@@ -54,6 +56,8 @@ export default function UserManagementPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   
+  const { hasPermission } = useAdminPermissions()
+
   const fetchStats = async () => {
     try {
       const res = await apiClient.get('/admin/users/stats')
@@ -252,14 +256,29 @@ export default function UserManagementPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
-                        onClick={() => handleDelete(user._id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {hasPermission('USERS_EDIT') && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full text-[#3b82f6] hover:bg-[#3b82f6]/10"
+                          onClick={() => {
+                            setEditingUser({...user});
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {hasPermission('USERS_DELETE') && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full text-red-500 hover:bg-red-50"
+                          onClick={() => handleDelete(user._id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

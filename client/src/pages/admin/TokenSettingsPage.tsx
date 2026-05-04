@@ -13,8 +13,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 export default function TokenSettingsPage() {
+  const { hasPermission } = useAdminPermissions()
+  const canEdit = hasPermission('SETTINGS_EDIT')
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
@@ -176,11 +180,11 @@ export default function TokenSettingsPage() {
             </Button>
             <Button 
               type="submit"
-              disabled={saving}
-              className="h-12 px-8 rounded-[12px] bg-[#276152] hover:bg-[#1e4d41]"
+              disabled={saving || !canEdit}
+              className="h-12 px-8 rounded-[12px] bg-[#276152] hover:bg-[#1e4d41] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} 
-              Lưu thay đổi
+              {canEdit ? "Lưu thay đổi" : "Không có quyền sửa"}
             </Button>
           </div>
         </div>
