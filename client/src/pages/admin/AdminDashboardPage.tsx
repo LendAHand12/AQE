@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="p-0">
               <div className="divide-y divide-[#efefef] max-h-[420px] overflow-y-auto custom-scrollbar">
-                {data.leaderboard?.length > 0 ? data.leaderboard.map((item: any, idx: number) => {
+                {leaderboard?.length > 0 ? leaderboard.map((item: any) => {
                   const rankDiff = item.previousRank ? item.previousRank - item.rank : 0;
                   return (
                     <div key={item._id} className="p-4 flex items-center justify-between hover:bg-[#f8faf9] transition-colors">

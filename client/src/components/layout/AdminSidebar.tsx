@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Settings, 
   LogOut,
-  Coins,
   Building2,
   HandCoins,
   BadgePercent,

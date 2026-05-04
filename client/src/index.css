@@ -129,6 +129,8 @@
   html {
     @apply font-sans;
     }
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
