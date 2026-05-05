@@ -185,6 +185,26 @@ export const getUserById = async (req, res) => {
             };
         }));
 
+        // Calculate Total Network
+        const totalNetworkArr = await User.aggregate([
+            { $match: { _id: user._id } },
+            {
+                $graphLookup: {
+                    from: 'users',
+                    startWith: '$_id',
+                    connectFromField: '_id',
+                    connectToField: 'referredBy',
+                    as: 'descendants'
+                }
+            },
+            {
+                $project: {
+                    totalNetwork: { $size: "$descendants" }
+                }
+            }
+        ]);
+        const totalNetwork = totalNetworkArr[0]?.totalNetwork || 0;
+
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
 
@@ -195,7 +215,8 @@ export const getUserById = async (req, res) => {
             commissions,
             tokenHistory,
             referrals,
-            totalSales
+            totalSales,
+            totalNetwork
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -718,6 +739,31 @@ export const deleteAdminAccount = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Không tìm thấy tài khoản admin' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get direct referrals for tree view (lazy loading)
+// @route   GET /api/admin/users/:id/referrals
+export const getDirectReferrals = async (req, res) => {
+    try {
+        const referralsRaw = await User.find({ referredBy: req.params.id, isDeleted: false })
+            .select('fullName username email createdAt kycStatus isActive usdtBalance paidUsdtPreRegister pledgeRounds');
+
+        const referrals = await Promise.all(referralsRaw.map(async (ref) => {
+            const sales = await calculateUserSystemSales(ref._id);
+            const personalPaid = (ref.paidUsdtPreRegister || 0) + 
+                (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
+            
+            return {
+                ...ref.toObject(),
+                totalSales: sales,
+                personalPaid: personalPaid
+            };
+        }));
+
+        res.json(referrals);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

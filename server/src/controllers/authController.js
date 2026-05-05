@@ -4,6 +4,8 @@ import Commission from '../models/Commission.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
+import mongoose from 'mongoose';
+import { calculateUserSystemSales } from '../utils/sales.js';
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
     try {
@@ -346,38 +348,108 @@ export const getReferrals = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // Find F1s (Direct referrals) who are active
-        const f1s = await User.find({ referredBy: userId, isActive: true })
-            .select('fullName username email pledgeUsdt paidUsdtPreRegister createdAt');
+        // Find F1s (Direct referrals)
+        const f1sRaw = await User.find({ referredBy: userId, isDeleted: false })
+            .select('fullName username email createdAt kycStatus isActive paidUsdtPreRegister pledgeRounds');
 
-        // Find F2s (Indirect referrals) for each F1
-        const network = await Promise.all(f1s.map(async (f1) => {
-            const f2s = await User.find({ referredBy: f1._id, isActive: true })
-                .select('fullName username email pledgeUsdt paidUsdtPreRegister createdAt');
+        const network = await Promise.all(f1sRaw.map(async (f1) => {
+            const sales = await calculateUserSystemSales(f1._id);
+            const personalPaid = (f1.paidUsdtPreRegister || 0) + 
+                (f1.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
             
             return {
                 ...f1.toObject(),
-                f2s
+                totalSales: sales,
+                personalPaid: personalPaid
             };
         }));
 
         // Calculate summary
-        const totalF1 = f1s.length;
-        const totalF2 = network.reduce((acc, curr) => acc + curr.f2s.length, 0);
-
-        // Fetch total commission
-        const commissions = await Commission.find({ recipientId: userId });
-        const totalCommission = commissions.reduce((acc, curr) => acc + curr.amountUsdt, 0);
+        const totalF1 = f1sRaw.length;
+        
+        // Calculate Total Network Count
+        const networkStats = await User.aggregate([
+            { $match: { _id: userId } },
+            {
+                $graphLookup: {
+                    from: 'users',
+                    startWith: '$_id',
+                    connectFromField: '_id',
+                    connectToField: 'referredBy',
+                    as: 'descendants'
+                }
+            },
+            {
+                $project: {
+                    totalNetwork: { $size: '$descendants' }
+                }
+            }
+        ]);
+        const totalNetwork = networkStats[0]?.totalNetwork || 0;
+        const totalSales = await calculateUserSystemSales(userId);
 
         res.json({
             summary: {
                 totalF1,
-                totalF2,
-                totalReferrals: totalF1 + totalF2,
-                totalCommission
+                totalNetwork,
+                totalSales,
             },
             network
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get sub-referrals for a user in the network
+// @route   GET /api/auth/referrals/:userId
+// @access  Private
+export const getSubReferrals = async (req, res) => {
+    try {
+        const targetUserId = req.params.userId;
+        const currentUserId = req.user._id;
+
+        // Verify descendant relationship
+        const isDescendant = await User.aggregate([
+            { $match: { _id: currentUserId } },
+            {
+                $graphLookup: {
+                    from: 'users',
+                    startWith: '$_id',
+                    connectFromField: '_id',
+                    connectToField: 'referredBy',
+                    as: 'descendants'
+                }
+            },
+            { 
+                $project: {
+                    isInNetwork: {
+                        $in: [new mongoose.Types.ObjectId(targetUserId), '$descendants._id']
+                    }
+                }
+            }
+        ]);
+
+        if (isDescendant.length === 0 || !isDescendant[0].isInNetwork) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const referralsRaw = await User.find({ referredBy: targetUserId, isDeleted: false })
+            .select('fullName username email createdAt kycStatus isActive paidUsdtPreRegister pledgeRounds');
+        
+        const referrals = await Promise.all(referralsRaw.map(async (ref) => {
+            const sales = await calculateUserSystemSales(ref._id);
+            const personalPaid = (ref.paidUsdtPreRegister || 0) + 
+                (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
+                
+            return {
+                ...ref.toObject(),
+                totalSales: sales,
+                personalPaid: personalPaid
+            };
+        }));
+
+        res.json(referrals);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useParams, useNavigate } from "react-router-dom"
 import { 
   User, 
@@ -20,7 +21,10 @@ import {
   MapPin, 
   Flag,
   Image as ImageIcon,
-  Eye
+  Eye,
+  ChevronRight,
+  ChevronDown,
+  Network
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -53,6 +57,122 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
+
+const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [children, setChildren] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const toggleOpen = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isOpen && children.length === 0) {
+      setLoading(true);
+      try {
+        const res = await apiClient.get(`/admin/users/${user._id}/referrals`);
+        setChildren(res.data);
+      } catch (err) {
+        toast.error("Không thể tải danh sách cấp dưới");
+      } finally {
+        setLoading(false);
+      }
+    }
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div className="select-none w-max min-w-full">
+      <div 
+        className={cn(
+          "flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent min-w-[900px]",
+          isOpen && "bg-gray-50 border-gray-100 shadow-sm"
+        )}
+        style={{ paddingLeft: `${level * 28 + 16}px` }}
+        onClick={toggleOpen}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-6 h-6 flex items-center justify-center">
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-emerald-600" />
+            ) : (
+              (user.totalSales > 0 || children.length > 0) ? (
+                <div className={cn("transition-transform duration-200", isOpen && "rotate-90")}>
+                   <ChevronRight size={20} className="text-gray-400 group-hover:text-[#276152]" />
+                </div>
+              ) : (
+                <div className="size-2 rounded-full bg-gray-200" />
+              )
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="size-11 rounded-xl bg-[#276152]/10 flex items-center justify-center text-[#276152] font-bold text-xs uppercase">
+              {user.username?.substring(0, 2)}
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[16px] text-gray-900">@{user.username}</span>
+                <span className="text-[14px] text-gray-500 font-semibold">{user.fullName}</span>
+                <Badge variant="outline" className={cn(
+                  "text-[10px] h-5 px-2 font-bold uppercase border-none",
+                  user.kycStatus === 'verified' ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-400"
+                )}>
+                  {user.kycStatus}
+                </Badge>
+              </div>
+              <span className="text-[11px] text-gray-400 font-mono">{user.email}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-10">
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Cá nhân nạp</p>
+            <p className="text-[16px] font-bold text-blue-600">{user.personalPaid?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Doanh số hệ thống</p>
+            <p className="text-[16px] font-bold text-emerald-700">{user.totalSales?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all text-gray-400 hover:text-[#276152]"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/admin/users/${user._id}`);
+            }}
+          >
+            <Eye size={16} />
+          </Button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="w-max min-w-full"
+          >
+            {children.length > 0 ? (
+              <div className="mt-1 border-l-2 border-emerald-50/50 ml-8">
+                {children.map((child: any) => (
+                  <ReferralTreeNode key={child._id} user={child} level={level + 1} />
+                ))}
+              </div>
+            ) : !loading && (
+              <div className="py-3 text-[12px] text-gray-400 italic ml-20">
+                 Không có cấp dưới
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default function AdminUserProfilePage() {
   const { id } = useParams()
@@ -619,82 +739,82 @@ export default function AdminUserProfilePage() {
 
             {/* Tab: Referral */}
             <TabsContent value="referrals" className="outline-none">
-               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                      <Users size={20} className="text-[#276152]" />
-                      Danh sách người được giới thiệu
-                    </CardTitle>
-                    <Badge className="bg-[#d9ede8] text-[#276152] border-none font-bold">
-                      Tổng: {referrals?.length || 0}
-                    </Badge>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader className="bg-gray-50/50">
-                        <TableRow>
-                          <TableHead className="pl-6 font-bold">Người dùng</TableHead>
-                          <TableHead className="font-bold">Ngày đăng ký</TableHead>
-                          <TableHead className="font-bold">KYC</TableHead>
-                          <TableHead className="font-bold text-right">Số dư USDT</TableHead>
-                          <TableHead className="font-bold text-right">Cá nhân nạp</TableHead>
-                          <TableHead className="font-bold text-right">Doanh số</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Thao tác</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {referrals?.length > 0 ? (
-                          referrals.map((ref: any) => (
-                            <TableRow key={ref._id}>
-                              <TableCell className="pl-6">
-                                <div className="flex flex-col">
-                                   <span className="font-bold">@{ref.username}</span>
-                                   <span className="text-[11px] text-gray-400">{ref.fullName}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {dayjs(ref.createdAt).format("DD/MM/YYYY")}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className={cn(
-                                  "text-[10px] font-bold border-none uppercase",
-                                  ref.kycStatus === 'verified' ? "bg-emerald-50 text-emerald-600" : "bg-gray-50 text-gray-400"
-                                )}>
-                                  {ref.kycStatus}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {ref.usdtBalance?.toLocaleString()} USDT
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-blue-600">
-                                {ref.personalPaid?.toLocaleString()} USDT
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-[#276152]">
-                                {ref.totalSales?.toLocaleString()} USDT
-                              </TableCell>
-                              <TableCell className="pr-6 text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-[#276152] font-bold text-xs"
-                                  onClick={() => navigate(`/admin/users/${ref._id}`)}
-                                >
-                                  Chi tiết <ArrowRight size={14} className="ml-1" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
+               <div className="space-y-6">
+                 {/* Referral Summary Cards */}
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
+                            <Users size={28} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Trực tiếp (F1)</p>
+                            <h3 className="text-2xl font-black text-[#111827]">{data.referrals?.length || 0}</h3>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600">
+                            <Network size={28} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Toàn hệ thống</p>
+                            <h3 className="text-2xl font-black text-[#111827]">{data.totalNetwork || 0}</h3>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-amber-600">
+                            <TrendingUp size={28} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Doanh số hệ thống</p>
+                            <h3 className="text-2xl font-black text-[#111827]">{data.totalSales?.toLocaleString()} <span className="text-sm font-bold">USDT</span></h3>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                 </div>
+
+                 <Card className="rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="border-b bg-gray-50/30 p-6">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                          <Users size={20} className="text-[#276152]" />
+                          Cây hệ thống giới thiệu
+                        </CardTitle>
+                        <Badge className="bg-[#276152] text-white border-none font-bold px-4 py-1.5 rounded-full">
+                          {data.totalNetwork || 0} thành viên
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 min-h-[400px] overflow-x-auto custom-scrollbar">
+                      <div className="space-y-1 w-max min-w-full">
+                        {data.referrals?.length > 0 ? (
+                          data.referrals.map((ref: any) => (
+                            <ReferralTreeNode key={ref._id} user={ref} />
                           ))
                         ) : (
-                          <TableRow>
-                            <TableCell colSpan={7} className="py-12 text-center text-gray-400">
-                               Người dùng này chưa giới thiệu ai
-                            </TableCell>
-                          </TableRow>
+                          <div className="py-20 text-center space-y-4">
+                             <div className="size-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-300">
+                                <Users size={40} />
+                             </div>
+                             <p className="text-gray-400 font-medium italic">Người dùng này chưa giới thiệu ai</p>
+                          </div>
                         )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-               </Card>
+                      </div>
+                    </CardContent>
+                 </Card>
+               </div>
             </TabsContent>
             {/* Tab: AQE Distribution */}
             <TabsContent value="aqe" className="outline-none">

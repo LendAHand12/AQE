@@ -342,7 +342,9 @@
     "stats": {
       "total_referrals": "Tổng số người giới thiệu",
       "active_referrals": "Người giới thiệu đã mua hàng",
-      "total_commission": "Tổng hoa hồng nhận được"
+      "total_commission": "Tổng hoa hồng nhận được",
+      "total_sales": "Doanh số hệ thống",
+      "personal_paid": "Cá nhân nạp"
     },
     "table": {
       "user": "Người dùng",

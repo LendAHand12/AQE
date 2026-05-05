@@ -7,6 +7,7 @@ import {
     updateUserByAdmin, 
     deleteUser,
     getUserById,
+    getDirectReferrals,
     generate2FA,
     enable2FA,
     disable2FA,
@@ -47,6 +48,8 @@ router.route('/users/:id')
     .get(adminProtect, getUserById)
     .put(adminProtect, updateUserByAdmin)
     .delete(adminProtect, deleteUser);
+
+router.get('/users/:id/referrals', adminProtect, getDirectReferrals);
 
 router.route('/token-settings')
     .get(adminProtect, getExplorerStats)

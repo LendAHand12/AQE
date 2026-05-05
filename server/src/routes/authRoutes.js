@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin } from '../controllers/authController.js';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 
@@ -16,6 +16,7 @@ router.get('/validate-referral/:username', (req, res, next) => {
     import('../controllers/authController.js').then(m => m.validateReferral(req, res)).catch(next);
 });
 router.get('/referrals', protect, getReferrals);
+router.get('/referrals/:userId', protect, getSubReferrals);
 router.post('/kyc-status', protect, updateFaceTecStatus);
 router.get('/2fa/generate', protect, generate2FA);
 router.post('/2fa/enable', protect, enable2FA);
