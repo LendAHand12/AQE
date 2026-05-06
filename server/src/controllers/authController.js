@@ -5,7 +5,7 @@ import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
-import { calculateUserSystemSales } from '../utils/sales.js';
+import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
 // @desc    Register a new user
 export const registerUser = async (req, res) => {
     try {
@@ -354,12 +354,14 @@ export const getReferrals = async (req, res) => {
 
         const network = await Promise.all(f1sRaw.map(async (f1) => {
             const sales = await calculateUserSystemSales(f1._id);
+            const networkSize = await calculateUserNetworkSize(f1._id);
             const personalPaid = (f1.paidUsdtPreRegister || 0) + 
                 (f1.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
             
             return {
                 ...f1.toObject(),
                 totalSales: sales,
+                totalNetwork: networkSize,
                 personalPaid: personalPaid
             };
         }));
@@ -439,12 +441,14 @@ export const getSubReferrals = async (req, res) => {
         
         const referrals = await Promise.all(referralsRaw.map(async (ref) => {
             const sales = await calculateUserSystemSales(ref._id);
+            const networkSize = await calculateUserNetworkSize(ref._id);
             const personalPaid = (ref.paidUsdtPreRegister || 0) + 
                 (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
                 
             return {
                 ...ref.toObject(),
                 totalSales: sales,
+                totalNetwork: networkSize,
                 personalPaid: personalPaid
             };
         }));

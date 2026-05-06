@@ -344,7 +344,9 @@
       "active_referrals": "Active Referrals",
       "total_commission": "Total Commission Earned",
       "total_sales": "System Sales",
-      "personal_paid": "Personal Paid"
+      "personal_paid": "Personal Paid",
+      "network_size": "Total Network",
+      "members": "members"
     },
     "table": {
       "user": "User",

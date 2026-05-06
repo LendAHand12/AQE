@@ -84,7 +84,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
     <div className="select-none w-max min-w-full">
       <div 
         className={cn(
-          "flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent min-w-[900px]",
+          "flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent min-w-[1100px]",
           isOpen && "bg-gray-50 border-gray-100 shadow-sm"
         )}
         style={{ paddingLeft: `${level * 28 + 16}px` }}
@@ -126,6 +126,10 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
         </div>
 
         <div className="flex items-center gap-10">
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Toàn hệ thống</p>
+            <p className="text-[16px] font-bold text-amber-600">{user.totalNetwork || 0} <span className="text-[11px]">thành viên</span></p>
+          </div>
           <div className="text-right">
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Cá nhân nạp</p>
             <p className="text-[16px] font-bold text-blue-600">{user.personalPaid?.toLocaleString()} <span className="text-[11px]">USDT</span></p>

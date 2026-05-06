@@ -64,3 +64,37 @@ export const calculateUserSystemSales = async (userId) => {
         return 0;
     }
 };
+
+/**
+ * Calculates the total number of descendants in a user's referral network.
+ * @param {string|mongoose.Types.ObjectId} userId 
+ * @returns {Promise<number>} Total network size
+ */
+export const calculateUserNetworkSize = async (userId) => {
+    try {
+        const id = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
+        const results = await User.aggregate([
+            { $match: { _id: id } },
+            {
+                $graphLookup: {
+                    from: 'users',
+                    startWith: '$_id',
+                    connectFromField: '_id',
+                    connectToField: 'referredBy',
+                    as: 'descendants'
+                }
+            },
+            {
+                $project: {
+                    totalNetwork: { $size: '$descendants' }
+                }
+            }
+        ]);
+
+        return results.length > 0 ? results[0].totalNetwork : 0;
+    } catch (error) {
+        console.error(`Error calculating network size for user ${userId}:`, error);
+        return 0;
+    }
+};

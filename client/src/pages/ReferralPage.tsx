@@ -57,7 +57,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: ReferralUser; level?: num
     <div className="select-none w-max min-w-full">
       <div 
         className={cn(
-          "flex items-center justify-between p-4 rounded-xl hover:bg-gray-50/80 transition-all cursor-pointer group border border-transparent min-w-[850px]",
+          "flex items-center justify-between p-4 rounded-xl hover:bg-gray-50/80 transition-all cursor-pointer group border border-transparent min-w-[1000px]",
           isOpen && "bg-gray-50 border-[#efefef] shadow-sm"
         )}
         style={{ paddingLeft: `${level * 24 + 16}px` }}
@@ -93,6 +93,10 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: ReferralUser; level?: num
         </div>
 
         <div className="flex items-center gap-8 px-4">
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">{t("referrals.stats.network_size")}</p>
+            <p className="text-[15px] font-bold text-amber-600">{user.totalNetwork || 0} <span className="text-[11px]">{t("referrals.stats.members")}</span></p>
+          </div>
           <div className="text-right">
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">{t("referrals.stats.personal_paid")}</p>
             <p className="text-[15px] font-bold text-blue-600">{user.personalPaid?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
@@ -177,7 +181,7 @@ export default function ReferralPage() {
           icon={UserPlus} 
           label={t("pre_register.f1_label")} 
           value={stats.totalF1} 
-          suffix=""
+          suffix={` ${t("referrals.stats.members")}`}
           color="bg-blue-50 text-blue-600"
           gradient="from-blue-50 to-white"
         />
@@ -185,7 +189,7 @@ export default function ReferralPage() {
           icon={Users} 
           label={t("pre_register.total_referrals")} 
           value={stats.totalNetwork} 
-          suffix=""
+          suffix={` ${t("referrals.stats.members")}`}
           color="bg-emerald-50 text-emerald-600"
           gradient="from-emerald-50 to-white"
         />

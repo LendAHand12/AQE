@@ -12,7 +12,7 @@ import { generateToken } from '../utils/jwt.js';
 import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
-import { calculateUserSystemSales } from '../utils/sales.js';
+import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -174,6 +174,7 @@ export const getUserById = async (req, res) => {
         
         const referrals = await Promise.all(referralsRaw.map(async (ref) => {
             const sales = await calculateUserSystemSales(ref._id);
+            const networkSize = await calculateUserNetworkSize(ref._id);
             // Calculate personal paid: current round + archived rounds
             const personalPaid = (ref.paidUsdtPreRegister || 0) + 
                 (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
@@ -181,6 +182,7 @@ export const getUserById = async (req, res) => {
             return {
                 ...ref.toObject(),
                 totalSales: sales,
+                totalNetwork: networkSize,
                 personalPaid: personalPaid
             };
         }));
@@ -753,12 +755,14 @@ export const getDirectReferrals = async (req, res) => {
 
         const referrals = await Promise.all(referralsRaw.map(async (ref) => {
             const sales = await calculateUserSystemSales(ref._id);
+            const networkSize = await calculateUserNetworkSize(ref._id);
             const personalPaid = (ref.paidUsdtPreRegister || 0) + 
                 (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
             
             return {
                 ...ref.toObject(),
                 totalSales: sales,
+                totalNetwork: networkSize,
                 personalPaid: personalPaid
             };
         }));
