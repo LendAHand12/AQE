@@ -8,7 +8,6 @@ import {
   ShieldCheck, 
   Wallet, 
   ArrowLeft,
-  ArrowRight,
   Loader2,
   XCircle,
   Clock,
@@ -23,7 +22,6 @@ import {
   Image as ImageIcon,
   Eye,
   ChevronRight,
-  ChevronDown,
   Network
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -233,7 +231,7 @@ export default function AdminUserProfilePage() {
 
   if (!data) return null
 
-  const { user, transactions, commissions, referrals } = data
+  const { user, transactions, commissions } = data
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-20 font-['SVN-Gilroy',sans-serif]">

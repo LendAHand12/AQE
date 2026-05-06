@@ -3,8 +3,6 @@ import {
   Users, 
   UserPlus, 
   ChevronRight, 
-  Mail, 
-  Calendar, 
   TrendingUp,
   Loader2
 } from "lucide-react"
@@ -12,7 +10,6 @@ import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
-import { format } from "date-fns"
 
 interface ReferralUser {
   _id: string
@@ -21,6 +18,7 @@ interface ReferralUser {
   email: string
   personalPaid: number
   totalSales: number
+  totalNetwork: number
   createdAt: string
   kycStatus?: string
 }
