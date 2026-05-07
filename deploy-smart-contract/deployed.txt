@@ -1,0 +1,7 @@
+Deploying contracts with the account: 0x2FbB86009D9e23E0790e7f7BEd013D19F02eFC35
+Account balance: 3500788250000000
+USDTPayment deployed to: 0x8D5fA144eCB2Cd108D8dBd29Fed8B4b11E1016d6
+
+Next steps:
+1. Add the contract address to your .env
+2. Verify the contract on BscScan: npx hardhat verify --network bsc 0x8D5fA144eCB2Cd108D8dBd29Fed8B4b11E1016d6 "0x55d398326f99059fF775485246999027B3197955" "0x8Aaa207584d9D3F76E937ce7c5c184d71Db19060"

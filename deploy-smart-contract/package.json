@@ -1,0 +1,21 @@
+{
+  "name": "usdt-payment-contract",
+  "version": "1.0.0",
+  "description": "USDT BEP20 Payment Smart Contract",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test",
+    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network bsc",
+    "deploy:testnet": "npx hardhat run scripts/deploy.js --network bscTestnet",
+    "verify:mainnet": "npx hardhat verify --network bsc",
+    "verify:testnet": "npx hardhat verify --network bscTestnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5"
+  }
+}
