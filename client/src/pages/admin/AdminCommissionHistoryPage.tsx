@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, Link } from "react-router-dom"
 import { 
   Search, 
   Loader2,
@@ -117,17 +117,23 @@ export default function AdminCommissionHistoryPage() {
                   {dayjs(tx.createdAt).format("DD/MM/YYYY HH:mm")}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-bold text-[#111827]">{tx.from?.username}</span>
-                  </div>
+                  <Link 
+                    to={`/admin/users/${tx.from?._id}`}
+                    className="font-bold text-[#111827] hover:text-[#276152] transition-colors"
+                  >
+                    @{tx.from?.username}
+                  </Link>
                 </TableCell>
                 <TableCell>
                   <ArrowRight size={16} className="text-gray-300" />
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-bold text-[#276152]">{tx.to?.username}</span>
-                  </div>
+                  <Link 
+                    to={`/admin/users/${tx.to?._id}`}
+                    className="font-bold text-[#276152] hover:opacity-70 transition-opacity"
+                  >
+                    @{tx.to?.username}
+                  </Link>
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="text-[14px] font-medium text-gray-600">{tx.salesAmount?.toLocaleString()} USDT</span>

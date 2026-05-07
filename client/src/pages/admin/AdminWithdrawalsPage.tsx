@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, Link } from "react-router-dom"
 import { 
   Search, 
   Loader2, 
@@ -210,10 +210,13 @@ export default function AdminWithdrawalsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#111827]">{item.userId?.username}</span>
+                      <Link 
+                        to={`/admin/users/${item.userId?._id}`}
+                        className="flex flex-col hover:opacity-70 transition-opacity"
+                      >
+                        <span className="font-bold text-[#111827]">@{item.userId?.username}</span>
                         <span className="text-xs text-gray-400">{item.userId?.email}</span>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">

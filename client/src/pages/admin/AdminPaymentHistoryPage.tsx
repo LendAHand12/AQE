@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, Link } from "react-router-dom"
 import { 
   Search, 
   Loader2,
@@ -121,15 +121,21 @@ export default function AdminPaymentHistoryPage() {
                 </TableCell>
                 <TableCell>
                   {(tx.type === 'BUY' || tx.type === 'REWARD') ? (
-                     <div className="flex flex-col">
-                        <span className="font-bold text-[#111827]">{tx.to?.username}</span>
+                     <Link 
+                       to={`/admin/users/${tx.to?._id}`}
+                       className="flex flex-col hover:opacity-70 transition-opacity"
+                     >
+                        <span className="font-bold text-[#111827]">@{tx.to?.username}</span>
                         <span className="text-xs text-gray-400">{tx.to?.fullName}</span>
-                     </div>
+                     </Link>
                   ) : tx.from && typeof tx.from === 'object' ? (
-                     <div className="flex flex-col">
-                        <span className="font-bold text-[#111827]">{tx.from.username}</span>
+                     <Link 
+                       to={`/admin/users/${tx.from?._id}`}
+                       className="flex flex-col hover:opacity-70 transition-opacity"
+                     >
+                        <span className="font-bold text-[#111827]">@{tx.from.username}</span>
                         <span className="text-xs text-gray-400">{tx.from.fullName}</span>
-                     </div>
+                     </Link>
                   ) : (
                     <Badge variant="outline" className="bg-blue-50 text-blue-600 border-none font-bold uppercase text-[10px]">
                       {tx.from || "Hệ thống / Ví"}
