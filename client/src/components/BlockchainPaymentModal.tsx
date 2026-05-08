@@ -127,7 +127,7 @@ export function BlockchainPaymentModal({
                 {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
               </button>
 
-              <button 
+              {/* <button 
                 onClick={handleShowQR}
                 disabled={loading}
                 className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
@@ -142,7 +142,7 @@ export function BlockchainPaymentModal({
                   </div>
                 </div>
                 {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
-              </button>
+              </button> */}
             </div>
           )}
 
