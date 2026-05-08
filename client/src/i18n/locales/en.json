@@ -442,8 +442,8 @@
       "pay_this_device": "Pay on this device",
       "pay_this_device_desc": "Use the wallet connected to your browser",
       "scan_qr": "Scan QR Code (Mobile)",
-      "scan_qr_desc": "Scan with Camera or MetaMask Mobile",
-      "qr_instruction": "Scan this code with your phone Camera or MetaMask Mobile. You will be redirected to a secure payment page.",
+      "scan_qr_desc": "Scan with Camera or Web3 Wallet (Trust, SafePal...)",
+      "qr_instruction": "Scan this code with your phone Camera or Web3 Wallet dApp browser. You will be redirected to a secure payment page.",
       "copy_link": "Or copy payment link:",
       "success_title": "Payment Successful!",
       "success_desc": "Your transaction has been confirmed. Tokens will be credited to your account shortly.",
@@ -461,7 +461,7 @@
       "success_hint": "Tokens will be credited to your account shortly.",
       "view_bscscan": "View on BscScan",
       "back_home": "Back to Home",
-      "connect_wallet": "Connect MetaMask Wallet",
+      "connect_wallet": "Connect Wallet",
       "pay_now": "Pay Now",
       "approving": "Approving USDT...",
       "paying": "Paying...",
@@ -489,5 +489,15 @@
     "mark_all_read": "Mark all as read",
     "empty": "No notifications yet",
     "new_notification": "New Notification"
+  },
+  "confirm_email": {
+    "verifying": "Verifying Email",
+    "verifying_desc": "Please wait a moment while we verify your authentication code.",
+    "success_title": "Verification Successful",
+    "success_desc": "Your email has been successfully verified. You can now log in to the AQ Estate system.",
+    "login_now": "Login Now",
+    "error_title": "Verification Failed",
+    "error_desc": "The authentication code is invalid or has expired. Please try again or contact support.",
+    "back_to_login": "Back to Login"
   }
 }

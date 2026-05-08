@@ -11,8 +11,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // server: {
-  //   host: true, // Cho phép truy cập từ địa chỉ IP trong mạng nội bộ
-  //   allowedHosts: ['4438-2001-ee0-52b7-67c0-c882-862-aeb6-fe0.ngrok-free.app'], // Cho phép tất cả các host (ngrok, local IP, v.v.)
-  // }
+  server: {
+    host: true, // Cho phép truy cập từ địa chỉ IP trong mạng nội bộ
+    allowedHosts: ['4438-2001-ee0-52b7-67c0-c882-862-aeb6-fe0.ngrok-free.app', '8488-2001-ee0-52b7-67c0-d2b9-380f-ffa0-b0cd.ngrok-free.app'], // Cho phép tất cả các host (ngrok, local IP, v.v.)
+  }
 })

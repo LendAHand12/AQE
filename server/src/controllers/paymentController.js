@@ -220,9 +220,7 @@ export const createPayment = async (req, res) => {
             metadata: { pledgeAmount: pledgeAmount || user.pledgeUsdt, method }
         });
 
-        const rawUrl = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}`;
-        const cleanUrl = rawUrl.replace(/^https?:\/\//, '');
-        const qrUrl = `https://metamask.app.link/dapp/${cleanUrl}`;
+        const qrUrl = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}`;
 
         res.json({
             paymentId,

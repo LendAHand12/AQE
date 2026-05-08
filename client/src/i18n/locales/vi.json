@@ -442,8 +442,8 @@
       "pay_this_device": "Thanh toán trên thiết bị này",
       "pay_this_device_desc": "Dùng ví đã kết nối trên trình duyệt",
       "scan_qr": "Quét mã QR (Mobile)",
-      "scan_qr_desc": "Quét bằng Camera hoặc MetaMask Mobile",
-      "qr_instruction": "Quét mã này bằng Camera điện thoại hoặc MetaMask Mobile. Bạn sẽ được dẫn đến trang thanh toán an toàn.",
+      "scan_qr_desc": "Quét bằng Camera hoặc Ví Web3 (Trust, SafePal...)",
+      "qr_instruction": "Quét mã này bằng Camera điện thoại hoặc trình duyệt dApp của Ví Web3. Bạn sẽ được dẫn đến trang thanh toán an toàn.",
       "copy_link": "Hoặc copy link thanh toán:",
       "success_title": "Thanh toán thành công!",
       "success_desc": "Giao dịch của bạn đã được xác nhận. Tokens sẽ được cộng vào tài khoản trong giây lát.",
@@ -461,7 +461,7 @@
       "success_hint": "Tokens sẽ được ghi nhận vào tài khoản của bạn trong giây lát.",
       "view_bscscan": "Xem trên BscScan",
       "back_home": "Quay lại trang chủ",
-      "connect_wallet": "Kết nối ví MetaMask",
+      "connect_wallet": "Kết nối ví",
       "pay_now": "Thanh toán ngay",
       "approving": "Đang phê duyệt USDT...",
       "paying": "Đang thanh toán...",
@@ -489,5 +489,15 @@
     "mark_all_read": "Đánh dấu tất cả là đã đọc",
     "empty": "Chưa có thông báo nào",
     "new_notification": "Thông báo mới"
+  },
+  "confirm_email": {
+    "verifying": "Xác thực Email",
+    "verifying_desc": "Vui lòng chờ trong giây lát, chúng tôi đang kiểm tra mã xác thực của bạn.",
+    "success_title": "Xác thực thành công",
+    "success_desc": "Email của bạn đã được xác minh thành công. Bây giờ bạn đã có thể đăng nhập vào hệ thống AQ Estate.",
+    "login_now": "Đăng nhập ngay",
+    "error_title": "Xác thực thất bại",
+    "error_desc": "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "back_to_login": "Quay lại đăng nhập"
   }
 }
