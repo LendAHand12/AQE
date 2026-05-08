@@ -5,7 +5,7 @@ import {
   Copy, 
   CheckCircle2, 
   Loader2, 
-  QrCode, 
+  // QrCode, 
   ChevronRight, 
   AlertCircle,
 } from 'lucide-react';
@@ -80,12 +80,12 @@ export function BlockchainPaymentModal({
     }
   };
 
-  const handleShowQR = async () => {
-    const data = await initPayment('QR');
-    if (data) {
-      setStep('qr');
-    }
-  };
+  // const handleShowQR = async () => {
+  //   const data = await initPayment('QR');
+  //   if (data) {
+  //     setStep('qr');
+  //   }
+  // };
 
   const resetAndClose = () => {
     setStep('choice');
