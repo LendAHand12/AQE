@@ -635,6 +635,7 @@ export default function AdminUserProfilePage() {
                         <TableRow>
                           <TableHead className="pl-6 font-bold">Thời gian</TableHead>
                           <TableHead className="font-bold">Loại</TableHead>
+                          <TableHead className="font-bold">Phương thức</TableHead>
                           <TableHead className="font-bold text-right">Số tiền</TableHead>
                           <TableHead className="font-bold">Mô tả</TableHead>
                           <TableHead className="pr-6 font-bold text-right">Mã Hash</TableHead>
@@ -656,6 +657,15 @@ export default function AdminUserProfilePage() {
                                 )}>
                                   {tx.type}
                                 </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-[10px] font-bold">
+                                  {tx.metadata?.method === 'QR' ? (
+                                    <span className="text-purple-600">Mã QR</span>
+                                  ) : (
+                                    <span className="text-blue-600">Chuyển ví</span>
+                                  )}
+                                </span>
                               </TableCell>
                               <TableCell className="text-right font-bold">
                                 {tx.amount?.toLocaleString()} {tx.symbol || 'USDT'}

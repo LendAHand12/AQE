@@ -30,6 +30,7 @@ import BalanceHistoryPage from "@/pages/BalanceHistoryPage"
 import AssetsPage from "@/pages/AssetsPage"
 import KycCallbackPage from "@/pages/KycCallbackPage"
 import ClaimPage from "@/pages/ClaimPage"
+import PaymentPage from "@/pages/PaymentPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -89,6 +90,7 @@ export function App() {
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
 
+            <Route path="/pay" element={<PaymentPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
             
             {/* Not Found page */}

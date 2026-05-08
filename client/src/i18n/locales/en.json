@@ -436,6 +436,45 @@
       "success": "Success",
       "pending": "Pending"
     },
+    "modal": {
+      "title": "USDT Payment",
+      "desc": "Deposit {{amount}} USDT into AQE system",
+      "pay_this_device": "Pay on this device",
+      "pay_this_device_desc": "Use the wallet connected to your browser",
+      "scan_qr": "Scan QR Code (Mobile)",
+      "scan_qr_desc": "Scan with Camera or MetaMask Mobile",
+      "qr_instruction": "Scan this code with your phone Camera or MetaMask Mobile. You will be redirected to a secure payment page.",
+      "copy_link": "Or copy payment link:",
+      "success_title": "Payment Successful!",
+      "success_desc": "Your transaction has been confirmed. Tokens will be credited to your account shortly.",
+      "close_btn": "Close"
+    },
+    "page": {
+      "title": "AQE Payment",
+      "total_label": "Total Payment",
+      "tx_id": "Transaction ID",
+      "sender": "Sender",
+      "status": "Status",
+      "status_success": "Completed",
+      "status_pending": "Pending",
+      "success_msg": "Success!",
+      "success_hint": "Tokens will be credited to your account shortly.",
+      "view_bscscan": "View on BscScan",
+      "back_home": "Back to Home",
+      "connect_wallet": "Connect MetaMask Wallet",
+      "pay_now": "Pay Now",
+      "approving": "Approving USDT...",
+      "paying": "Paying...",
+      "wallet_disconnected": "Wallet disconnected successfully",
+      "wallet_connected": "Connected Wallet",
+      "disconnect": "Disconnect",
+      "security_note": "By clicking pay, you agree to transfer USDT from your personal wallet to the AQE system via a secure Smart Contract.",
+      "errors": {
+        "invalid_id": "Invalid payment ID",
+        "not_found": "Payment details not found",
+        "connect_failed": "Wallet connection failed"
+      }
+    },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",
     "errors": {
@@ -444,5 +483,11 @@
       "kyc_required": "Step 1 KYC required for payment",
       "min_first_payment": "First payment must be at least 30% ({{minAmount}} USDT)"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "No notifications yet",
+    "new_notification": "New Notification"
   }
 }

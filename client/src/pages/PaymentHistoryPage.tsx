@@ -61,7 +61,7 @@ export default function PaymentHistoryPage() {
   }, [page])
 
   const filteredPayments = payments.filter(p => 
-    p.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.hash || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -175,17 +175,23 @@ export default function PaymentHistoryPage() {
                       </td>
                       <td className="px-6 py-5 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          <code className="text-[11px] text-[#868F9E] font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                             {p.hash.slice(0, 6)}...{p.hash.slice(-4)}
-                          </code>
-                          <a 
-                            href={`https://bscscan.com/tx/${p.hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#276152] hover:bg-[#276152]/5 p-1.5 rounded-full transition-colors"
-                          >
-                             <ArrowRight size={18} />
-                          </a>
+                          {p.hash ? (
+                            <>
+                              <code className="text-[11px] text-[#868F9E] font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                                {p.hash.slice(0, 6)}...{p.hash.slice(-4)}
+                              </code>
+                              <a 
+                                href={`https://bscscan.com/tx/${p.hash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#276152] hover:bg-[#276152]/5 p-1.5 rounded-full transition-colors"
+                              >
+                                <ArrowRight size={18} />
+                              </a>
+                            </>
+                          ) : (
+                            <span className="text-[11px] text-gray-400 italic">Pending confirmation</span>
+                          )}
                         </div>
                       </td>
                     </tr>

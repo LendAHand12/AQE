@@ -150,7 +150,8 @@ export const getUserById = async (req, res) => {
 
         // Fetch transactions (USDT payments, deposits)
         const transactions = await Transaction.find({
-            $or: [{ from: user._id }, { to: user._id }]
+            $or: [{ from: user._id }, { to: user._id }],
+            status: 'SUCCESS'
         }).sort({ createdAt: -1 }).limit(50);
 
         // Fetch withdrawals separately from new model

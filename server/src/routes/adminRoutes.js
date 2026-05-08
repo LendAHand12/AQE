@@ -20,7 +20,7 @@ import {
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
 import { adminProtect } from '../middleware/auth.js';
-import { getAllTransactionsForAdmin } from '../controllers/paymentController.js';
+import { getAllTransactionsForAdmin, getAllCommissionsForAdmin } from '../controllers/paymentController.js';
 import { 
     createProperty, 
     getProperties, 
@@ -57,6 +57,7 @@ router.route('/token-settings')
 
 router.get('/logs', adminProtect, getAdminLogs);
 router.get('/transactions', adminProtect, getAllTransactionsForAdmin);
+router.get('/commissions', adminProtect, getAllCommissionsForAdmin);
 
 router.get('/2fa/generate', adminProtect, generate2FA);
 router.post('/2fa/enable', adminProtect, enable2FA);

@@ -104,7 +104,8 @@ export default function AdminPaymentHistoryPage() {
             <TableRow className="border-b border-gray-100">
               <TableHead className="py-6 font-bold text-[#111827] pl-8">Thời gian</TableHead>
               <TableHead className="font-bold text-[#111827]">Người thực hiện</TableHead>
-              <TableHead className="font-bold text-[#111827]">Loại giao dịch</TableHead>
+              <TableHead className="font-bold text-[#111827]">Loại</TableHead>
+              <TableHead className="font-bold text-[#111827]">Phương thức</TableHead>
               <TableHead className="font-bold text-[#111827] text-right">Số tiền (USDT)</TableHead>
               <TableHead className="font-bold text-[#111827] text-center">Trạng thái</TableHead>
               <TableHead className="font-bold text-[#111827] pr-8 text-right">Mã Hash</TableHead>
@@ -152,6 +153,19 @@ export default function AdminPaymentHistoryPage() {
                   )}>
                     {tx.type}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs font-bold text-gray-500">
+                    {tx.metadata?.method === 'QR' ? (
+                      <span className="flex items-center gap-1 text-purple-600">
+                        <span className="size-1.5 rounded-full bg-purple-600" /> Mã QR
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-blue-600">
+                        <span className="size-1.5 rounded-full bg-blue-600" /> Chuyển ví
+                      </span>
+                    )}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right font-bold text-emerald-600">
                   {(tx.usdtAmount || tx.amount)?.toLocaleString()} USDT

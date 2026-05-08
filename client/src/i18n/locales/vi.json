@@ -436,6 +436,45 @@
       "success": "Thành công",
       "pending": "Đang chờ"
     },
+    "modal": {
+      "title": "Thanh toán USDT",
+      "desc": "Nạp {{amount}} USDT vào hệ thống AQE",
+      "pay_this_device": "Thanh toán trên thiết bị này",
+      "pay_this_device_desc": "Dùng ví đã kết nối trên trình duyệt",
+      "scan_qr": "Quét mã QR (Mobile)",
+      "scan_qr_desc": "Quét bằng Camera hoặc MetaMask Mobile",
+      "qr_instruction": "Quét mã này bằng Camera điện thoại hoặc MetaMask Mobile. Bạn sẽ được dẫn đến trang thanh toán an toàn.",
+      "copy_link": "Hoặc copy link thanh toán:",
+      "success_title": "Thanh toán thành công!",
+      "success_desc": "Giao dịch của bạn đã được xác nhận. Tokens sẽ được cộng vào tài khoản trong giây lát.",
+      "close_btn": "Đóng"
+    },
+    "page": {
+      "title": "Thanh toán AQE",
+      "total_label": "Tổng thanh toán",
+      "tx_id": "Mã giao dịch",
+      "sender": "Người gửi",
+      "status": "Trạng thái",
+      "status_success": "Đã hoàn tất",
+      "status_pending": "Đang chờ",
+      "success_msg": "Thành công!",
+      "success_hint": "Tokens sẽ được ghi nhận vào tài khoản của bạn trong giây lát.",
+      "view_bscscan": "Xem trên BscScan",
+      "back_home": "Quay lại trang chủ",
+      "connect_wallet": "Kết nối ví MetaMask",
+      "pay_now": "Thanh toán ngay",
+      "approving": "Đang phê duyệt USDT...",
+      "paying": "Đang thanh toán...",
+      "wallet_disconnected": "Đã ngắt kết nối ví",
+      "wallet_connected": "Ví đã kết nối",
+      "disconnect": "Ngắt kết nối",
+      "security_note": "Bằng cách nhấn thanh toán, bạn đồng ý chuyển USDT từ ví cá nhân vào hệ thống AQE thông qua Smart Contract an toàn.",
+      "errors": {
+        "invalid_id": "Mã thanh toán không hợp lệ",
+        "not_found": "Không tìm thấy thông tin thanh toán",
+        "connect_failed": "Kết nối ví thất bại"
+      }
+    },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",
     "errors": {
@@ -444,5 +483,11 @@
       "kyc_required": "Bạn cần hoàn thành và được duyệt KYC bước 1 để thực hiện thanh toán",
       "min_first_payment": "Lần thanh toán đầu tiên phải tối thiểu 30% ({{minAmount}} USDT)"
     }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "mark_all_read": "Đánh dấu tất cả là đã đọc",
+    "empty": "Chưa có thông báo nào",
+    "new_notification": "Thông báo mới"
   }
 }

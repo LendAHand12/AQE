@@ -39,7 +39,7 @@ export default function AdminCommissionHistoryPage() {
     if (page === 1) setLoading(true)
     else setFetching(true)
     try {
-      const response = await apiClient.get(`/admin/transactions?category=COMMISSION&page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}`)
+      const response = await apiClient.get(`/admin/commissions?page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}`)
       setCommissions(response.data.transactions)
       setTotalPages(response.data.pages)
       setTotalItems(response.data.total)

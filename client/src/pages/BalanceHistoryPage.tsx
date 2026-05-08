@@ -180,10 +180,10 @@ export default function BalanceHistoryPage() {
                       <td className="px-4 py-5">
                         <div className="flex flex-col">
                           <span className="text-[14px] font-bold text-[#111827]">
-                            {dayjs(item.date).format("DD/MM/YYYY")}
+                            {dayjs(item.createdAt).format("DD/MM/YYYY")}
                           </span>
                           <span className="text-[12px] text-[#868F9E]">
-                            {dayjs(item.date).format("HH:mm:ss")}
+                            {dayjs(item.createdAt).format("HH:mm:ss")}
                           </span>
                         </div>
                       </td>

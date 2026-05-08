@@ -27,9 +27,12 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import dayjs from "dayjs"
+import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
+import { useSocket } from "@/providers/SocketProvider"
 
 export default function PreRegisterPage() {
   const { t } = useTranslation()
+  const { socket } = useSocket()
   const [pledgeAmount, setPledgeAmount] = useState(0)
   const [paymentAmount, setPaymentAmount] = useState(0)
   const [pledge, setPledge] = useState<any>(null)
@@ -38,6 +41,8 @@ export default function PreRegisterPage() {
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
   const [isNewRound, setIsNewRound] = useState(false)
+  const [isBlockchainModalOpen, setIsBlockchainModalOpen] = useState(false)
+  const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
 
   const { open } = useWeb3Modal()
   const { disconnect } = useDisconnect()
@@ -48,6 +53,26 @@ export default function PreRegisterPage() {
   useEffect(() => {
     fetchInitialData()
   }, [])
+
+  // Listen for socket notifications to refresh data instantly
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notification: any) => {
+      if (notification.type === 'PAYMENT') {
+        console.log("Payment detected via socket, refreshing data...");
+        fetchInitialData();
+        // Set modal to success state instead of closing immediately
+        setModalStatus('success');
+      }
+    };
+
+    socket.on('new_notification', handleNotification);
+
+    return () => {
+      socket.off('new_notification', handleNotification);
+    };
+  }, [socket])
 
   const fetchInitialData = async () => {
     setLoading(true)
@@ -80,17 +105,7 @@ export default function PreRegisterPage() {
     }
   }
 
-  const handleWalletConnect = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    open()
-  }
 
-  const handleWalletDisconnect = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    disconnect()
-  }
 
   const handlePayment = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -101,15 +116,10 @@ export default function PreRegisterPage() {
       return
     }
 
-    if (!isConnected) {
-      toast.error(t("header.connect_wallet"))
-      return
-    }
-
     const isFirstRegistration = !pledge
     const isFirstPayment = !pledge || pledge.paidUsdtPreRegister === 0
 
-    if (isFirstRegistration && pledgeAmount < 100) {
+    if (isFirstRegistration && pledgeAmount < 10) {
         toast.error(t("pre_register.reg_amount_min"))
         return
     }
@@ -121,29 +131,7 @@ export default function PreRegisterPage() {
       return
     }
 
-    setPaying(true)
-    try {
-      toast.info(t("pre_register.pay_confirm_toast"))
-      
-      const hash = await transferUSDT(paymentAmount.toString(), address as `0x${string}`)
-
-      toast.success(t("pre_register.pay_sent_toast"))
-
-      await apiClient.post("/payments/payment", { 
-        hash, 
-        amount: paymentAmount,
-        pledgeAmount: (!pledge || isNewRound) ? pledgeAmount : undefined
-      })
-
-      toast.success(t("pre_register.pay_success"))
-      fetchInitialData()
-    } catch (err: any) {
-      console.error("Payment Error:", err)
-      const errorMsg = err.response?.data?.message || err.shortMessage || err.message || "pre_register.pay_failed";
-      toast.error(t(errorMsg, err.response?.data || {}) as string);
-    } finally {
-      setPaying(false)
-    }
+    setIsBlockchainModalOpen(true)
   }
 
   const handleStartNewRound = () => {
@@ -374,7 +362,6 @@ export default function PreRegisterPage() {
               </div>
             </div>
 
-            {/* Registration Card */}
             <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100">
               <div className="space-y-4">
                  <div className="flex gap-3 items-center">
@@ -428,55 +415,6 @@ export default function PreRegisterPage() {
                            <p className="text-[11px] text-amber-600 font-medium">
                              {t("pre_register.pay_min_error", { min: (pledge.pledgeUsdt * 0.3).toLocaleString() })}
                            </p>
-                         )}
-                       </div>
-
-                       {/* Wallet Section (Explicit Actions) */}
-                       <div className="bg-[#efefef]/30 p-4 rounded-[12px] border border-[#efefef] space-y-3 mt-4">
-                         <div className="flex items-center justify-between">
-                           <p className="text-[14px] font-bold text-[#0d1f1d]">{t("header.connect_wallet")}</p>
-                           {isConnected && (
-                             <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 gap-1 px-2 py-0.5">
-                               <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                               Connected
-                             </Badge>
-                           )}
-                         </div>
-                         
-                         {!isConnected ? (
-                           <Button 
-                             type="button"
-                             onClick={handleWalletConnect}
-                             className="w-full h-[52px] bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[12px] shadow-[0_8px_20px_rgba(39,97,82,0.25)] font-bold text-[16px] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                           >
-                               <Wallet size={20} />
-                               {t("header.connect_wallet")}
-                           </Button>
-                         ) : (
-                           <div className="flex gap-2">
-                               <div className="flex-1 h-11 bg-white border border-gray-100 rounded-[10px] px-3 flex items-center gap-2 overflow-hidden">
-                                  <ShieldCheck size={18} className="text-emerald-500 shrink-0" />
-                                  <span className="text-[13px] font-mono text-[#4b5563] truncate">
-                                    {address ? `${address.slice(0, 6)}...${address.slice(-6)}` : ''}
-                                  </span>
-                               </div>
-                               <Button 
-                                 type="button"
-                                 variant="ghost" 
-                                 onClick={handleWalletConnect}
-                                 className="size-11 p-0 rounded-[10px] bg-white border border-gray-100 hover:bg-gray-50 text-gray-400"
-                               >
-                                  <RefreshCw size={18} />
-                               </Button>
-                               <Button 
-                                 type="button"
-                                 variant="ghost" 
-                                 onClick={handleWalletDisconnect}
-                                 className="size-11 p-0 rounded-[10px] bg-rose-50 border border-rose-100 hover:bg-rose-100 text-rose-500"
-                               >
-                                  <LogOut size={18} />
-                               </Button>
-                           </div>
                          )}
                        </div>
                     </div>
@@ -556,7 +494,7 @@ export default function PreRegisterPage() {
                               <Button 
                                 type="button"
                                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold flex items-center justify-center gap-2"
-                                disabled={paying || !isConnected}
+                                disabled={paying}
                                 onClick={handlePayment}
                               >
                                 {paying ? <Loader2 size={18} className="animate-spin" /> : 
@@ -565,11 +503,6 @@ export default function PreRegisterPage() {
                                    <span>{(!pledge || pledge?.paidUsdtPreRegister === 0) ? t("pre_register.confirm_payment_btn") : t("pre_register.pay_now")}</span>
                                  </>}
                               </Button>
-                              {!isConnected && (
-                                <p className="text-[11px] text-amber-600 font-medium text-center italic">
-                                  * {t("pre_register.connect_to_pay_hint") || "Vui lòng kết nối ví để thanh toán"}
-                                </p>
-                              )}
                             </div>
                          )}
                       </div>
@@ -586,17 +519,18 @@ export default function PreRegisterPage() {
                               {(!pledge || pledge?.paidUsdtPreRegister === 0) ? t("pre_register.confirm_payment_btn") : t("pre_register.pay_now")}
                             </Button>
                             <Link to="/settings?tab=kyc" className="shrink-0">
-                              <Button variant="outline" className="h-[44px] border-[#276152] text-[#276152] hover:bg-[#276152]/5 rounded-[12px] font-medium">
-                                {t("pre_register.kyc_btn")}
-                              </Button>
+                               <Button variant="outline" className="h-[44px] border-[#276152] text-[#276152] hover:bg-[#276152]/5 rounded-[12px] font-medium">
+                                 {t("pre_register.kyc_btn")}
+                               </Button>
                             </Link>
                          </div>
                       </div>
                     )}
-                 </div>
-              </div>
+               </div>
             </div>
+           </div>
 
+          <div className="xl:sticky xl:top-[137px] z-20 space-y-6">
             {/* Pledge Rounds History Card */}
             {pledge?.pledgeRounds?.length > 0 && (
               <div className="bg-white p-6 rounded-[16px] shadow-[0px_26px_27px_0px_rgba(0,0,0,0.03)] border border-gray-100">
@@ -619,7 +553,7 @@ export default function PreRegisterPage() {
                              <p className="text-[14px] font-bold text-[#111827]">
                                {t("pre_register.round_label", { num: round.roundNumber || idx + 1 })}
                              </p>
-                             <div className="size-1.5 rounded-full bg-emerald-500" />
+                             <div className="size-1.5 rounded-full bg-emerald-500"></div>
                            </div>
                            <p className="text-[11px] text-[#636d7d] font-medium flex items-center gap-1">
                              <Calendar size={12} />
@@ -647,6 +581,23 @@ export default function PreRegisterPage() {
           </div>
         </div>
       </div>
+
+      <BlockchainPaymentModal 
+        isOpen={isBlockchainModalOpen}
+        onClose={() => {
+          setIsBlockchainModalOpen(false);
+          setModalStatus('idle');
+        }}
+        amount={paymentAmount}
+        pledgeAmount={(!pledge || isNewRound) ? pledgeAmount : undefined}
+        status={modalStatus}
+        onSuccess={() => {
+          setIsBlockchainModalOpen(false);
+          setModalStatus('idle');
+          fetchInitialData();
+        }}
+      />
+    </div>
     </div>
   )
 }

@@ -15,6 +15,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import { initCronJobs } from './services/cronService.js';
+import { initPaymentListener } from './services/paymentListener.js';
 
 import { createServer } from 'http';
 import { initSocket } from './utils/socket.js';
@@ -42,6 +43,9 @@ initSocket(httpServer);
 
 // Initialize Cron Jobs
 initCronJobs();
+
+// Initialize Blockchain Payment Listener
+initPaymentListener();
 
 // Middleware
 app.use(helmet({

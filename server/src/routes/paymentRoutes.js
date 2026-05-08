@@ -3,7 +3,11 @@ import {
     submitPreRegisterPledge,
     getMyPreRegister,
     submitPreRegisterPayment,
-    getUserPayments
+    getUserPayments,
+    createPayment,
+    getPaymentById,
+    getPaymentHistory,
+    confirmTransactionHash
 } from '../controllers/paymentController.js';
 import {
     getUserCommissions,
@@ -20,15 +24,19 @@ const router = express.Router();
 // Pre-Register & Checkout
 router.post('/pledge', protect, submitPreRegisterPledge);
 router.post('/payment', protect, submitPreRegisterPayment);
+router.post('/create', protect, createPayment);
+router.post('/confirm-hash', confirmTransactionHash);
 router.get('/pledge', protect, getMyPreRegister);
+router.get('/history', protect, getPaymentHistory);
 router.get('/my-payments', protect, getUserPayments);
+// Financial History & Stats
+router.get('/my-commissions', protect, getUserCommissions);
+router.get('/my-balance-history', protect, getUserBalanceHistory);
 
 // Trading Operations
 router.post('/buy', protect, buyToken);
 router.post('/sell', protect, sellToken);
 
-// Financial History & Stats
-router.get('/my-commissions', protect, getUserCommissions);
-router.get('/my-balance-history', protect, getUserBalanceHistory);
+router.get('/:paymentId', getPaymentById);
 
 export default router;
