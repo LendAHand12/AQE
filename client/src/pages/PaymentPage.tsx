@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ethers } from 'ethers';
 import { 
   Wallet, 
   CheckCircle2, 
   Loader2, 
-  AlertCircle, 
-  ChevronRight, 
   ArrowLeft,
   ExternalLink,
   ShieldCheck
@@ -15,7 +12,7 @@ import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from "react-i18next";
-import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core';
 import { config } from '@/config/wagmi.config';
@@ -25,6 +22,16 @@ import BEP20USDT_ABI from "@/abis/BEP20USDT.json";
 const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
 
+interface Payment {
+  amount: number;
+  paymentId: number;
+  from: {
+    username: string;
+  };
+  status: string;
+  hash: string;
+}
+
 export default function PaymentPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -32,12 +39,11 @@ export default function PaymentPage() {
   const paymentId = searchParams.get('pid');
 
   const { open: openWeb3Modal } = useWeb3Modal();
-  const { address: account, isConnected, chainId } = useAccount();
+  const { address: account, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { switchChain } = useSwitchChain();
 
   const [loading, setLoading] = useState(true);
-  const [payment, setPayment] = useState(null);
+  const [payment, setPayment] = useState<Payment | null>(null);
   const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error
   const [txHash, setTxHash] = useState('');
 
@@ -67,7 +73,7 @@ export default function PaymentPage() {
 
   // Start polling status when successful
   useEffect(() => {
-    let interval;
+    let interval: any;
     if (status === 'paying' || (status === 'success' && !txHash)) {
       interval = setInterval(async () => {
         try {
@@ -81,7 +87,7 @@ export default function PaymentPage() {
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [status, paymentId]);
+  }, [status, paymentId, txHash]);
 
   const connectWallet = async () => {
     try {
@@ -98,7 +104,7 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    if (!isConnected || !account) {
+    if (!isConnected || !account || !payment) {
         await connectWallet();
         return;
     }
@@ -289,6 +295,6 @@ export default function PaymentPage() {
   );
 }
 
-function cn(...classes) {
+function cn(...classes: any[]) {
     return classes.filter(Boolean).join(' ');
 }

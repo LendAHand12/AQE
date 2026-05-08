@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Wallet, 
@@ -7,13 +7,8 @@ import {
   Loader2, 
   QrCode, 
   ChevronRight, 
-  ArrowRight,
   AlertCircle,
-  ExternalLink,
-  Smartphone
 } from 'lucide-react';
-import { useAccount, useSwitchChain } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
 import { Button } from '@/components/ui/button';
@@ -26,24 +21,32 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-const BSC_CHAIN_ID = 56;
+interface PaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  amount: number;
+  pledgeAmount: number;
+  status: 'idle' | 'success';
+}
+
+interface PaymentData {
+  qrUrl: string;
+  address: string;
+  amount: number;
+  paymentId: number;
+}
 
 export function BlockchainPaymentModal({ 
   isOpen, 
   onClose, 
   amount, 
   pledgeAmount,
-  onSuccess,
   status: externalStatus // 'idle' | 'success'
-}) {
+}: PaymentModalProps) {
   const { t } = useTranslation();
-  const [paymentData, setPaymentData] = useState(null);
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('choice'); // 'choice', 'qr', 'success'
-
-  const { isConnected, chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
-  const { open: openWeb3Modal } = useWeb3Modal();
 
   // Sync external status to internal step
   useEffect(() => {

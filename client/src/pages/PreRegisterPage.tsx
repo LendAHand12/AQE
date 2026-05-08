@@ -12,7 +12,6 @@ import {
   Smartphone,
   Mail,
   UserCheck,
-  LogOut,
   RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,9 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
-import { useWeb3Modal } from '@web3modal/wagmi/react'
-import { useAccount, useDisconnect } from 'wagmi'
-import { transferUSDT } from "@/lib/payment"
+import { useAccount } from 'wagmi'
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -39,14 +36,11 @@ export default function PreRegisterPage() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [referralStats, setReferralStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [paying, setPaying] = useState(false)
   const [isNewRound, setIsNewRound] = useState(false)
   const [isBlockchainModalOpen, setIsBlockchainModalOpen] = useState(false)
   const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
 
-  const { open } = useWeb3Modal()
-  const { disconnect } = useDisconnect()
-  const { address, isConnected } = useAccount()
+  const { isConnected } = useAccount()
 
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
@@ -494,10 +488,10 @@ export default function PreRegisterPage() {
                               <Button 
                                 type="button"
                                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold flex items-center justify-center gap-2"
-                                disabled={paying}
+                                disabled={loading}
                                 onClick={handlePayment}
                               >
-                                {paying ? <Loader2 size={18} className="animate-spin" /> : 
+                                {loading ? <Loader2 size={18} className="animate-spin" /> : 
                                  <>
                                    <Rocket size={18} />
                                    <span>{(!pledge || pledge?.paidUsdtPreRegister === 0) ? t("pre_register.confirm_payment_btn") : t("pre_register.pay_now")}</span>
@@ -588,14 +582,9 @@ export default function PreRegisterPage() {
           setIsBlockchainModalOpen(false);
           setModalStatus('idle');
         }}
-        amount={paymentAmount}
-        pledgeAmount={(!pledge || isNewRound) ? pledgeAmount : undefined}
+        amount={paymentAmount || 0}
+        pledgeAmount={((!pledge || isNewRound) ? pledgeAmount : 0) || 0}
         status={modalStatus}
-        onSuccess={() => {
-          setIsBlockchainModalOpen(false);
-          setModalStatus('idle');
-          fetchInitialData();
-        }}
       />
     </div>
     </div>
