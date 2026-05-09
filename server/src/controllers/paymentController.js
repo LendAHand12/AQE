@@ -90,7 +90,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                 user.isPledgeCompleted = false;
             }
 
-            if (!pledgeAmountNum || pledgeAmountNum < 100) {
+            if (!pledgeAmountNum || pledgeAmountNum < 10) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             user.pledgeUsdt = pledgeAmountNum;
