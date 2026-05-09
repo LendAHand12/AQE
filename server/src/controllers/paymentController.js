@@ -90,7 +90,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                 user.isPledgeCompleted = false;
             }
 
-            if (!pledgeAmountNum || pledgeAmountNum < 10) {
+            if (!pledgeAmountNum || pledgeAmountNum < 100) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             user.pledgeUsdt = pledgeAmountNum;
@@ -122,9 +122,35 @@ export const submitPreRegisterPayment = async (req, res) => {
             user.preRegisterTokens += tokensCalculated;
 
             if (user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
-                user.aqeBalance += user.preRegisterTokens;
-                user.preRegisterTokens = 0;
                 user.isPledgeCompleted = true;
+                
+                let bonusPercent = 0;
+                if (nowVN <= may31VN) {
+                    bonusPercent = 0.10;
+                } else if (nowVN < julyFirstVN) {
+                    bonusPercent = 0.05;
+                }
+
+                const bonusTokens = user.preRegisterTokens * bonusPercent;
+                const totalTokens = user.preRegisterTokens + bonusTokens;
+                
+                user.aqeBalance += totalTokens;
+                user.preRegisterTokens = 0;
+                user.hasReceivedPromotion = true;
+
+                if (bonusTokens > 0) {
+                     await BalanceHistory.create({
+                        userId: user._id,
+                        amount: bonusTokens,
+                        symbol: 'AQE',
+                        type: 'REWARD',
+                        status: 'SUCCESS',
+                        isOfficial: true,
+                        balanceBefore: user.aqeBalance - bonusTokens,
+                        balanceAfter: user.aqeBalance,
+                        description: `Bonus ${bonusPercent * 100}% for completing pledge`
+                    });
+                }
             }
         }
 

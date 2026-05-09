@@ -173,7 +173,17 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         transaction.status = 'SUCCESS';
         transaction.hash = hash;
         transaction.amount = processingAmount; 
-        await transaction.save();
+        
+        try {
+            await transaction.save();
+        } catch (saveError) {
+            // E11000 duplicate key error on hash means another process already saved it
+            if (saveError.code === 11000) {
+                console.log(`[Finalize] Transaction ${paymentId} already processed (duplicate hash).`);
+                return;
+            }
+            throw saveError;
+        }
 
         // Log token receipt
         await BalanceHistory.create({
@@ -195,8 +205,34 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         // Auto-complete pledge if reached
         if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
             user.isPledgeCompleted = true;
-            user.aqeBalance += user.preRegisterTokens;
-            // Optionally clear preRegisterTokens or keep as history
+            
+            let bonusPercent = 0;
+            if (nowVN <= may31VN) {
+                bonusPercent = 0.10;
+            } else if (nowVN < julyFirstVN) {
+                bonusPercent = 0.05;
+            }
+
+            const bonusTokens = user.preRegisterTokens * bonusPercent;
+            const totalTokens = user.preRegisterTokens + bonusTokens;
+            
+            user.aqeBalance += totalTokens;
+            user.preRegisterTokens = 0;
+            user.hasReceivedPromotion = true;
+
+            if (bonusTokens > 0) {
+                 await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: user.aqeBalance - bonusTokens,
+                    balanceAfter: user.aqeBalance,
+                    description: `Bonus ${bonusPercent * 100}% for completing pledge`
+                });
+            }
         }
 
         if (isLivePhase) {
