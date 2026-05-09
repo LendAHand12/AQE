@@ -1,6 +1,6 @@
 import { createConfig, http } from "wagmi";
 import { bsc } from "wagmi/chains";
-import { walletConnect, injected } from "wagmi/connectors";
+import { walletConnect, metaMask } from "wagmi/connectors";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
@@ -15,7 +15,7 @@ const metadata = {
 
 const chains = [bsc] as const;
 const connectors = [
-  injected(),
+  metaMask(),
   walletConnect({ projectId, metadata }),
 ];
 
@@ -23,7 +23,7 @@ export const config = createConfig({
   chains,
   connectors,
   transports: {
-    [bsc.id]: http(),
+    [bsc.id]: http("https://bsc-dataseed.binance.org"),
   },
 });
 

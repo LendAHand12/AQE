@@ -6,17 +6,20 @@ import { config, projectId } from '@/config/wagmi.config'
 
 // 3. Create modal
 if (!projectId) {
-  console.warn("WalletConnect Project ID is missing. Web3Modal may not function correctly.");
+  console.error("VITE_WALLETCONNECT_PROJECT_ID is missing in .env file!");
+} else {
+  console.log("Web3Modal initialized with Project ID:", projectId.slice(0, 6) + "...");
 }
 
 createWeb3Modal({
   wagmiConfig: config,
-  projectId: projectId || "1b15f85b4e2f0c6f99354a3f49fe7660", // Fallback to a test ID if env is missing
+  projectId: projectId as string,
   themeMode: "light",
   themeVariables: {
     "--w3m-z-index": 9999,
   },
   enableAnalytics: false,
+  enableEIP6963: false,
 })
 
 const queryClient = new QueryClient()

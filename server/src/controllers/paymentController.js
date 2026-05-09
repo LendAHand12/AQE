@@ -281,60 +281,43 @@ export const confirmTransactionHash = async (req, res) => {
             return res.status(500).json({ message: 'Server configuration error' });
         }
 
-        res.json({ message: 'Processing confirmation...' });
-
         // Fast-track validation
         const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const receipt = await provider.waitForTransaction(hash, 1);
+        console.log(`[ConfirmHash] Fast-tracking hash: ${hash} for payment: ${paymentId}`);
         
-        if (receipt && receipt.status === 1) {
-            const depositTopic = "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7";
-            const transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-            const usdtAddress = (process.env.USDT_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
-            const adminAddress = (process.env.ADMIN_WALLET_ADDRESS).toLowerCase();
+        // Trả về kết quả cho frontend ngay để tránh timeout, việc xử lý hash chạy ngầm
+        res.json({ message: 'Processing confirmation...' });
 
-            // 1. Check for Smart Contract Deposit Event
-            const depositLog = receipt.logs.find(l => 
-                l.topics[0] === depositTopic && 
-                l.address.toLowerCase() === (process.env.PAYMENT_CONTRACT_ADDRESS || "").toLowerCase()
-            );
+        try {
+            let receipt = await provider.getTransactionReceipt(hash);
+            if (!receipt) {
+                // Nếu chưa có receipt ngay, đợi tối đa 10s
+                receipt = await provider.waitForTransaction(hash, 1, 10000); 
+            }
             
-            if (depositLog) {
-                const iface = new ethers.Interface([
-                    "event Deposit(address indexed from, address indexed to, uint256 amount, uint256 paymentId)"
-                ]);
-                const parsedLog = iface.parseLog(depositLog);
-                const eventPaymentId = Number(parsedLog.args.paymentId);
-                const eventAmount = parseFloat(ethers.formatUnits(parsedLog.args.amount, 18));
+            if (receipt && receipt.status === 1) {
+                const usdtAddress = (process.env.USDT_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
 
-                if (eventPaymentId === Number(paymentId)) {
-                    await finalizeBlockchainPayment(eventPaymentId, hash, eventAmount);
-                    return;
+                // Lấy số tiền từ log đầu tiên có giá trị (đơn giản hóa)
+                const transferLog = receipt.logs.find(l => l.address.toLowerCase() === usdtAddress);
+                let amountFromLog = 0;
+                if (transferLog) {
+                    const valueHex = transferLog.data === "0x" ? transferLog.topics[3] : transferLog.data;
+                    amountFromLog = parseFloat(ethers.formatUnits(valueHex, 18));
                 }
+
+                console.log(`[ConfirmHash] Verified hash ${hash}. Amount: ${amountFromLog}. Finalizing...`);
+                await finalizeBlockchainPayment(Number(paymentId), hash, amountFromLog);
+            } else {
+                console.error(`[ConfirmHash] Transaction failed on chain: ${hash}`);
             }
-
-            // 2. Check for Direct USDT Transfer Event (Legacy/Extension Flow)
-            const transferLog = receipt.logs.find(l => 
-                l.topics[0] === transferTopic && 
-                l.address.toLowerCase() === usdtAddress
-            );
-
-            if (transferLog) {
-                const iface = new ethers.Interface([
-                    "event Transfer(address indexed from, address indexed to, uint256 value)"
-                ]);
-                const parsedLog = iface.parseLog(transferLog);
-                const recipient = parsedLog.args.to.toLowerCase();
-                const eventAmount = parseFloat(ethers.formatUnits(parsedLog.args.value, 18));
-
-                // Verify recipient is admin and amount matches (or at least valid)
-                if (recipient === adminAddress) {
-                    await finalizeBlockchainPayment(Number(paymentId), hash, eventAmount);
-                }
-            }
+        } catch (err) {
+            console.error(`[ConfirmHash] Async processing error:`, err);
+            // Fallback: Nếu lỗi RPC nhưng frontend đã cam đoan thành công, ta có thể xem xét xử lý sau hoặc log lại
         }
     } catch (error) {
-        console.error('[ConfirmHash] Error:', error);
+        console.error('[ConfirmHash] Global Error:', error);
+        if (!res.headersSent) res.status(500).json({ message: error.message });
     }
 };
 

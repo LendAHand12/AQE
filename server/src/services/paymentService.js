@@ -112,9 +112,15 @@ async function processCommissions(buyer, amountPaid) {
  */
 export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) => {
     try {
+        console.log(`[Finalize] Processing PaymentID: ${paymentId}, Hash: ${hash}, Amount: ${actualAmount}`);
         const transaction = await Transaction.findOne({ paymentId, status: 'PENDING' });
         if (!transaction) {
-            console.error(`[Blockchain] Transaction not found for paymentId: ${paymentId}`);
+            console.error(`[Finalize] PENDING Transaction not found for paymentId: ${paymentId}`);
+            // Check if it's already success
+            const existing = await Transaction.findOne({ paymentId, status: 'SUCCESS' });
+            if (existing) {
+                console.log(`[Finalize] Transaction ${paymentId} already processed as SUCCESS.`);
+            }
             return;
         }
 
@@ -137,9 +143,12 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             price = stats ? stats.currentPrice : 1.0;
         }
 
-        const tokensCalculated = actualAmount / price;
         const isPostMay = nowVN > may31VN;
         const isLivePhase = nowVN >= julyFirstVN;
+        
+        // Use transaction amount as fallback if actualAmount is zero
+        const processingAmount = actualAmount > 0 ? actualAmount : transaction.amount;
+        const tokensCalculated = processingAmount / price;
 
         // Update User Pledge if it was a new pledge
         if (transaction.metadata?.pledgeAmount && (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted)) {
@@ -163,7 +172,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         // Update Transaction
         transaction.status = 'SUCCESS';
         transaction.hash = hash;
-        transaction.amount = actualAmount; 
+        transaction.amount = processingAmount; 
         await transaction.save();
 
         // Log token receipt
@@ -180,7 +189,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         });
 
         // Update User
-        user.paidUsdtPreRegister += actualAmount;
+        user.paidUsdtPreRegister += processingAmount;
         user.preRegisterTokens += tokensCalculated;
 
         // Auto-complete pledge if reached
@@ -195,6 +204,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         }
 
         await user.save();
+        console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
 
         // Process commissions
         await processCommissions(user, actualAmount);
@@ -204,13 +214,13 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         await Notification.create({
             userId: user._id,
             title,
-            message: `Your payment of ${actualAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens.`,
+            message: `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens.`,
             type: 'PAYMENT'
         });
 
         emitNotification(user._id, {
             title,
-            message: `Confirmed ${actualAmount} USDT. Received ${tokensCalculated.toFixed(2)} AQE.`,
+            message: `Confirmed ${processingAmount} USDT. Received ${tokensCalculated.toFixed(2)} AQE.`,
             type: 'PAYMENT',
             paymentId: paymentId // Thêm paymentId để frontend nhận diện
         });

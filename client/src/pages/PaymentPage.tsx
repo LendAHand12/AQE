@@ -42,6 +42,14 @@ export default function PaymentPage() {
   const { address: account, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
+  // Sync wallet address with backend profile
+  useEffect(() => {
+    if (isConnected && account) {
+      apiClient.put('/auth/profile', { walletAddress: account })
+        .catch(err => console.error("Failed to sync wallet address:", err));
+    }
+  }, [isConnected, account]);
+
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<Payment | null>(null);
   const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error
