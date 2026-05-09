@@ -19,7 +19,7 @@ createWeb3Modal({
     "--w3m-z-index": 9999,
   },
   enableAnalytics: false,
-  enableEIP6963: false,
+  enableEIP6963: true,
 })
 
 const queryClient = new QueryClient()

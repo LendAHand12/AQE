@@ -1,6 +1,6 @@
-import { createConfig, http } from "wagmi";
+import { http } from "wagmi";
 import { bsc } from "wagmi/chains";
-import { walletConnect, metaMask } from "wagmi/connectors";
+import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
@@ -14,14 +14,11 @@ const metadata = {
 }
 
 const chains = [bsc] as const;
-const connectors = [
-  metaMask(),
-  walletConnect({ projectId, metadata }),
-];
 
-export const config = createConfig({
+export const config = defaultWagmiConfig({
   chains,
-  connectors,
+  projectId,
+  metadata,
   transports: {
     [bsc.id]: http("https://bsc-dataseed.binance.org"),
   },
