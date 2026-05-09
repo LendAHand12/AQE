@@ -16,7 +16,7 @@ const ABI = [
 ];
 
 const MAX_BLOCK_RANGE = 5;
-const CONFIRMATION_BLOCKS = 3;
+const CONFIRMATION_BLOCKS = 15;
 
 const USDT_ABI = [
     "event Transfer(address indexed from, address indexed to, uint256 value)"
@@ -71,17 +71,15 @@ const setupPollingListener = async () => {
             if (currentBlock > lastBlockChecked) {
                 let targetEndBlock = Math.min(currentBlock, lastBlockChecked + MAX_BLOCK_RANGE);
                 
-                // 1. Scan for Deposit events
                 try {
+                    // 1. Scan for Deposit events
                     const depositEvents = await depositContract.queryFilter("Deposit", lastBlockChecked + 1, targetEndBlock);
                     for (const event of depositEvents) {
                         const { amount, paymentId } = event.args;
                         await handleDepositEvent(amount, paymentId, event.transactionHash);
                     }
-                } catch (e) { console.warn(`[PaymentListener] Deposit scan lag: ${e.message}`); }
 
-                // 2. Scan for direct Transfer events
-                try {
+                    // 2. Scan for direct Transfer events
                     const transferEvents = await usdtContract.queryFilter("Transfer", lastBlockChecked + 1, targetEndBlock);
                     for (const event of transferEvents) {
                         const { from, to, value } = event.args;
@@ -89,12 +87,16 @@ const setupPollingListener = async () => {
                             await handleTransferEvent(from, value, event.transactionHash);
                         }
                     }
-                } catch (e) { console.warn(`[PaymentListener] Transfer scan lag: ${e.message}`); }
-                
-                lastBlockChecked = targetEndBlock;
-                if (lastBlockChecked < currentBlock) {
-                    setTimeout(poll, 1000);
-                    return;
+                    
+                    // Chỉ cập nhật mốc block nếu cả 2 truy vấn đều thành công
+                    lastBlockChecked = targetEndBlock;
+                    if (lastBlockChecked < currentBlock) {
+                        setTimeout(poll, 1000);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn(`[PaymentListener] Scan lag/error (RPC sync issue): ${e.message}`);
+                    // Không cập nhật lastBlockChecked để chu kỳ sau quét lại, tránh bị sót block
                 }
             }
         } catch (error) {

@@ -465,6 +465,7 @@
       "pay_now": "Pay Now",
       "approving": "Approving USDT...",
       "paying": "Paying...",
+      "verifying": "Finalizing with system...",
       "wallet_disconnected": "Wallet disconnected successfully",
       "wallet_connected": "Connected Wallet",
       "disconnect": "Disconnect",

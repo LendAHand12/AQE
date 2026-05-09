@@ -465,6 +465,7 @@
       "pay_now": "Thanh toán ngay",
       "approving": "Đang phê duyệt USDT...",
       "paying": "Đang thanh toán...",
+      "verifying": "Đang ghi nhận vào máy chủ...",
       "wallet_disconnected": "Đã ngắt kết nối ví",
       "wallet_connected": "Ví đã kết nối",
       "disconnect": "Ngắt kết nối",

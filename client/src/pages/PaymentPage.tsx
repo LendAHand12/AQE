@@ -13,7 +13,7 @@ import apiClient from '@/lib/axios';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from "react-i18next";
 import { useAccount, useDisconnect } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core';
 import { config } from '@/config/wagmi.config';
 import { parseUnits } from 'viem';
@@ -38,7 +38,7 @@ export default function PaymentPage() {
   const navigate = useNavigate();
   const paymentId = searchParams.get('pid');
 
-  const { open: openWeb3Modal } = useWeb3Modal();
+  const { open: openAppKit } = useAppKit();
   const { address: account, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
@@ -99,7 +99,7 @@ export default function PaymentPage() {
 
   const connectWallet = async () => {
     try {
-      await openWeb3Modal();
+      await openAppKit();
     } catch (error) {
       console.error(error);
       toast.error(t("payments.page.errors.connect_failed"));
@@ -147,20 +147,26 @@ export default function PaymentPage() {
       });
       
       // CHỦ ĐỘNG GỬI HASH VỀ BACKEND NGAY LẬP TỨC
-      apiClient.post('/payments/confirm-hash', {
+      setStatus('verifying');
+      await waitForTransactionReceipt(config, { hash });
+
+      // Gửi hash lên backend và ĐỢI backend xử lý xong xuôi (cộng token, hoa hồng...)
+      const res = await apiClient.post('/payments/confirm-hash', {
         paymentId: payment.paymentId,
         hash: hash
-      }).catch(e => console.error("Fast-track failed", e));
+      });
 
-      await waitForTransactionReceipt(config, { hash });
-      
-      setTxHash(hash);
-      setStatus('success');
-      toast.success(t("payments.page.success_msg"));
+      if (res.data.status === 'SUCCESS') {
+        setTxHash(hash);
+        setStatus('success');
+        toast.success(t("payments.page.success_msg"));
+      } else {
+        throw new Error("Backend verification failed");
+      }
     } catch (error: any) {
       console.error(error);
       setStatus('error');
-      const msg = error.shortMessage || error.message || t("pre_register.pay_failed");
+      const msg = error.response?.data?.message || error.shortMessage || error.message || t("pre_register.pay_failed");
       toast.error(msg);
     }
   };
@@ -275,11 +281,11 @@ export default function PaymentPage() {
 
                   <Button 
                     onClick={handlePayment} 
-                    disabled={status === 'checking_balance' || status === 'paying'}
+                    disabled={status === 'checking_balance' || status === 'paying' || status === 'verifying'}
                     className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
                   >
-                    { (status === 'checking_balance' || status === 'paying') ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} /> }
-                    {status === 'checking_balance' ? t("auth.processing") : status === 'paying' ? t("payments.page.paying") : t("payments.page.pay_now")}
+                    { (status === 'checking_balance' || status === 'paying' || status === 'verifying') ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} /> }
+                    {status === 'checking_balance' ? t("auth.processing") : status === 'paying' ? t("payments.page.paying") : status === 'verifying' ? t("payments.page.verifying") : t("payments.page.pay_now")}
                   </Button>
                 </div>
               )}

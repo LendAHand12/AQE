@@ -19,7 +19,7 @@ const getVietnamTime = () => {
 export const submitPreRegisterPledge = async (req, res) => {
     const { pledgeAmount } = req.body;
     try {
-        if (pledgeAmount < 100) {
+        if (pledgeAmount < 10) {
             return res.status(400).json({ message: 'payments.errors.min_pledge' });
         }
 
@@ -90,7 +90,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                 user.isPledgeCompleted = false;
             }
 
-            if (!pledgeAmountNum || pledgeAmountNum < 100) {
+            if (!pledgeAmountNum || pledgeAmountNum < 10) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             user.pledgeUsdt = pledgeAmountNum;
@@ -311,10 +311,8 @@ export const confirmTransactionHash = async (req, res) => {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
         console.log(`[ConfirmHash] Fast-tracking hash: ${hash} for payment: ${paymentId}`);
         
-        // Trả về kết quả cho frontend ngay để tránh timeout, việc xử lý hash chạy ngầm
-        res.json({ message: 'Processing confirmation...' });
-
         try {
+            // Tạm thời bỏ res.json ở đây để chờ xử lý xong
             let receipt = await provider.getTransactionReceipt(hash);
             if (!receipt) {
                 // Nếu chưa có receipt ngay, đợi tối đa 10s
@@ -334,12 +332,16 @@ export const confirmTransactionHash = async (req, res) => {
 
                 console.log(`[ConfirmHash] Verified hash ${hash}. Amount: ${amountFromLog}. Finalizing...`);
                 await finalizeBlockchainPayment(Number(paymentId), hash, amountFromLog);
+                
+                // Trả về khi đã CHẮC CHẮN finalize xong
+                return res.json({ message: 'Payment confirmed successfully', status: 'SUCCESS' });
             } else {
                 console.error(`[ConfirmHash] Transaction failed on chain: ${hash}`);
+                return res.status(400).json({ message: 'Transaction failed on chain' });
             }
         } catch (err) {
             console.error(`[ConfirmHash] Async processing error:`, err);
-            // Fallback: Nếu lỗi RPC nhưng frontend đã cam đoan thành công, ta có thể xem xét xử lý sau hoặc log lại
+            return res.status(500).json({ message: 'Error processing transaction receipt' });
         }
     } catch (error) {
         console.error('[ConfirmHash] Global Error:', error);

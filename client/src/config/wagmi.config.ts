@@ -1,26 +1,27 @@
 import { http } from "wagmi";
-import { bsc } from "wagmi/chains";
-import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
+import { bsc } from "@reown/appkit/networks";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
-// 2. Create wagmiConfig
-const metadata = {
+export const metadata = {
   name: 'AQ Estate',
   description: 'AQ Estate Payment System',
-  url: window.location.origin, // origin must match your domain & subdomain
+  url: 'https://aqestate.io', // Force HTTPS url for strict mobile wallets like MetaMask
   icons: ['https://aqestate.io/logo.png']
 }
 
-const chains = [bsc] as const;
+export const networks = [bsc] as const;
 
-export const config = defaultWagmiConfig({
-  chains,
+export const wagmiAdapter = new WagmiAdapter({
+  ssr: false,
+  networks,
   projectId,
-  metadata,
   transports: {
     [bsc.id]: http("https://bsc-dataseed.binance.org"),
   },
 });
+
+export const config = wagmiAdapter.wagmiConfig;
 

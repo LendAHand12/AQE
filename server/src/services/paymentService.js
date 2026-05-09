@@ -169,7 +169,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             user.pledgeUsdt = transaction.metadata.pledgeAmount;
         }
 
-        // Update Transaction
+        // Update Transaction (Use as lock)
         transaction.status = 'SUCCESS';
         transaction.hash = hash;
         transaction.amount = processingAmount; 
@@ -185,83 +185,92 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             throw saveError;
         }
 
-        // Log token receipt
-        await BalanceHistory.create({
-            userId: user._id,
-            amount: tokensCalculated,
-            symbol: 'AQE',
-            type: 'RECEIVE',
-            status: 'SUCCESS',
-            isOfficial: isLivePhase ? true : user.isPledgeCompleted ? true : false,
-            balanceBefore: user.aqeBalance + user.preRegisterTokens,
-            balanceAfter: user.aqeBalance + user.preRegisterTokens + tokensCalculated,
-            description: `Purchased AQE via Blockchain in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase`
-        });
+        try {
+            // Log token receipt
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: tokensCalculated,
+                symbol: 'AQE',
+                type: 'RECEIVE',
+                status: 'SUCCESS',
+                isOfficial: isLivePhase ? true : user.isPledgeCompleted ? true : false,
+                balanceBefore: user.aqeBalance + user.preRegisterTokens,
+                balanceAfter: user.aqeBalance + user.preRegisterTokens + tokensCalculated,
+                description: `Purchased AQE via Blockchain in ${isLivePhase ? 'Live' : (isPostMay ? 'June' : 'May')} phase`
+            });
 
-        // Update User
-        user.paidUsdtPreRegister += processingAmount;
-        user.preRegisterTokens += tokensCalculated;
+            // Update User
+            user.paidUsdtPreRegister += processingAmount;
+            user.preRegisterTokens += tokensCalculated;
 
-        // Auto-complete pledge if reached
-        if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
-            user.isPledgeCompleted = true;
-            
-            let bonusPercent = 0;
-            if (nowVN <= may31VN) {
-                bonusPercent = 0.10;
-            } else if (nowVN < julyFirstVN) {
-                bonusPercent = 0.05;
+            // Auto-complete pledge if reached
+            if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
+                user.isPledgeCompleted = true;
+                
+                let bonusPercent = 0;
+                if (nowVN <= may31VN) {
+                    bonusPercent = 0.10;
+                } else if (nowVN < julyFirstVN) {
+                    bonusPercent = 0.05;
+                }
+
+                const bonusTokens = user.preRegisterTokens * bonusPercent;
+                const totalTokens = user.preRegisterTokens + bonusTokens;
+                
+                user.aqeBalance += totalTokens;
+                user.preRegisterTokens = 0;
+                user.hasReceivedPromotion = true;
+
+                if (bonusTokens > 0) {
+                     await BalanceHistory.create({
+                        userId: user._id,
+                        amount: bonusTokens,
+                        symbol: 'AQE',
+                        type: 'REWARD',
+                        status: 'SUCCESS',
+                        isOfficial: true,
+                        balanceBefore: user.aqeBalance - bonusTokens,
+                        balanceAfter: user.aqeBalance,
+                        description: `Bonus ${bonusPercent * 100}% for completing pledge`
+                    });
+                }
             }
 
-            const bonusTokens = user.preRegisterTokens * bonusPercent;
-            const totalTokens = user.preRegisterTokens + bonusTokens;
-            
-            user.aqeBalance += totalTokens;
-            user.preRegisterTokens = 0;
-            user.hasReceivedPromotion = true;
-
-            if (bonusTokens > 0) {
-                 await BalanceHistory.create({
-                    userId: user._id,
-                    amount: bonusTokens,
-                    symbol: 'AQE',
-                    type: 'REWARD',
-                    status: 'SUCCESS',
-                    isOfficial: true,
-                    balanceBefore: user.aqeBalance - bonusTokens,
-                    balanceAfter: user.aqeBalance,
-                    description: `Bonus ${bonusPercent * 100}% for completing pledge`
-                });
+            if (isLivePhase) {
+                user.aqeBalance += tokensCalculated;
             }
+
+            await user.save();
+            console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
+
+            // Process commissions
+            await processCommissions(user, actualAmount);
+
+            // Notify user
+            const title = isLivePhase ? 'Token Purchase Successful' : 'Pre-registration Payment Received';
+            await Notification.create({
+                userId: user._id,
+                title,
+                message: `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens.`,
+                type: 'PAYMENT'
+            });
+
+            emitNotification(user._id, {
+                title,
+                message: `Confirmed ${processingAmount} USDT. Received ${tokensCalculated.toFixed(2)} AQE.`,
+                type: 'PAYMENT',
+                paymentId: paymentId // Thêm paymentId để frontend nhận diện
+            });
+
+            console.log(`[Blockchain] Payment finalized for user ${user.username}, amount: ${actualAmount}`);
+        } catch (processError) {
+            // ROLLBACK TRANSACTION LOCK IF SOMETHING FAILED
+            console.error(`[Finalize] Critical Error! Rolling back transaction ${paymentId}. Error:`, processError);
+            transaction.status = 'PENDING';
+            transaction.hash = undefined;
+            await transaction.save();
+            throw processError; // Re-throw to be logged
         }
-
-        if (isLivePhase) {
-            user.aqeBalance += tokensCalculated;
-        }
-
-        await user.save();
-        console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
-
-        // Process commissions
-        await processCommissions(user, actualAmount);
-
-        // Notify user
-        const title = isLivePhase ? 'Token Purchase Successful' : 'Pre-registration Payment Received';
-        await Notification.create({
-            userId: user._id,
-            title,
-            message: `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens.`,
-            type: 'PAYMENT'
-        });
-
-        emitNotification(user._id, {
-            title,
-            message: `Confirmed ${processingAmount} USDT. Received ${tokensCalculated.toFixed(2)} AQE.`,
-            type: 'PAYMENT',
-            paymentId: paymentId // Thêm paymentId để frontend nhận diện
-        });
-
-        console.log(`[Blockchain] Payment finalized for user ${user.username}, amount: ${actualAmount}`);
     } catch (error) {
         console.error('[Blockchain] Error finalizing payment:', error);
     }
