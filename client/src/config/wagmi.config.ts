@@ -12,7 +12,7 @@ export const metadata = {
   icons: ['https://aqestate.io/logo.png']
 }
 
-export const networks = [bsc] as const;
+export const networks = [bsc];
 
 export const wagmiAdapter = new WagmiAdapter({
   ssr: false,
