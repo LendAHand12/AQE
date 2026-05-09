@@ -113,7 +113,7 @@ export default function PreRegisterPage() {
     const isFirstRegistration = !pledge
     const isFirstPayment = !pledge || pledge.paidUsdtPreRegister === 0
 
-    if (isFirstRegistration && pledgeAmount < 10) {
+    if (isFirstRegistration && pledgeAmount < 100) {
         toast.error(t("pre_register.reg_amount_min"))
         return
     }
