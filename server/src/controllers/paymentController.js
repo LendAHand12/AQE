@@ -19,7 +19,7 @@ const getVietnamTime = () => {
 export const submitPreRegisterPledge = async (req, res) => {
     const { pledgeAmount } = req.body;
     try {
-        if (pledgeAmount < 10) {
+        if (pledgeAmount < 100) {
             return res.status(400).json({ message: 'payments.errors.min_pledge' });
         }
 
@@ -90,7 +90,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                 user.isPledgeCompleted = false;
             }
 
-            if (!pledgeAmountNum || pledgeAmountNum < 10) {
+            if (!pledgeAmountNum || pledgeAmountNum < 100) {
                 return res.status(400).json({ message: 'payments.errors.min_pledge' });
             }
             user.pledgeUsdt = pledgeAmountNum;
