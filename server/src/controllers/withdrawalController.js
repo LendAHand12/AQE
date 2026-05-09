@@ -35,7 +35,7 @@ export const requestWithdrawal = async (req, res) => {
 
         // - Total Paid >= 100 USDT
         const totalPaid = user.paidUsdtPreRegister || 0;
-        if (totalPaid < 10) {
+        if (totalPaid < 100) {
             return res.status(400).json({ message: 'withdrawals.errors.min_payment_required' });
         }
 
