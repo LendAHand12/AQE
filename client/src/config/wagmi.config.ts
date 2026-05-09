@@ -10,10 +10,10 @@ export const metadata = {
   description: 'AQ Estate Payment System',
   url: 'https://platform.aqestate.net', // URL đã được whitelist trên Reown Dashboard
   icons: ['https://platform.aqestate.net/logo.png'],
-  redirect: {
-    native: 'http://localhost:5173', // Redirect về localhost khi dev
-    universal: 'https://platform.aqestate.net'
-  }
+  // redirect: {
+  //   native: 'http://localhost:5173', // Redirect về localhost khi dev
+  //   universal: 'https://platform.aqestate.net'
+  // }
 }
 
 export const networks = [bsc];
