@@ -64,7 +64,8 @@
       "referral_required": "Referral ID is required",
       "referral_not_qualified": "This referral code is not qualified",
       "invalid_referral": "Invalid referral code",
-      "invalid_credentials": "Invalid email or password"
+      "invalid_credentials": "Invalid email or password",
+      "phone_exists": "This phone number is already in use"
     }
   },
   "dashboard": {

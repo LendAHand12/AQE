@@ -27,7 +27,9 @@ export const sendTelegramNotification = async (message) => {
         if (errorData?.description === 'Bad Request: chat not found') {
             console.error('[TelegramService] Lỗi: Không tìm thấy Chat ID. Vui lòng kiểm tra xem Bot đã được thêm vào Nhóm và Nhóm có ID chính xác trong .env chưa.');
         } else {
-            console.error('[TelegramService] Error sending notification:', errorData || error.message);
+            // Thay đổi dòng 30 trong src/utils/telegramService.js thành:
+            console.error('[TelegramService] Error sending notification:', error.code, error.message);
+
         }
     }
 };
