@@ -65,7 +65,9 @@
       "referral_not_qualified": "This referral code is not qualified",
       "invalid_referral": "Invalid referral code",
       "invalid_credentials": "Invalid email or password",
-      "phone_exists": "This phone number is already in use"
+      "phone_exists": "This phone number is already in use",
+      "email_exists": "This email address is already in use",
+      "username_exists": "This username is already in use"
     }
   },
   "dashboard": {

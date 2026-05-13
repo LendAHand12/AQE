@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+// Load env vars immediately at the top
+dotenv.config();
+
 import morgan from 'morgan';
 import helmet from 'helmet';
 import path from 'path';
@@ -16,12 +20,8 @@ import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 import { initPaymentListener } from './services/paymentListener.js';
-
 import { createServer } from 'http';
 import { initSocket } from './utils/socket.js';
-
-// Load env vars
-dotenv.config();
 
 // Connect to Database
 connectDB();
@@ -38,28 +38,16 @@ if (!fs.existsSync(uploadDir)) {
     console.log('Created uploads directory');
 }
 
-// Initialize Socket.io
-initSocket(httpServer);
-
-// Initialize Cron Jobs
-initCronJobs();
-
-// Initialize Blockchain Payment Listener
-// initPaymentListener();
-
 // Middleware
 app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginResourcePolicy: false,
+    crossOriginResourcePolicy: false,
 }));
-app.use(cors({
-  origin: [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"],
-  credentials: true
-}));
-app.use(morgan('dev'));
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use(morgan('dev'));
+
+// Static files
+app.use('/uploads', express.static(uploadDir));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -70,13 +58,21 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/kyc', kycRoutes);
 
-// Simple Route
+// Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the AQE API' });
+    res.json({ message: 'AQ Estate API is running...' });
 });
 
-// Port
+// Initialize Socket.io
+initSocket(httpServer);
+
+// Initialize Cron Jobs
+initCronJobs();
+
+// Initialize Payment Listener (Uncomment when using RPC)
+// initPaymentListener();
+
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
