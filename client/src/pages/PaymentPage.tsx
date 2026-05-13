@@ -6,7 +6,6 @@ import {
   Loader2, 
   ExternalLink,
   ShieldCheck,
-  Smartphone,
   Copy,
   Clock,
   ArrowLeft
@@ -58,7 +57,7 @@ export default function PaymentPage() {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error, awaiting
   const [txHash, setTxHash] = useState('');
-  const [method, setMethod] = useState<'wallet' | 'zelle'>(searchParams.get('method') === 'zelle' ? 'zelle' : 'wallet');
+  const method = searchParams.get('method') === 'zelle' ? 'zelle' : 'wallet';
 
   useEffect(() => {
     if (!paymentId) {

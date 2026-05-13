@@ -3,10 +3,8 @@ import { useSearchParams, Link } from "react-router-dom"
 import { 
   Search, 
   Loader2,
-  ArrowRight,
   Check,
   X,
-  AlertCircle,
   ExternalLink
 } from "lucide-react"
 import { 

@@ -14,6 +14,7 @@ interface Notification {
   message: string
   type: string
   isRead: boolean
+  messageParams?: any
   createdAt: string
 }
 
@@ -50,21 +51,21 @@ export default function NotificationDropdown() {
         }
 
         if (notification.type === 'PAYMENT' || notification.type === 'KYC_APPROVED') {
-          toast.success(t(notification.title), {
+          toast.success(String(t(notification.title)), {
             ...toastOptions,
-            description: t(notification.message, notification.messageParams),
+            description: String(t(notification.message, notification.messageParams)),
             icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />,
           })
         } else if (notification.type === 'KYC_REJECTED' || notification.type === 'ERROR') {
-          toast.error(t(notification.title), {
+          toast.error(String(t(notification.title)), {
             ...toastOptions,
-            description: t(notification.message, notification.messageParams),
+            description: String(t(notification.message, notification.messageParams)),
             icon: <AlertCircle className="h-5 w-5 text-red-500" />,
           })
         } else {
-          toast(t(notification.title), {
+          toast(String(t(notification.title)), {
             ...toastOptions,
-            description: t(notification.message, notification.messageParams),
+            description: String(t(notification.message, notification.messageParams)),
             icon: <Bell className="h-5 w-5 text-[#276152]" />,
           })
         }

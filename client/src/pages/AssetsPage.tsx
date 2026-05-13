@@ -6,9 +6,7 @@ import {
   ShieldCheck,
   CreditCard,
   Receipt,
-  AlertCircle,
-  Settings as SettingsIcon,
-  ChevronRight
+  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
