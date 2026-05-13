@@ -332,57 +332,35 @@ export const getPaymentHistory = async (req, res) => {
 // @desc    Manually confirm a transaction hash for instant UX
 export const confirmTransactionHash = async (req, res) => {
     const { paymentId, hash } = req.body;
-    const rpcUrl = process.env.ALCHEMY_RPC_URL || process.env.RPC_URL;
 
     try {
         if (!hash || !paymentId) {
             return res.status(400).json({ message: 'Missing hash or paymentId' });
         }
 
-        if (!rpcUrl) {
-            console.error('[ConfirmHash] Missing RPC_URL in environment');
-            return res.status(500).json({ message: 'Server configuration error' });
+        const transaction = await Transaction.findOne({ paymentId });
+        if (!transaction) {
+            return res.status(404).json({ message: 'Payment not found' });
         }
 
-        // Fast-track validation
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        console.log(`[ConfirmHash] Fast-tracking hash: ${hash} for payment: ${paymentId}`);
+        if (transaction.status !== 'PENDING') {
+            return res.status(400).json({ message: 'Transaction is already processed' });
+        }
+
+        console.log(`[ConfirmHash] Auto-finalizing hash ${hash} for payment ${paymentId} (Instant Success)`);
         
-        try {
-            // Tạm thời bỏ res.json ở đây để chờ xử lý xong
-            let receipt = await provider.getTransactionReceipt(hash);
-            if (!receipt) {
-                // Nếu chưa có receipt ngay, đợi tối đa 10s
-                receipt = await provider.waitForTransaction(hash, 1, 10000); 
-            }
-            
-            if (receipt && receipt.status === 1) {
-                const usdtAddress = (process.env.USDT_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
+        // Auto-finalize without checking blockchain
+        // Use the amount from the transaction record since we're not checking the chain
+        await finalizeBlockchainPayment(Number(paymentId), hash, transaction.amount);
+        
+        return res.json({ 
+            message: 'Payment confirmed successfully', 
+            status: 'SUCCESS' 
+        });
 
-                // Lấy số tiền từ log đầu tiên có giá trị (đơn giản hóa)
-                const transferLog = receipt.logs.find(l => l.address.toLowerCase() === usdtAddress);
-                let amountFromLog = 0;
-                if (transferLog) {
-                    const valueHex = transferLog.data === "0x" ? transferLog.topics[3] : transferLog.data;
-                    amountFromLog = parseFloat(ethers.formatUnits(valueHex, 18));
-                }
-
-                console.log(`[ConfirmHash] Verified hash ${hash}. Amount: ${amountFromLog}. Finalizing...`);
-                await finalizeBlockchainPayment(Number(paymentId), hash, amountFromLog);
-                
-                // Trả về khi đã CHẮC CHẮN finalize xong
-                return res.json({ message: 'Payment confirmed successfully', status: 'SUCCESS' });
-            } else {
-                console.error(`[ConfirmHash] Transaction failed on chain: ${hash}`);
-                return res.status(400).json({ message: 'Transaction failed on chain' });
-            }
-        } catch (err) {
-            console.error(`[ConfirmHash] Async processing error:`, err);
-            return res.status(500).json({ message: 'Error processing transaction receipt' });
-        }
     } catch (error) {
-        console.error('[ConfirmHash] Global Error:', error);
-        if (!res.headersSent) res.status(500).json({ message: error.message });
+        console.error('[ConfirmHash] Error:', error);
+        res.status(500).json({ message: error.message });
     }
 };
 

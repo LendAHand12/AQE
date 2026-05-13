@@ -405,7 +405,8 @@
       "commission": "Commission",
       "buy": "Buy Token",
       "reward": "Reward",
-      "receive": "Receive"
+      "receive": "Receive",
+      "refund": "Refund"
     },
     "status": {
       "official": "Official",
