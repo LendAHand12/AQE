@@ -26,6 +26,8 @@ interface Transaction {
   createdAt: string;
   isReleased?: boolean;
   description?: string;
+  paymentId?: number;
+  metadata?: any;
 }
 
 export default function PaymentHistoryPage() {
@@ -116,7 +118,9 @@ export default function PaymentHistoryPage() {
               <thead>
                 <tr className="bg-[#EFEFEF]/50">
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.date")}</th>
+                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">Payment ID</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.description")}</th>
+                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">Phương thức</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("payments.table.amount")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.status")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.details")}</th>
@@ -143,6 +147,9 @@ export default function PaymentHistoryPage() {
                           <span className="text-[12px] text-[#868F9E]">{dayjs(p.createdAt).format("HH:mm:ss")}</span>
                         </div>
                       </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                         <span className="font-mono text-[13px] text-gray-500">{p.paymentId || "N/A"}</span>
+                      </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className={cn(
@@ -158,6 +165,17 @@ export default function PaymentHistoryPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="px-6 py-5">
+                         <span className="text-[12px] font-bold">
+                            {p.metadata?.method === 'QR' ? (
+                               <span className="text-purple-600">Mã QR</span>
+                            ) : p.metadata?.method === 'ZELLE' ? (
+                               <span className="text-orange-500">Zelle</span>
+                            ) : (
+                               <span className="text-blue-600">Chuyển ví</span>
+                            )}
+                         </span>
+                      </td>
                       <td className="px-6 py-5 text-right whitespace-nowrap">
                          <span className="text-[14px] font-bold text-[#111827]">
                             {p.amount ? `${p.amount.toLocaleString()} USDT` : "---"}
@@ -167,9 +185,13 @@ export default function PaymentHistoryPage() {
                          <div className="flex justify-center">
                            <div className={cn(
                              "rounded-full px-3 py-1 flex items-center gap-2 text-[11px] font-bold",
-                             p.status === 'SUCCESS' ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#FEF3C7] text-[#92400E]"
+                             p.status === 'SUCCESS' ? "bg-emerald-100 text-emerald-700" : 
+                             p.status === 'AWAITING_APPROVAL' ? "bg-amber-100 text-amber-700" :
+                             "bg-gray-100 text-gray-600"
                            )}>
-                             {p.status === 'SUCCESS' ? t("payments.status.success") : t("payments.status.pending")}
+                             {p.status === 'SUCCESS' ? t("payments.status.success") : 
+                              p.status === 'AWAITING_APPROVAL' ? t("payments.status.awaiting") :
+                              t("payments.status.pending")}
                            </div>
                          </div>
                       </td>

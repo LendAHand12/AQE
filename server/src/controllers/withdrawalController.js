@@ -5,6 +5,9 @@ import { sendUsdt } from '../services/blockchainService.js';
 import jwt from 'jsonwebtoken';
 import Transaction from '../models/Transaction.js';
 import mongoose from 'mongoose';
+import { sendTelegramNotification } from '../utils/telegramService.js';
+import { emitNotification } from '../utils/socket.js';
+import Notification from '../models/Notification.js';
 
 /**
  * @desc    Get Withdrawal Verification URL (FaceID)
@@ -12,13 +15,16 @@ import mongoose from 'mongoose';
  * @access  Private
  */
 export const requestWithdrawal = async (req, res) => {
-    const { walletAddress } = req.body;
+    const { walletAddress, zelleInfo, paymentMethod = 'WALLET' } = req.body;
     const { user } = req;
     const fee = 1.0;
 
     try {
-        if (!walletAddress) {
+        if (paymentMethod === 'WALLET' && !walletAddress) {
             return res.status(400).json({ message: 'withdrawals.errors.wallet_required' });
+        }
+        if (paymentMethod === 'ZELLE' && !zelleInfo) {
+            return res.status(400).json({ message: 'withdrawals.errors.zelle_required' });
         }
 
         // 1. Check Balance (Withdraw ALL)
@@ -43,7 +49,9 @@ export const requestWithdrawal = async (req, res) => {
         const token = jwt.sign(
             { 
                 userId: user._id, 
-                walletAddress, 
+                walletAddress,
+                zelleInfo,
+                paymentMethod,
                 amount: withdrawalAmount 
             }, 
             process.env.JWT_SECRET || 'secret_key', 
@@ -51,7 +59,7 @@ export const requestWithdrawal = async (req, res) => {
         );
 
         // 4. Generate Facetec Redirect URL
-        const callbackUrl = `${process.env.FRONTEND_URL}/user/claim?token=${token}`;
+        const callbackUrl = `${process.env.FRONTEND_URL}/user/claim?token=${token}&method=${paymentMethod}`;
         const facetecUrl = `${process.env.FACETEC_BASE_URL}/verify.html?callback=${encodeURIComponent(callbackUrl)}&user_id=${user._id}`;
 
         res.json({ url: facetecUrl });
@@ -77,7 +85,7 @@ export const completeWithdrawal = async (req, res) => {
 
         // 1. Verify Token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-        const { userId, walletAddress, amount } = decoded;
+        const { userId, walletAddress, amount, zelleInfo, paymentMethod } = decoded;
 
         if (userId !== req.user._id.toString()) {
             return res.status(403).json({ message: 'withdrawals.errors.invalid_token' });
@@ -106,21 +114,23 @@ export const completeWithdrawal = async (req, res) => {
             status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
             balanceBefore: balanceBefore,
             balanceAfter: user.usdtBalance,
-            description: `USDT withdrawal to wallet ${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)} (Fee: 1 USDT)`
+            description: `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
         });
 
         const withdrawal = await Withdrawal.create({
             userId: user._id,
             walletAddress: walletAddress,
+            zelleInfo: zelleInfo,
+            paymentMethod: paymentMethod,
             amount: withdrawalAmount,
             fee: fee,
             symbol: 'USDT',
-            method: withdrawalAmount <= 200 ? 'AUTO' : 'MANUAL',
-            status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
-            description: `Withdrawal request to ${walletAddress}`
+            method: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'AUTO' : 'MANUAL',
+            status: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'SUCCESS' : 'PENDING',
+            description: `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleInfo : walletAddress}`
         });
 
-        if (withdrawalAmount <= 200) {
+        if (paymentMethod === 'WALLET' && withdrawalAmount <= 200) {
             try {
                 const hash = await sendUsdt(walletAddress, withdrawalAmount);
                 withdrawal.hash = hash;
@@ -130,6 +140,7 @@ export const completeWithdrawal = async (req, res) => {
                 return res.json({ 
                     success: true, 
                     message: 'withdrawals.success_auto', 
+                    paymentMethod,
                     hash 
                 });
             } catch (blockchainError) {
@@ -144,9 +155,21 @@ export const completeWithdrawal = async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: 'withdrawals.pending_approval', 
+            message: paymentMethod === 'ZELLE' ? 'withdrawals.success_manual_zelle' : 'withdrawals.pending_approval', 
+            paymentMethod,
+            zelleInfo,
             status: 'PENDING' 
         });
+
+        // Send Telegram Notification if Zelle
+        if (paymentMethod === 'ZELLE') {
+            const teleMsg = `🚀 <b>Yêu cầu Rút tiền Zelle Mới</b>\n\n` +
+                `👤 User: @${user.username}\n` +
+                `💰 Số tiền: ${withdrawalAmount} USDT\n` +
+                `🏦 Zelle: <code>${zelleInfo}</code>\n\n` +
+                `👉 Vui lòng kiểm tra trang quản trị để xử lý.`;
+            sendTelegramNotification(teleMsg);
+        }
 
     } catch (error) {
         console.error('Complete Withdrawal Error:', error);
@@ -258,6 +281,11 @@ export const approveWithdrawal = async (req, res) => {
 
         withdrawal.status = 'SUCCESS';
         if (hash) withdrawal.hash = hash;
+        
+        // Record Admin Action
+        withdrawal.processedBy = req.admin._id;
+        withdrawal.processedAt = new Date();
+        
         await withdrawal.save();
 
         // Update BalanceHistory status if found
@@ -265,6 +293,20 @@ export const approveWithdrawal = async (req, res) => {
             { userId: withdrawal.userId, type: 'WITHDRAW', amount: withdrawal.amount, status: 'PENDING' },
             { status: 'SUCCESS' }
         );
+
+        // Notify User
+        const approvedTitle = "Withdrawal Approved";
+        const approvedMsg = `Your withdrawal request for ${withdrawal.amount} USDT has been successfully approved!`;
+        
+        await Notification.create({
+            userId: withdrawal.userId,
+            title: approvedTitle,
+            message: approvedMsg
+        });
+        emitNotification(withdrawal.userId.toString(), {
+            title: approvedTitle,
+            message: approvedMsg
+        });
 
         res.json({ message: 'withdrawals.approved' });
     } catch (error) {
@@ -285,6 +327,12 @@ export const rejectWithdrawal = async (req, res) => {
         }
 
         withdrawal.status = 'FAILED';
+        withdrawal.adminNote = req.body?.reason || 'Rejected by Admin';
+        
+        // Record Admin Action
+        withdrawal.processedBy = req.admin._id;
+        withdrawal.processedAt = new Date();
+        
         await withdrawal.save();
 
         // Refund user balance
@@ -311,8 +359,22 @@ export const rejectWithdrawal = async (req, res) => {
         // Update original BalanceHistory record to FAILED
         await BalanceHistory.findOneAndUpdate(
             { userId: withdrawal.userId, type: 'WITHDRAW', amount: withdrawal.amount, status: 'PENDING' },
-            { status: 'FAILED' }
+            { status: 'FAILED', adminNote: withdrawal.adminNote }
         );
+
+        // Notify User
+        const rejectedTitle = "Withdrawal Rejected";
+        const rejectedMsg = `Your withdrawal request for ${withdrawal.amount} USDT has been rejected and refunded. Reason: ${withdrawal.adminNote}`;
+
+        await Notification.create({
+            userId: withdrawal.userId,
+            title: rejectedTitle,
+            message: rejectedMsg
+        });
+        emitNotification(withdrawal.userId.toString(), {
+            title: rejectedTitle,
+            message: rejectedMsg
+        });
 
         res.json({ message: 'withdrawals.rejected_refund' });
     } catch (error) {

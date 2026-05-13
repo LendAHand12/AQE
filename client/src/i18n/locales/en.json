@@ -1,4 +1,7 @@
 {
+  "common": {
+    "copied": "Copied to clipboard"
+  },
   "header": {
     "good_morning": "Good morning",
     "good_afternoon": "Good afternoon",
@@ -266,6 +269,8 @@
     "summary_remaining": "Remaining",
     "pay_completed_msg": "Congratulations! You have fulfilled 100% of your payment obligation.",
     "pay_success": "Success!",
+    "awaiting_approval_title": "Awaiting Approval",
+    "awaiting_approval_desc": "You have {{amount}} USDT awaiting administrator approval.",
     "new_purchase_round": "Start New Purchase Round",
     "confirm_payment_btn": "Confirm & Pay",
     "pay_now": "Pay Now",
@@ -289,7 +294,7 @@
     "withdraw_history": "Withdrawal History",
     "table": {
       "time": "Time",
-      "wallet": "Wallet",
+      "recipient_info": "Recipient Info",
       "amount": "Amount",
       "fee": "Fee",
       "hash": "Hash",
@@ -311,7 +316,12 @@
       "no_wallet_title": "Missing Withdrawal Address",
       "no_wallet_desc": "You need to update your USDT (BEP20) wallet address in settings.",
       "go_to_settings": "Go to Settings",
-      "insufficient_balance": "Insufficient USDT balance"
+      "insufficient_balance": "Insufficient USDT balance",
+      "method_label": "Withdrawal Method",
+      "method_wallet": "Crypto Wallet (USDT-BEP20)",
+      "method_zelle": "Zelle (US Only)",
+      "zelle_info_label": "Zelle Email or Phone",
+      "zelle_info_placeholder": "Enter your Zelle account"
     },
     "empty_history": "No withdrawal history yet",
     "status": {
@@ -374,6 +384,7 @@
     },
     "history_desc": "USDT withdrawal to {{wallet}} (Fee: 1 USDT)",
     "success_auto": "Withdrawal successful and sent automatically",
+    "success_manual_zelle": "Zelle withdrawal request submitted. Admin will process and transfer to you within 24 hours.",
     "success_manual_needed": "Request recorded. Admin will process manually.",
     "pending_approval": "Withdrawal pending Admin approval (> 200 USDT)",
     "approved": "Withdrawal approved",
@@ -405,6 +416,7 @@
     "date": "Transaction Date",
     "type": "Type",
     "detail": "Detail",
+    "note": "Note/Reason",
     "amount": "Amount",
     "fee": "Fee",
     "balance_before": "Balance Before",
@@ -434,13 +446,17 @@
     },
     "status": {
       "success": "Success",
-      "pending": "Pending"
+      "pending": "Pending",
+      "awaiting": "Awaiting Approval"
     },
     "modal": {
       "title": "USDT Payment",
       "desc": "Deposit {{amount}} USDT into AQE system",
+      "pay_now": "Continue to Payment",
+      "pay_now_desc": "Pay via Crypto Wallet or Zelle",
       "pay_this_device": "Pay on this device",
       "pay_this_device_desc": "Use the wallet connected to your browser",
+      "pay_zelle_desc": "Manual payment via Zelle QR",
       "scan_qr": "Scan QR Code (Mobile)",
       "scan_qr_desc": "Scan with Camera or Web3 Wallet (Trust, SafePal...)",
       "qr_instruction": "Scan this code with your phone Camera or Web3 Wallet dApp browser. You will be redirected to a secure payment page.",
@@ -474,7 +490,16 @@
         "invalid_id": "Invalid payment ID",
         "not_found": "Payment details not found",
         "connect_failed": "Wallet connection failed"
-      }
+      },
+      "method_wallet": "Crypto Wallet",
+      "method_zelle": "Zelle Wallet (USA)",
+      "zelle_info": "Please scan the Zelle QR code below and complete the payment.",
+      "zelle_memo": "Mandatory Memo/Note:",
+      "confirm_manual_btn": "I Have Paid",
+      "status_awaiting": "Awaiting Approval",
+      "manual_confirm_success": "Notification sent to admin. Your transaction will be processed shortly.",
+      "manual_success_hint": "Administrator will verify and approve your transaction within 30-60 minutes.",
+      "pending_manual_exists": "You have a transaction awaiting approval. Please wait for administrator approval or rejection before making a new transaction."
     },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",
@@ -489,7 +514,13 @@
     "title": "Notifications",
     "mark_all_read": "Mark all as read",
     "empty": "No notifications yet",
-    "new_notification": "New Notification"
+    "new_notification": "New Notification",
+    "payment_approved_title": "Payment Approved",
+    "payment_approved_msg": "Your transaction of {{amount}} USDT (#{{paymentId}}) has been approved successfully!",
+    "payment_rejected_title": "Payment Rejected",
+    "payment_rejected_msg": "Your transaction (#{{paymentId}}) has been rejected. Reason: {{reason}}",
+    "withdrawal_approved": "Your withdrawal request for {{amount}} USDT has been successfully approved!",
+    "withdrawal_rejected": "Your withdrawal request for {{amount}} USDT has been rejected and refunded."
   },
   "confirm_email": {
     "verifying": "Verifying Email",

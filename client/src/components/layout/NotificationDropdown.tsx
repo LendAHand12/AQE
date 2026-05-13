@@ -41,11 +41,33 @@ export default function NotificationDropdown() {
     if (socket) {
       socket.on("new_notification", (notification: Notification) => {
         setNotifications(prev => [notification, ...prev])
-        // Trigger toast
-        toast(t("notifications.new_notification"), {
-          description: notification.title,
-          icon: <Bell className="h-4 w-4" />,
-        })
+        
+        // Premium Toast Notification
+        const toastOptions = {
+          description: notification.message,
+          duration: 8000,
+          className: "rounded-2xl border-none shadow-2xl p-4",
+        }
+
+        if (notification.type === 'PAYMENT' || notification.type === 'KYC_APPROVED') {
+          toast.success(t(notification.title), {
+            ...toastOptions,
+            description: t(notification.message, notification.messageParams),
+            icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />,
+          })
+        } else if (notification.type === 'KYC_REJECTED' || notification.type === 'ERROR') {
+          toast.error(t(notification.title), {
+            ...toastOptions,
+            description: t(notification.message, notification.messageParams),
+            icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+          })
+        } else {
+          toast(t(notification.title), {
+            ...toastOptions,
+            description: t(notification.message, notification.messageParams),
+            icon: <Bell className="h-5 w-5 text-[#276152]" />,
+          })
+        }
       })
 
       return () => {

@@ -31,6 +31,7 @@ const balanceHistorySchema = mongoose.Schema({
     balanceBefore: { type: Number },
     balanceAfter: { type: Number },
     description: { type: String },
+    adminNote: { type: String },
     isOfficial: { type: Boolean, default: false },
 }, { timestamps: true });
 

@@ -12,7 +12,8 @@ import {
   Smartphone,
   Mail,
   UserCheck,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -104,6 +105,11 @@ export default function PreRegisterPage() {
   const handlePayment = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    if (pledge?.awaitingApprovalAmount > 0) {
+      toast.error(t("payments.pending_manual_exists"))
+      return
+    }
 
     if (userProfile?.kycStatus !== 'verified' && userProfile?.kycStatus !== 'pending') {
       toast.error(t("pre_register.kyc_verified_required"))
@@ -436,7 +442,20 @@ export default function PreRegisterPage() {
                                    <div className="flex flex-col items-center px-1">
                                      <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
                                      <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
-                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister - (pledge.awaitingApprovalAmount || 0)).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                     </p>
+                                   </div>
+                                 </div>
+                              )}
+                              {pledge?.awaitingApprovalAmount > 0 && (
+                                 <div className="p-4 bg-amber-50 border border-amber-100 rounded-[12px] flex items-start gap-3 mb-4">
+                                   <Clock size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                                   <div className="space-y-1">
+                                     <p className="text-[14px] text-amber-700 font-bold leading-none">
+                                       {t("pre_register.awaiting_approval_title") || "Giao dịch chờ duyệt"}
+                                     </p>
+                                     <p className="text-[12px] text-amber-600 font-medium">
+                                       {t("pre_register.awaiting_approval_desc", { amount: pledge.awaitingApprovalAmount.toLocaleString() }) || `Bạn có ${pledge.awaitingApprovalAmount.toLocaleString()} USDT đang chờ quản trị viên phê duyệt.`}
                                      </p>
                                    </div>
                                  </div>
@@ -480,15 +499,28 @@ export default function PreRegisterPage() {
                                    <div className="flex flex-col items-center px-1">
                                      <p className="text-[12px] text-[#636d7d] font-normal mb-1 whitespace-nowrap">{t("pre_register.summary_remaining")}</p>
                                      <p className="text-[14px] text-[#ef4444] font-bold tracking-tight">
-                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister).toLocaleString('en-US', { minimumFractionDigits: 1 })}
+                                       {Math.max(0, pledge.pledgeUsdt - pledge.paidUsdtPreRegister - (pledge.awaitingApprovalAmount || 0)).toLocaleString('en-US', { minimumFractionDigits: 1 })}
                                      </p>
                                    </div>
                                  </div>
                               )}
-                              <Button 
+                              {pledge?.awaitingApprovalAmount > 0 && (
+                                 <div className="p-4 bg-amber-50 border border-amber-100 rounded-[12px] flex items-start gap-3 mb-4">
+                                   <Clock size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                                   <div className="space-y-1">
+                                     <p className="text-[14px] text-amber-700 font-bold leading-none">
+                                       {t("pre_register.awaiting_approval_title") || "Giao dịch chờ duyệt"}
+                                     </p>
+                                     <p className="text-[12px] text-amber-600 font-medium">
+                                       {t("pre_register.awaiting_approval_desc", { amount: pledge.awaitingApprovalAmount.toLocaleString() }) || `Bạn có ${pledge.awaitingApprovalAmount.toLocaleString()} USDT đang chờ quản trị viên phê duyệt.`}
+                                     </p>
+                                   </div>
+                                 </div>
+                              )}
+                                <Button 
                                 type="button"
                                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold flex items-center justify-center gap-2"
-                                disabled={loading}
+                                disabled={loading || pledge?.awaitingApprovalAmount > 0}
                                 onClick={handlePayment}
                               >
                                 {loading ? <Loader2 size={18} className="animate-spin" /> : 
@@ -585,6 +617,7 @@ export default function PreRegisterPage() {
         amount={paymentAmount || 0}
         pledgeAmount={((!pledge || isNewRound) ? pledgeAmount : 0) || 0}
         status={modalStatus}
+        countryCode={userProfile?.countryCode}
       />
     </div>
     </div>

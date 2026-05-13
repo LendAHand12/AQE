@@ -23,6 +23,7 @@ export default function ClaimPage() {
 
       const token = searchParams.get("token")
       const facetecStatus = searchParams.get("status")
+      const method = searchParams.get("method")
 
       if (!token || facetecStatus !== "success") {
         setStatus('error')
@@ -32,15 +33,17 @@ export default function ClaimPage() {
 
       try {
         const response = await apiClient.post("/withdrawals/complete", {
-          token
+          token,
+          method
         })
 
         if (response.data.success) {
           setStatus('success')
-          setMessage(t("withdrawals.success_auto"))
+          const successMsg = t(response.data.message)
+          setMessage(successMsg)
           await syncProfile() // Refresh user data
           
-          toast.success(t("withdrawals.success_auto"))
+          toast.success(successMsg)
           
           // Auto redirect after 5 seconds
           setTimeout(() => {
@@ -50,7 +53,7 @@ export default function ClaimPage() {
       } catch (error: any) {
         console.error("Claim Error:", error)
         setStatus('error')
-        setMessage(error.response?.data?.message || t("assets.kyc_callback.process_error"))
+        setMessage(t(error.response?.data?.message) || t("assets.kyc_callback.process_error"))
       }
     }
 

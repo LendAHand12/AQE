@@ -15,9 +15,13 @@ import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/providers/AuthProvider"
@@ -45,6 +49,8 @@ export default function AssetsPage() {
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.walletAddress ? 'WALLET' : 'ZELLE')
+  const [zelleInfo, setZelleInfo] = useState('')
 
   useEffect(() => {
     fetchData()
@@ -69,10 +75,14 @@ export default function AssetsPage() {
       setFetching(false)
     }
   }
-
   const handleWithdraw = async () => {
-    if (!user?.walletAddress) {
+    if (paymentMethod === 'WALLET' && !user?.walletAddress) {
       toast.error(t("assets.withdraw_dialog.no_wallet_title"));
+      return;
+    }
+
+    if (paymentMethod === 'ZELLE' && !zelleInfo) {
+      toast.error(t("assets.withdraw_dialog.zelle_info_placeholder"));
       return;
     }
 
@@ -88,7 +98,9 @@ export default function AssetsPage() {
     setWithdrawing(true);
     try {
       const res = await apiClient.post("/withdrawals/request", {
-        walletAddress: user.walletAddress
+        walletAddress: paymentMethod === 'WALLET' ? user?.walletAddress : undefined,
+        zelleInfo: paymentMethod === 'ZELLE' ? zelleInfo : undefined,
+        paymentMethod: paymentMethod
       });
 
       if (res.data.url) {
@@ -200,7 +212,7 @@ export default function AssetsPage() {
               <thead>
                 <tr className="bg-[#EFEFEF]/50">
                   <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.table.time")}</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.table.wallet")}</th>
+                  <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.table.recipient_info")}</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("assets.table.amount")}</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("assets.table.fee")}</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.table.hash")}</th>
@@ -222,9 +234,16 @@ export default function AssetsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <p className="text-[14px] text-[#111827] font-mono">
-                          {item.walletAddress ? `${item.walletAddress.substring(0, 6)}...${item.walletAddress.substring(item.walletAddress.length - 4)}` : "-"}
-                        </p>
+                        {item.paymentMethod === 'ZELLE' ? (
+                           <div className="flex flex-col">
+                             <span className="text-[13px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full w-fit">Zelle</span>
+                             <span className="text-[14px] font-medium text-[#111827] mt-1">{item.zelleInfo}</span>
+                           </div>
+                        ) : (
+                           <p className="text-[14px] text-[#111827] font-mono font-medium">
+                             {item.walletAddress ? `${item.walletAddress.substring(0, 6)}...${item.walletAddress.substring(item.walletAddress.length - 4)}` : "-"}
+                           </p>
+                        )}
                       </td>
                       <td className="px-6 py-5 text-right whitespace-nowrap">
                         <span className="text-[14px] font-bold text-[#EF4444]">
@@ -261,6 +280,11 @@ export default function AssetsPage() {
                              item.status === 'FAILED' ? t("assets.status.failed") :
                              t("assets.status.pending")}
                           </div>
+                          {item.status === 'FAILED' && item.adminNote && (
+                            <p className="text-[10px] text-red-500 mt-1.5 font-medium max-w-[150px] leading-tight text-center italic">
+                              Lý do: {item.adminNote}
+                            </p>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -292,15 +316,63 @@ export default function AssetsPage() {
       {/* Withdrawal Dialog - Simple Confirmation Only */}
       <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
         <DialogContent className="max-w-md rounded-[24px] p-8 border-none shadow-2xl">
-          {hasWallet ? (
             <div className="space-y-6">
-              <div className="space-y-1">
-                <h2 className="text-[24px] font-bold text-gray-900">{t("assets.withdraw_dialog.title")}</h2>
-                <p className="text-[14px] text-gray-500">{t("assets.withdraw_dialog.desc")}</p>
-              </div>
+            <DialogHeader className="space-y-1">
+                <DialogTitle className="text-[24px] font-bold text-gray-900">{t("assets.withdraw_dialog.title")}</DialogTitle>
+                <DialogDescription className="text-[14px] text-gray-500">{t("assets.withdraw_dialog.desc")}</DialogDescription>
+            </DialogHeader>
 
               <div className="space-y-4">
-                <div className="p-5 rounded-[16px] bg-gray-50 space-y-4">
+                {/* Method Selection */}
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-gray-100 rounded-[16px]">
+                  <button
+                    disabled={!hasWallet}
+                    onClick={() => setPaymentMethod('WALLET')}
+                    className={cn(
+                      "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
+                      paymentMethod === 'WALLET' ? "bg-white text-[#276152] shadow-sm" : "text-gray-500",
+                      !hasWallet && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {t("assets.withdraw_dialog.method_wallet")}
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('ZELLE')}
+                    className={cn(
+                      "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
+                      paymentMethod === 'ZELLE' ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"
+                    )}
+                  >
+                    {t("assets.withdraw_dialog.method_zelle")}
+                  </button>
+                </div>
+
+                {!hasWallet && paymentMethod === 'WALLET' && (
+                   <p className="text-[11px] text-red-500 font-bold px-1">
+                     {t("assets.withdraw_dialog.no_wallet_desc")} 
+                     <span onClick={() => navigate("/settings")} className="underline cursor-pointer ml-1">{t("assets.withdraw_dialog.go_to_settings")}</span>
+                   </p>
+                )}
+
+                {/* Destination Info */}
+                {paymentMethod === 'WALLET' ? (
+                  <div className="p-4 bg-emerald-50/50 rounded-[16px] border border-emerald-100/50">
+                      <p className="text-[12px] text-emerald-700/60 font-bold uppercase tracking-wider mb-1">{t("assets.withdraw_dialog.wallet_label")}</p>
+                      <p className="text-[14px] font-mono font-bold text-[#276152] break-all">{user?.walletAddress}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                      <p className="text-[12px] font-bold text-gray-700 uppercase tracking-wider pl-1">{t("assets.withdraw_dialog.zelle_info_label")}</p>
+                      <Input 
+                          value={zelleInfo}
+                          onChange={(e) => setZelleInfo(e.target.value)}
+                          placeholder={t("assets.withdraw_dialog.zelle_info_placeholder")}
+                          className="h-[52px] rounded-[16px] border-gray-200 focus:ring-[#276152] font-medium"
+                      />
+                  </div>
+                )}
+
+                <div className="p-5 rounded-[20px] bg-gray-50 border border-gray-100 space-y-4">
                   <div className="flex justify-between text-[14px]">
                     <span className="text-gray-500">{t("assets.withdraw_dialog.amount_label")}</span>
                     <span className="font-bold text-gray-900">{currentBalance.toLocaleString()} USDT</span>
@@ -309,16 +381,16 @@ export default function AssetsPage() {
                     <span className="text-gray-500">{t("assets.withdraw_dialog.fee_note")}</span>
                     <span className="font-bold text-gray-900">1 USDT</span>
                   </div>
-                  <div className="h-px bg-gray-200" />
+                  <div className="h-px bg-gray-200/60" />
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-[15px] font-bold text-gray-900">{t("assets.withdraw_dialog.total_deduct")}</span>
                     <span className="text-[20px] font-black text-[#276152]">{receiveAmount.toLocaleString()} USDT</span>
                   </div>
                 </div>
 
-                <div className="bg-amber-50 rounded-[12px] p-3 border border-amber-100 flex gap-2">
-                  <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-amber-800 leading-normal">
+                <div className="bg-amber-50 rounded-[16px] p-4 border border-amber-100 flex gap-3">
+                  <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-amber-800 leading-relaxed">
                     {t("assets.withdraw_dialog.note")}
                   </p>
                 </div>
@@ -339,27 +411,7 @@ export default function AssetsPage() {
                 )}
               </Button>
             </div>
-          ) : (
-            <div className="flex flex-col items-center text-center space-y-6 py-4">
-              <div className="size-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
-                <SettingsIcon size={32} />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-[20px] font-bold text-gray-900">{t("assets.withdraw_dialog.no_wallet_title")}</h2>
-                <p className="text-[14px] text-gray-500">
-                  {t("assets.withdraw_dialog.no_wallet_desc")}
-                </p>
-              </div>
-              <Button
-                onClick={() => navigate("/settings")}
-                className="w-full h-[52px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold text-[16px]"
-              >
-                {t("assets.withdraw_dialog.go_to_settings")}
-                <ChevronRight size={18} className="ml-1" />
-              </Button>
-            </div>
-          )}
-        </DialogContent>
+         </DialogContent>
       </Dialog>
     </div>
   )

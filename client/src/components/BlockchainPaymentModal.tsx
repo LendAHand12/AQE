@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  Wallet, 
+import {
+  Wallet,
   Copy, 
   CheckCircle2, 
   Loader2, 
   // QrCode, 
   ChevronRight, 
   AlertCircle,
+  Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
@@ -27,6 +28,7 @@ interface PaymentModalProps {
   amount: number;
   pledgeAmount: number;
   status: 'idle' | 'success';
+  countryCode?: string;
 }
 
 interface PaymentData {
@@ -38,10 +40,11 @@ interface PaymentData {
 
 export function BlockchainPaymentModal({ 
   isOpen, 
-  onClose, 
+  onClose,
   amount, 
   pledgeAmount,
-  status: externalStatus // 'idle' | 'success'
+  status: externalStatus, // 'idle' | 'success'
+  countryCode
 }: PaymentModalProps) {
   const { t } = useTranslation();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
@@ -73,10 +76,10 @@ export function BlockchainPaymentModal({
     }
   };
 
-  const handlePayDirect = async () => {
-    const data = await initPayment('DIRECT');
+  const handleSelectMethod = async (method: 'wallet' | 'zelle') => {
+    const data = await initPayment(method.toUpperCase());
     if (data) {
-      window.location.href = `/pay?pid=${data.paymentId}`;
+      window.location.href = `/pay?pid=${data.paymentId}&method=${method}`;
     }
   };
 
@@ -111,7 +114,7 @@ export function BlockchainPaymentModal({
           {step === 'choice' && (
             <div className="grid gap-3">
               <button 
-                onClick={handlePayDirect}
+                onClick={() => handleSelectMethod('wallet')}
                 disabled={loading}
                 className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
               >
@@ -120,29 +123,31 @@ export function BlockchainPaymentModal({
                     <Wallet size={24} />
                   </div>
                   <div>
-                    <p className="font-bold text-[#0d1f1d]">{t("payments.modal.pay_this_device")}</p>
-                    <p className="text-xs text-gray-500">{t("payments.modal.pay_this_device_desc")}</p>
+                    <p className="font-bold text-[#0d1f1d]">{t("payments.page.method_wallet") || "Ví Crypto"}</p>
+                    <p className="text-xs text-gray-500">{t("payments.modal.pay_this_device_desc") || "Kết nối ví và thanh toán trực tiếp"}</p>
                   </div>
                 </div>
                 {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
               </button>
 
-              {/* <button 
-                onClick={handleShowQR}
-                disabled={loading}
-                className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <QrCode size={24} />
+              {countryCode === '+1' && (
+                <button 
+                  onClick={() => handleSelectMethod('zelle')}
+                  disabled={loading}
+                  className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="size-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Smartphone size={24} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#0d1f1d]">{t("payments.page.method_zelle") || "Ví Zelle (USA)"}</p>
+                      <p className="text-xs text-gray-500">{t("payments.modal.pay_zelle_desc") || "Thanh toán thủ công qua Zelle QR"}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-[#0d1f1d]">{t("payments.modal.scan_qr")}</p>
-                    <p className="text-xs text-gray-500">{t("payments.modal.scan_qr_desc")}</p>
-                  </div>
-                </div>
-                {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
-              </button> */}
+                  {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
+                </button>
+              )}
             </div>
           )}
 

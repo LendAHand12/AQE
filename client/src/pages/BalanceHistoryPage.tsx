@@ -166,6 +166,7 @@ export default function BalanceHistoryPage() {
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("history.date")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("history.type")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("history.detail")}</th>
+                  <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("history.note")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.amount")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.fee")}</th>
                   <th className="px-4 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("history.balance_before")}</th>
@@ -199,8 +200,13 @@ export default function BalanceHistoryPage() {
                           {t(`balance_history.types.${item.type.toLowerCase()}`) || item.type}
                         </Badge>
                       </td>
-                      <td className="px-4 py-5 max-w-[250px]">
-                        <p className="text-[14px] text-[#111827] truncate font-medium">{item.description}</p>
+                      <td className="px-4 py-5">
+                        <p className="text-[14px] text-[#111827] font-medium">{item.description}</p>
+                      </td>
+                      <td className="px-4 py-5 max-w-[200px]">
+                        <p className="text-[13px] text-red-500 italic font-medium">
+                          {item.adminNote || ""}
+                        </p>
                       </td>
                        <td className="px-4 py-5 text-right whitespace-nowrap">
                          {item.symbol === 'AQE' ? (

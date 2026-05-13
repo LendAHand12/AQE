@@ -8,7 +8,15 @@ const withdrawalSchema = mongoose.Schema({
     },
     walletAddress: {
         type: String,
-        required: true
+        required: false
+    },
+    zelleInfo: {
+        type: String // Email or Phone
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['WALLET', 'ZELLE'],
+        default: 'WALLET'
     },
     amount: {
         type: Number,
@@ -40,6 +48,13 @@ const withdrawalSchema = mongoose.Schema({
     },
     adminNote: {
         type: String
+    },
+    processedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin'
+    },
+    processedAt: {
+        type: Date
     }
 }, { timestamps: true });
 

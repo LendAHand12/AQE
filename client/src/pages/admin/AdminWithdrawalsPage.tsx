@@ -59,6 +59,7 @@ export default function AdminWithdrawalsPage() {
   const [isRejectOpen, setIsRejectOpen] = useState(false)
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null)
   const [txHash, setTxHash] = useState("")
+  const [rejectReason, setRejectReason] = useState("")
 
   const ITEMS_PER_PAGE = 10
 
@@ -106,7 +107,7 @@ export default function AdminWithdrawalsPage() {
   }, [searchTerm])
 
   const handleApprove = async () => {
-    if (!txHash.trim()) {
+    if (selectedWithdrawal.paymentMethod === 'WALLET' && !txHash.trim()) {
       toast.error("Vui lòng nhập mã hash giao dịch")
       return
     }
@@ -130,9 +131,12 @@ export default function AdminWithdrawalsPage() {
   const handleReject = async () => {
     setProcessingId(selectedWithdrawal._id)
     try {
-      await apiClient.put(`/withdrawals/admin/${selectedWithdrawal._id}/reject`)
+      await apiClient.put(`/withdrawals/admin/${selectedWithdrawal._id}/reject`, {
+        reason: rejectReason
+      })
       toast.success("Đã từ chối và hoàn tiền")
       setIsRejectOpen(false)
+      setRejectReason("")
       fetchWithdrawals()
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Lỗi khi từ chối")
@@ -220,9 +224,15 @@ export default function AdminWithdrawalsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        <span className="font-mono text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded w-fit border border-gray-100">
-                          {item.walletAddress.substring(0, 8)}...{item.walletAddress.substring(item.walletAddress.length - 8)}
-                        </span>
+                        {item.paymentMethod === 'ZELLE' ? (
+                          <span className="font-bold text-[13px] text-orange-600 bg-orange-50 px-2 py-1 rounded w-fit border border-orange-100">
+                            Zelle: {item.zelleInfo}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded w-fit border border-gray-100">
+                            {item.walletAddress?.substring(0, 8)}...{item.walletAddress?.substring(item.walletAddress.length - 8)}
+                          </span>
+                        )}
                         {item.hash && (
                           <a 
                             href={`https://bscscan.com/tx/${item.hash}`} 
@@ -244,9 +254,10 @@ export default function AdminWithdrawalsPage() {
                       <div className="flex justify-center">
                         <Badge className={cn(
                           "rounded-full font-bold border-none px-3 py-1 text-[10px]",
+                          item.paymentMethod === 'ZELLE' ? "bg-orange-50 text-orange-600" :
                           item.method === 'AUTO' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
                         )}>
-                          {item.method}
+                          {item.paymentMethod === 'ZELLE' ? 'ZELLE' : item.method}
                         </Badge>
                       </div>
                     </TableCell>
@@ -320,7 +331,10 @@ export default function AdminWithdrawalsPage() {
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-[26px] font-black text-gray-900 leading-tight">Phê duyệt rút tiền</DialogTitle>
             <DialogDescription className="text-[14px] text-gray-500">
-              Vui lòng nhập mã giao dịch (Hash) sau khi bạn đã chuyển khoản thủ công cho người dùng.
+              {selectedWithdrawal?.paymentMethod === 'ZELLE' 
+                ? "Sau khi đã chuyển tiền qua Zelle cho người dùng, bạn có thể nhấn xác nhận ngay."
+                : "Vui lòng nhập mã giao dịch (Hash) sau khi bạn đã chuyển khoản thủ công cho người dùng."
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="py-6 space-y-5">
@@ -332,23 +346,27 @@ export default function AdminWithdrawalsPage() {
                 </span>
               </div>
               <div className="space-y-1.5">
-                <span className="text-emerald-700 font-bold text-sm block">Địa chỉ ví nhận:</span>
+                <span className="text-emerald-700 font-bold text-sm block">
+                  {selectedWithdrawal?.paymentMethod === 'ZELLE' ? "Thông tin Zelle:" : "Địa chỉ ví nhận:"}
+                </span>
                 <div className="bg-white p-3 rounded-[12px] border border-emerald-100 break-all">
                    <span className="font-mono text-[13px] font-bold text-gray-700 leading-relaxed">
-                     {selectedWithdrawal?.walletAddress}
+                     {selectedWithdrawal?.paymentMethod === 'ZELLE' ? selectedWithdrawal?.zelleInfo : selectedWithdrawal?.walletAddress}
                    </span>
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-md font-black text-gray-900">Mã Hash giao dịch (TxHash)</label>
-              <Input 
-                placeholder="Dán mã giao dịch tại đây..." 
-                value={txHash}
-                onChange={(e) => setTxHash(e.target.value)}
-                className="h-14 rounded-[14px] text-md border-gray-200 focus:ring-[#276152]"
-              />
-            </div>
+            {selectedWithdrawal?.paymentMethod !== 'ZELLE' && (
+              <div className="space-y-2">
+                <label className="text-md font-black text-gray-900">Mã Hash giao dịch (TxHash)</label>
+                <Input 
+                  placeholder="Dán mã giao dịch tại đây..." 
+                  value={txHash}
+                  onChange={(e) => setTxHash(e.target.value)}
+                  className="h-14 rounded-[14px] text-md border-gray-200 focus:ring-[#276152]"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2 pt-2">
             <Button variant="ghost" onClick={() => setIsApproveOpen(false)} className="rounded-[12px] font-bold h-12 px-6">Hủy</Button>
@@ -382,6 +400,15 @@ export default function AdminWithdrawalsPage() {
                 <span>Số dư hoàn trả:</span>
                 <span className="font-black">{(selectedWithdrawal?.amount + (selectedWithdrawal?.fee || 1)).toLocaleString()} USDT</span>
               </div>
+            </div>
+            <div className="space-y-2 mt-4">
+              <label className="text-sm font-bold text-gray-700">Lý do từ chối (Gửi cho User):</label>
+              <Input 
+                placeholder="Nhập lý do (ví dụ: Tài khoản Zelle không chính xác...)" 
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="h-12 rounded-[12px] border-gray-200 focus:ring-red-500"
+              />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">

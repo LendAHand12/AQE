@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "create-admin": "node src/scripts/createAdmin.js",
     "create-user": "node src/scripts/createUser.js",
+    "test-tele": "node src/scripts/testTelegram.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

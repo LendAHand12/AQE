@@ -7,7 +7,8 @@ import {
     createPayment,
     getPaymentById,
     getPaymentHistory,
-    confirmTransactionHash
+    confirmTransactionHash,
+    confirmManualPayment
 } from '../controllers/paymentController.js';
 import {
     getUserCommissions,
@@ -26,6 +27,7 @@ router.post('/pledge', protect, submitPreRegisterPledge);
 router.post('/payment', protect, submitPreRegisterPayment);
 router.post('/create', protect, createPayment);
 router.post('/confirm-hash', confirmTransactionHash);
+router.post('/confirm-manual', protect, confirmManualPayment);
 router.get('/pledge', protect, getMyPreRegister);
 router.get('/history', protect, getPaymentHistory);
 router.get('/my-payments', protect, getUserPayments);

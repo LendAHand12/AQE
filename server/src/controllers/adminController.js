@@ -438,7 +438,10 @@ export const getDashboardStats = async (req, res) => {
         ]);
 
         // Recent Transactions (Only user payments)
-        const recentTransactionsRaw = await Transaction.find({ type: 'PAYMENT', status: 'SUCCESS' })
+        const recentTransactionsRaw = await Transaction.find({ 
+            type: 'PAYMENT', 
+            status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } 
+        })
             .sort({ createdAt: -1 })
             .limit(5);
 
@@ -550,7 +553,11 @@ export const getAllTransactionsForAdmin = async (req, res) => {
         let total = 0;
 
         if (category === 'USDT') {
-            const query = { symbol: 'USDT', ...(queryRegex && { description: { $regex: queryRegex } }) };
+            const query = { 
+                symbol: 'USDT', 
+                status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] },
+                ...(queryRegex && { description: { $regex: queryRegex } }) 
+            };
             total = await Transaction.countDocuments(query);
             const data = await Transaction.find(query)
                 .populate({ path: 'from', select: 'username fullName email' })

@@ -14,7 +14,7 @@ const getVietnamTime = () => {
 /**
  * Shared logic to process commissions
  */
-async function processCommissions(buyer, amountPaid) {
+export async function processCommissions(buyer, amountPaid) {
     if (!buyer.referredBy) return;
 
     const amountF1 = amountPaid * 0.08;

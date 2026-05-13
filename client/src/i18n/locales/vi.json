@@ -1,4 +1,7 @@
 {
+  "common": {
+    "copied": "Đã sao chép vào bộ nhớ tạm"
+  },
   "header": {
     "good_morning": "Chào buổi sáng",
     "good_afternoon": "Chào buổi chiều",
@@ -266,6 +269,8 @@
     "summary_remaining": "Còn lại",
     "pay_completed_msg": "Chúc mừng! Bạn đã hoàn thành 100% nghĩa vụ thanh toán cho chiến dịch này.",
     "pay_success": "Thành công!",
+    "awaiting_approval_title": "Giao dịch chờ duyệt",
+    "awaiting_approval_desc": "Bạn có {{amount}} USDT đang chờ quản trị viên phê duyệt.",
     "new_purchase_round": "Bắt đầu lượt mua mới",
     "confirm_payment_btn": "Xác nhận đăng ký & Thanh toán",
     "pay_now": "Thanh toán ngay",
@@ -289,7 +294,7 @@
     "withdraw_history": "Lịch sử rút tiền",
     "table": {
       "time": "Thời gian",
-      "wallet": "Ví rút về",
+      "recipient_info": "Thông tin nhận tiền",
       "amount": "Số tiền",
       "fee": "Phí",
       "hash": "Mã hash",
@@ -311,7 +316,12 @@
       "no_wallet_title": "Thiếu địa chỉ ví nhận tiền",
       "no_wallet_desc": "Bạn cần cập nhật địa chỉ ví USDT (BEP20) trong phần Cài đặt trước khi thực hiện rút tiền.",
       "go_to_settings": "Đi tới Cài đặt",
-      "insufficient_balance": "Số dư USDT không đủ để thực hiện giao dịch này"
+      "insufficient_balance": "Số dư USDT không đủ để thực hiện giao dịch này",
+      "method_label": "Phương thức rút tiền",
+      "method_wallet": "Ví Crypto (USDT-BEP20)",
+      "method_zelle": "Zelle (Dành cho US)",
+      "zelle_info_label": "Email hoặc Số điện thoại Zelle",
+      "zelle_info_placeholder": "Nhập thông tin Zelle của bạn"
     },
     "empty_history": "Chưa có lịch sử rút tiền",
     "status": {
@@ -374,6 +384,7 @@
     },
     "history_desc": "Rút tiền USDT về ví {{wallet}} (Phí: 1 USDT)",
     "success_auto": "Rút tiền thành công và đã được gửi tự động",
+    "success_manual_zelle": "Yêu cầu rút tiền qua Zelle đã được gửi. Admin sẽ xử lý và chuyển khoản cho bạn trong vòng 24h.",
     "success_manual_needed": "Yêu cầu đã được ghi nhận nhưng gặp lỗi khi chuyển tự động. Admin sẽ xử lý thủ công.",
     "pending_approval": "Yêu cầu rút tiền đã được gửi và đang chờ Admin duyệt (Số tiền > 200 USDT)",
     "approved": "Đã phê duyệt yêu cầu rút tiền",
@@ -405,6 +416,7 @@
     "date": "Ngày giao dịch",
     "type": "Loại",
     "detail": "Chi tiết",
+    "note": "Ghi chú/Lý do",
     "amount": "Số tiền",
     "fee": "Phí",
     "balance_before": "Số dư trước",
@@ -434,13 +446,17 @@
     },
     "status": {
       "success": "Thành công",
-      "pending": "Đang chờ"
+      "pending": "Đang chờ",
+      "awaiting": "Chờ duyệt"
     },
     "modal": {
       "title": "Thanh toán USDT",
       "desc": "Nạp {{amount}} USDT vào hệ thống AQE",
+      "pay_now": "Tiếp tục thanh toán",
+      "pay_now_desc": "Thanh toán qua Ví Crypto hoặc Zelle",
       "pay_this_device": "Thanh toán trên thiết bị này",
       "pay_this_device_desc": "Dùng ví đã kết nối trên trình duyệt",
+      "pay_zelle_desc": "Thanh toán thủ công qua Zelle QR",
       "scan_qr": "Quét mã QR (Mobile)",
       "scan_qr_desc": "Quét bằng Camera hoặc Ví Web3 (Trust, SafePal...)",
       "qr_instruction": "Quét mã này bằng Camera điện thoại hoặc trình duyệt dApp của Ví Web3. Bạn sẽ được dẫn đến trang thanh toán an toàn.",
@@ -474,7 +490,16 @@
         "invalid_id": "Mã thanh toán không hợp lệ",
         "not_found": "Không tìm thấy thông tin thanh toán",
         "connect_failed": "Kết nối ví thất bại"
-      }
+      },
+      "method_wallet": "Ví Crypto",
+      "method_zelle": "Ví Zelle (USA)",
+      "zelle_info": "Vui lòng quét mã QR Zelle bên dưới và thực hiện thanh toán.",
+      "zelle_memo": "Nội dung chuyển khoản (Memo) bắt buộc:",
+      "confirm_manual_btn": "Tôi đã thanh toán",
+      "status_awaiting": "Chờ duyệt",
+      "manual_confirm_success": "Thông báo đã được gửi tới quản trị viên. Giao dịch sẽ được xử lý sớm nhất.",
+      "manual_success_hint": "Quản trị viên sẽ kiểm tra và phê duyệt giao dịch của bạn trong vòng 30-60 phút.",
+      "pending_manual_exists": "Bạn có giao dịch đang chờ duyệt. Vui lòng đợi quản trị viên phê duyệt hoặc từ chối trước khi thực hiện giao dịch mới."
     },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",
@@ -489,7 +514,13 @@
     "title": "Thông báo",
     "mark_all_read": "Đánh dấu tất cả là đã đọc",
     "empty": "Chưa có thông báo nào",
-    "new_notification": "Thông báo mới"
+    "new_notification": "Thông báo mới",
+    "payment_approved_title": "Thanh toán được phê duyệt",
+    "payment_approved_msg": "Giao dịch {{amount}} USDT (#{{paymentId}}) của bạn đã được duyệt thành công!",
+    "payment_rejected_title": "Thanh toán bị từ chối",
+    "payment_rejected_msg": "Giao dịch (#{{paymentId}}) đã bị từ chối. Lý do: {{reason}}",
+    "withdrawal_approved": "Yêu cầu rút tiền {{amount}} USDT của bạn đã được duyệt thành công!",
+    "withdrawal_rejected": "Yêu cầu rút tiền {{amount}} USDT của bạn đã bị từ chối và hoàn tiền."
   },
   "confirm_email": {
     "verifying": "Xác thực Email",

@@ -45,7 +45,7 @@ initSocket(httpServer);
 initCronJobs();
 
 // Initialize Blockchain Payment Listener
-initPaymentListener();
+// initPaymentListener();
 
 // Middleware
 app.use(helmet({

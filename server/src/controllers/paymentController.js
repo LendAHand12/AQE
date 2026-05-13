@@ -7,8 +7,9 @@ import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import Notification from '../models/Notification.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-import { finalizeBlockchainPayment } from '../services/paymentService.js';
+import { finalizeBlockchainPayment, processCommissions } from '../services/paymentService.js';
 import { emitNotification } from '../utils/socket.js';
+import { sendTelegramNotification } from '../utils/telegramService.js';
 
 // Helper to get current time in Vietnam (GMT+7)
 const getVietnamTime = () => {
@@ -166,15 +167,39 @@ export const submitPreRegisterPayment = async (req, res) => {
 export const getMyPreRegister = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        if (!user.pledgeUsdt || user.pledgeUsdt <= 0) return res.json(null);
+        
+        const transactions = await Transaction.find({ 
+            from: req.user._id, 
+            type: 'PAYMENT',
+            status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
+        }).sort({ createdAt: -1 });
 
-        const transactions = await Transaction.find({ from: req.user._id, type: 'PAYMENT' }).sort({ createdAt: -1 });
+        const awaitingApprovalAmount = transactions
+            .filter(t => t.status === 'AWAITING_APPROVAL')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
+            if (awaitingApprovalAmount > 0) {
+                return res.json({
+                    userId: user._id,
+                    username: user.username,
+                    pledgeUsdt: 0,
+                    paidUsdtPreRegister: 0,
+                    awaitingApprovalAmount,
+                    preRegisterTokens: 0,
+                    status: 'pending',
+                    transactions: transactions
+                });
+            }
+            return res.json(null);
+        }
 
         res.json({
             userId: user._id,
             username: user.username,
             pledgeUsdt: user.pledgeUsdt,
             paidUsdtPreRegister: user.paidUsdtPreRegister,
+            awaitingApprovalAmount,
             preRegisterTokens: user.preRegisterTokens,
             status: user.paidUsdtPreRegister >= user.pledgeUsdt ? 'completed' : 'pending',
             transactions,
@@ -192,8 +217,14 @@ export const getUserPayments = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const total = await Transaction.countDocuments({ from: req.user._id, type: 'PAYMENT', status: 'SUCCESS' });
-        const history = await Transaction.find({ from: req.user._id, type: 'PAYMENT', status: 'SUCCESS' })
+        const query = { 
+            from: req.user._id, 
+            type: 'PAYMENT',
+            status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
+        };
+        
+        const total = await Transaction.countDocuments(query);
+        const history = await Transaction.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -229,10 +260,16 @@ export const createPayment = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        // Check for pending manual payments
+        const existingAwaiting = await Transaction.findOne({ from: req.user._id, status: 'AWAITING_APPROVAL' });
+        if (existingAwaiting) {
+            return res.status(400).json({ message: 'payments.pending_manual_exists' });
+        }
+
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
         
-        const methodText = method === 'QR' ? 'QR Code' : 'Direct Extension';
-        const description = `Blockchain Payment (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
+        const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
+        const description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
 
         const transaction = await Transaction.create({
             paymentId,
@@ -349,6 +386,199 @@ export const confirmTransactionHash = async (req, res) => {
     }
 };
 
+// @desc    User confirms they have paid via manual method (Zelle)
+export const confirmManualPayment = async (req, res) => {
+    const { paymentId } = req.body;
+    try {
+        const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
+        if (!transaction) {
+            return res.status(404).json({ message: 'Payment not found' });
+        }
+
+        if (transaction.status !== 'PENDING') {
+            return res.status(400).json({ message: 'Transaction is already processed' });
+        }
+
+        transaction.status = 'AWAITING_APPROVAL';
+        await transaction.save();
+
+        const user = await User.findById(req.user._id);
+        
+        // Notify Admin via Telegram
+        const telegramMsg = `
+🚀 <b>New Manual Payment Submission</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>User:</b> ${user.fullName} (@${user.username})
+💰 <b>Amount:</b> ${transaction.amount} ${transaction.symbol}
+🆔 <b>Payment ID:</b> <code>${paymentId}</code>
+📝 <b>Method:</b> Zelle
+⏰ <b>Time:</b> ${getVietnamTime().toLocaleString()}
+━━━━━━━━━━━━━━━━━━━━━━━━
+<i>Please check the admin dashboard to verify and approve this transaction.</i>`;
+
+        await sendTelegramNotification(telegramMsg);
+
+        res.json({ 
+            message: 'payments.manual_confirm_success',
+            status: 'AWAITING_APPROVAL'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Admin Approve Manual Payment
+export const approveManualPayment = async (req, res) => {
+    try {
+        const { paymentId } = req.body;
+        const transaction = await Transaction.findOne({ paymentId, status: 'AWAITING_APPROVAL' });
+
+        if (!transaction) {
+            return res.status(404).json({ message: 'Transaction not found or already processed' });
+        }
+
+        const user = await User.findById(transaction.from);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Handle New Pledge Round if previous was completed
+        if (transaction.metadata?.pledgeAmount && (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted)) {
+            if (user.isPledgeCompleted) {
+                user.pledgeRounds.push({
+                    roundNumber: user.pledgeRounds.length + 1,
+                    pledgeUsdt: user.pledgeUsdt,
+                    paidUsdt: user.paidUsdtPreRegister,
+                    tokensReceived: user.preRegisterTokens,
+                    bonusPercent: 0, 
+                    completedAt: new Date()
+                });
+                user.paidUsdtPreRegister = 0;
+                user.preRegisterTokens = 0;
+                user.isPledgeCompleted = false;
+            }
+            user.pledgeUsdt = transaction.metadata.pledgeAmount;
+        }
+
+        // --- SHARED FINALIZE LOGIC ---
+        const nowVN = getVietnamTime();
+        const may31VN = new Date('2026-05-31T23:59:59+07:00');
+        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+
+        let price = 1.0;
+        const tokensCalculated = transaction.amount / price;
+
+        // Update Transaction
+        transaction.status = 'SUCCESS';
+        transaction.description = transaction.description + ` (Approved by ${req.admin.username})`;
+        transaction.hash = `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
+        await transaction.save();
+
+        // Update User Profile
+        user.paidUsdtPreRegister += transaction.amount;
+        user.preRegisterTokens += tokensCalculated;
+
+        // Log Token Receipt
+        await BalanceHistory.create({
+            userId: user._id,
+            amount: tokensCalculated,
+            symbol: 'AQE',
+            type: 'RECEIVE',
+            status: 'SUCCESS',
+            isOfficial: false,
+            balanceBefore: user.aqeBalance + (user.preRegisterTokens - tokensCalculated),
+            balanceAfter: user.aqeBalance + user.preRegisterTokens,
+            description: `Manual Payment Approved (Zelle)`
+        });
+
+        // Auto-complete pledge if reached
+        if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
+            user.isPledgeCompleted = true;
+            
+            let bonusPercent = 0;
+            if (nowVN <= may31VN) bonusPercent = 0.10;
+            else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+
+            const bonusTokens = user.preRegisterTokens * bonusPercent;
+            user.aqeBalance += (user.preRegisterTokens + bonusTokens);
+            user.preRegisterTokens = 0;
+            user.hasReceivedPromotion = true;
+
+            if (bonusTokens > 0) {
+                 await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: user.aqeBalance - bonusTokens,
+                    balanceAfter: user.aqeBalance,
+                    description: `Bonus ${bonusPercent * 100}% for completing pledge`
+                });
+            }
+        }
+        await user.save();
+
+        // Process Commissions
+        await processCommissions(user, transaction.amount);
+        
+        // Notify User
+        await Notification.create({
+            userId: user._id,
+            title: 'Payment Approved',
+            message: `Your manual payment of ${transaction.amount} USDT has been approved.`,
+            type: 'PAYMENT'
+        });
+        emitNotification(user._id, {
+            title: 'notifications.payment_approved_title',
+            message: 'notifications.payment_approved_msg',
+            messageParams: { amount: transaction.amount, paymentId: paymentId },
+            type: 'PAYMENT',
+            paymentId: paymentId
+        });
+
+        res.json({ message: 'Transaction approved successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Admin Reject Manual Payment
+export const rejectManualPayment = async (req, res) => {
+    try {
+        const { paymentId, reason } = req.body;
+        const transaction = await Transaction.findOne({ paymentId, status: 'AWAITING_APPROVAL' });
+
+        if (!transaction) {
+            return res.status(404).json({ message: 'Transaction not found' });
+        }
+
+        transaction.status = 'FAILED';
+        transaction.description = `Rejected by Admin: ${reason || 'Invalid details'}`;
+        await transaction.save();
+
+        // Notify User
+        await Notification.create({
+            userId: transaction.from,
+            title: 'Payment Rejected',
+            message: `Your manual payment #${paymentId} was rejected. Reason: ${reason || 'Invalid details'}`,
+            type: 'PAYMENT'
+        });
+        emitNotification(transaction.from, {
+            title: 'notifications.payment_rejected_title',
+            message: 'notifications.payment_rejected_msg',
+            messageParams: { paymentId: paymentId, reason: reason || 'Invalid' },
+            type: 'PAYMENT',
+            paymentId: paymentId
+        });
+
+        res.json({ message: 'Transaction rejected' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get ALL transactions (Admin only)
 export const getAllTransactionsForAdmin = async (req, res) => {
     try {
@@ -358,8 +588,8 @@ export const getAllTransactionsForAdmin = async (req, res) => {
         const search = req.query.search || '';
 
         let query = req.query.category === 'ALL' 
-            ? { status: 'SUCCESS' } 
-            : { symbol: req.query.category || 'USDT', status: 'SUCCESS' };
+            ? { status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } } 
+            : { symbol: req.query.category || 'USDT', status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } };
 
         if (search) {
             // Find users matching search first if we want to search by username/fullName

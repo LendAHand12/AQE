@@ -17,7 +17,7 @@ const transactionSchema = mongoose.Schema({
     amount: { type: Number, required: true },
     symbol: { type: String, default: 'USDT' },
     type: { type: String, enum: ['PAYMENT', 'DEPOSIT', 'WITHDRAW', 'PLEDGE'], default: 'PAYMENT' },
-    status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED', 'EXPIRED'], default: 'SUCCESS' },
+    status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED', 'EXPIRED', 'AWAITING_APPROVAL'], default: 'SUCCESS' },
     description: { type: String },
     metadata: { type: Object }
 }, { timestamps: true });

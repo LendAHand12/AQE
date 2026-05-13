@@ -3,6 +3,10 @@ import { useSearchParams, Link } from "react-router-dom"
 import { 
   Search, 
   Loader2,
+  ArrowRight,
+  Check,
+  X,
+  AlertCircle,
   ExternalLink
 } from "lucide-react"
 import { 
@@ -33,8 +37,38 @@ export default function AdminPaymentHistoryPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [fetching, setFetching] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
 
+  const handleApprove = async (paymentId: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn DUYỆT giao dịch này?")) return;
+    setActionLoading(paymentId);
+    try {
+      await apiClient.post('/admin/transactions/approve', { paymentId });
+      toast.success("Đã duyệt giao dịch thành công");
+      fetchTransactions();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi duyệt giao dịch");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (paymentId: string) => {
+    const reason = window.prompt("Lý do từ chối (không bắt buộc):");
+    if (reason === null) return;
+    
+    setActionLoading(paymentId);
+    try {
+      await apiClient.post('/admin/transactions/reject', { paymentId, reason });
+      toast.error("Đã từ chối giao dịch");
+      fetchTransactions();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi từ chối giao dịch");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchTransactions = async () => {
     if (page === 1) setLoading(true)
@@ -104,6 +138,7 @@ export default function AdminPaymentHistoryPage() {
             <TableRow className="border-b border-gray-100">
               <TableHead className="py-6 font-bold text-[#111827] pl-8">Thời gian</TableHead>
               <TableHead className="font-bold text-[#111827]">Người thực hiện</TableHead>
+              <TableHead className="font-bold text-[#111827]">Payment ID</TableHead>
               <TableHead className="font-bold text-[#111827]">Loại</TableHead>
               <TableHead className="font-bold text-[#111827]">Phương thức</TableHead>
               <TableHead className="font-bold text-[#111827] text-right">Số tiền (USDT)</TableHead>
@@ -143,6 +178,9 @@ export default function AdminPaymentHistoryPage() {
                     </Badge>
                   )}
                 </TableCell>
+                <TableCell className="font-mono text-[13px] text-gray-500">
+                  {tx.paymentId || "N/A"}
+                </TableCell>
                 <TableCell>
                   <Badge className={cn(
                     "rounded-full font-bold border-none",
@@ -160,6 +198,10 @@ export default function AdminPaymentHistoryPage() {
                       <span className="flex items-center gap-1 text-purple-600">
                         <span className="size-1.5 rounded-full bg-purple-600" /> Mã QR
                       </span>
+                    ) : tx.metadata?.method === 'ZELLE' ? (
+                      <span className="flex items-center gap-1 text-orange-500">
+                        <span className="size-1.5 rounded-full bg-orange-500" /> Zelle
+                      </span>
                     ) : (
                       <span className="flex items-center gap-1 text-blue-600">
                         <span className="size-1.5 rounded-full bg-blue-600" /> Chuyển ví
@@ -172,15 +214,53 @@ export default function AdminPaymentHistoryPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-center">
-                    <Badge className="bg-green-100 text-green-700 border-none rounded-full px-3 py-1 font-bold">
-                      Thành công
+                    <Badge className={cn(
+                      "border-none rounded-full px-3 py-1 font-bold",
+                      tx.status === 'SUCCESS' ? "bg-green-100 text-green-700" :
+                      tx.status === 'AWAITING_APPROVAL' ? "bg-amber-100 text-amber-700" :
+                      "bg-gray-100 text-gray-600"
+                    )}>
+                      {tx.status === 'SUCCESS' ? "Thành công" : 
+                       tx.status === 'AWAITING_APPROVAL' ? "Chờ duyệt" : "Đang xử lý"}
                     </Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right pr-8">
-                  <a href={`https://bscscan.com/tx/${tx.hash}`} target="_blank" className="font-mono text-xs text-gray-400 hover:text-[#276152] flex items-center justify-end gap-1">
-                    {tx.hash?.substring(0,6)}...{tx.hash?.substring(tx.hash.length-4)} <ExternalLink size={12}/>
-                  </a>
+                  <div className="flex items-center justify-end gap-2">
+                    {tx.status === 'AWAITING_APPROVAL' && (
+                      <div className="flex items-center gap-1 mr-2">
+                        <button 
+                          onClick={() => handleApprove(tx.paymentId)}
+                          disabled={!!actionLoading}
+                          className="size-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors"
+                          title="Duyệt"
+                        >
+                          {actionLoading === tx.paymentId ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        </button>
+                        <button 
+                          onClick={() => handleReject(tx.paymentId)}
+                          disabled={!!actionLoading}
+                          className="size-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
+                          title="Từ chối"
+                        >
+                          {actionLoading === tx.paymentId ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                        </button>
+                      </div>
+                    )}
+                    {tx.hash ? (
+                      tx.hash.startsWith('0x') ? (
+                        <a href={`https://bscscan.com/tx/${tx.hash}`} target="_blank" className="font-mono text-xs text-gray-400 hover:text-[#276152] flex items-center justify-end gap-1">
+                          {tx.hash?.substring(0,6)}...{tx.hash?.substring(tx.hash.length-4)} <ExternalLink size={12}/>
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-gray-400 font-medium italic">
+                          {tx.hash}
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-[11px] text-gray-400 italic">No hash</span>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

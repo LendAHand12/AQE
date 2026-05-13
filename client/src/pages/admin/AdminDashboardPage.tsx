@@ -315,12 +315,14 @@ function StatCard({ title, value, change }: { title: string, value: string, chan
 function StatusBadge({ status }: { status: string }) {
   const styles = {
     SUCCESS: "bg-[#d1fae5] text-[#065f46]",
-    PENDING: "bg-[#fef3c7] text-[#d97706]",
+    AWAITING_APPROVAL: "bg-[#fef3c7] text-[#92400e]",
+    PENDING: "bg-[#f3f4f6] text-[#374151]",
     FAILED: "bg-[#fee2e2] text-[#ef4444]"
   } as any
 
   const labels = {
     SUCCESS: "Hoàn tất",
+    AWAITING_APPROVAL: "Chờ duyệt",
     PENDING: "Đang xử lý",
     FAILED: "Thất bại"
   } as any

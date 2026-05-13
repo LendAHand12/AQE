@@ -3,11 +3,6 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Notification from '../models/Notification.js';
 import { emitNotification } from '../utils/socket.js';
-import crypto from 'crypto';
-
-const generateHash = (input) => {
-    return crypto.createHash('sha256').update(input + Date.now()).digest('hex');
-};
 
 import { updateLeaderboard } from './leaderboardService.js';
 
