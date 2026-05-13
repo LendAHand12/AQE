@@ -1,15 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// Load env vars immediately at the top
+// Define __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load env vars - simple config() looks in the current working directory (project root)
 dotenv.config();
 
 import morgan from 'morgan';
 import helmet from 'helmet';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -28,8 +32,6 @@ connectDB();
 
 const app = express();
 const httpServer = createServer(app);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, '../uploads');
