@@ -1,4 +1,8 @@
 import axios from 'axios';
+import https from 'https';
+
+// Force IPv4 for AWS EC2 compatibility
+const httpsAgent = new https.Agent({ family: 4 });
 
 /**
  * Send a notification to a Telegram group/admin
@@ -19,6 +23,8 @@ export const sendTelegramNotification = async (message) => {
             chat_id: chatId,
             text: message,
             parse_mode: 'HTML'
+        }, {
+            httpsAgent: httpsAgent // Force IPv4
         });
         
         console.log('[TelegramService] Notification sent successfully');
@@ -27,9 +33,7 @@ export const sendTelegramNotification = async (message) => {
         if (errorData?.description === 'Bad Request: chat not found') {
             console.error('[TelegramService] Lỗi: Không tìm thấy Chat ID. Vui lòng kiểm tra xem Bot đã được thêm vào Nhóm và Nhóm có ID chính xác trong .env chưa.');
         } else {
-            // Thay đổi dòng 30 trong src/utils/telegramService.js thành:
             console.error('[TelegramService] Error sending notification:', error.code, error.message);
-
         }
     }
 };
