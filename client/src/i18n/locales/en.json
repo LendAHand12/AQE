@@ -497,7 +497,7 @@
       "method_zelle": "Zelle Wallet (USA)",
       "zelle_info": "Please scan the Zelle QR code below and complete the payment.",
       "zelle_memo": "Mandatory Memo/Note:",
-      "confirm_manual_btn": "I Have Paid",
+      "confirm_manual_btn": "Payment Confirmed",
       "status_awaiting": "Awaiting Approval",
       "manual_confirm_success": "Notification sent to admin. Your transaction will be processed shortly.",
       "manual_success_hint": "Administrator will verify and approve your transaction within 30-60 minutes.",
