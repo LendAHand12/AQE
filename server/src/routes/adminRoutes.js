@@ -15,7 +15,8 @@ import {
     getAllAdmins,
     createSubadmin,
     updateSubadmin,
-    deleteAdminAccount
+    deleteAdminAccount,
+    getWalletConnections
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
@@ -65,6 +66,8 @@ router.get('/transactions', adminProtect, getAllTransactionsForAdmin);
 router.post('/transactions/approve', adminProtect, approveManualPayment);
 router.post('/transactions/reject', adminProtect, rejectManualPayment);
 router.get('/commissions', adminProtect, getAllCommissionsForAdmin);
+
+router.get('/wallet-connections', adminProtect, getWalletConnections);
 
 router.get('/2fa/generate', adminProtect, generate2FA);
 router.post('/2fa/enable', adminProtect, enable2FA);

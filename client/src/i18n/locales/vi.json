@@ -67,7 +67,8 @@
       "invalid_credentials": "Email hoặc mật khẩu không chính xác",
       "phone_exists": "Số điện thoại này đã được sử dụng",
       "email_exists": "Địa chỉ email này đã được sử dụng",
-      "username_exists": "Tên đăng nhập này đã được sử dụng"
+      "username_exists": "Tên đăng nhập này đã được sử dụng",
+      "unconfirmed": "Tài khoản của bạn chưa được xác minh email. Vui lòng kiểm tra hộp thư để kích hoạt."
     }
   },
   "dashboard": {

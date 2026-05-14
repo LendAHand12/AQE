@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import User from '../models/User.js';
+import WalletConnection from '../models/WalletConnection.js';
 import Commission from '../models/Commission.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
@@ -548,3 +549,26 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Record Wallet Connection
+// @route   POST /api/auth/wallet-connections
+// @access  Private
+export const recordWalletConnection = async (req, res) => {
+    try {
+        const { walletAddress, walletName } = req.body;
+        if (!walletAddress) {
+            return res.status(400).json({ message: 'Wallet address is required' });
+        }
+        
+        await WalletConnection.create({
+            user: req.user._id,
+            walletAddress: walletAddress.toLowerCase(),
+            walletName: walletName || null
+        });
+        
+        res.status(201).json({ message: 'Wallet connection recorded' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

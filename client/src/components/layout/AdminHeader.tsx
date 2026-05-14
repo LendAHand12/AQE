@@ -45,6 +45,11 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
           title: "Quản lý Rút tiền", 
           description: "Duyệt và theo dõi các yêu cầu rút tiền USDT của người dùng" 
         };
+      case "/admin/wallet-connections":
+        return { 
+          title: "Lịch sử kết nối ví", 
+          description: "Quản lý và đối chiếu các ví mà người dùng đã sử dụng để kết nối hệ thống" 
+        };
       case "/admin/token-settings":
         return { 
           title: "Cài đặt Pool & Token", 

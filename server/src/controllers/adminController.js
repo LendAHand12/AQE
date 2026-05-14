@@ -8,6 +8,7 @@ import Commission from '../models/Commission.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import Withdrawal from '../models/Withdrawal.js';
 import Leaderboard from '../models/Leaderboard.js';
+import WalletConnection from '../models/WalletConnection.js';
 import { generateToken } from '../utils/jwt.js';
 import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
@@ -780,3 +781,75 @@ export const getDirectReferrals = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Get wallet connections history
+// @route   GET /api/admin/wallet-connections
+// @access  Admin
+export const getWalletConnections = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || '';
+
+        const createVietnameseRegex = (str) => {
+            const map = {
+                'a': '[aàáảãạăằắẳẵặâầấẩẫậ]',
+                'e': '[eèéẻẽẹêềếểễệ]',
+                'i': '[iìíỉĩị]',
+                'o': '[oòóỏõọôồốổỗộơờớởỡợ]',
+                'u': '[uùúủũụưừứửữự]',
+                'y': '[yỳýỷỹỵ]',
+                'd': '[dđ]',
+                'A': '[AÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]',
+                'E': '[EÈÉẺẼẸÊỀẾỂỄỆ]',
+                'I': '[IÌÍỈĨỊ]',
+                'O': '[OÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]',
+                'U': '[UÙÚỦŨỤƯỪỨỬỮỰ]',
+                'Y': '[YỲÝỶỸỴ]',
+                'D': '[DĐ]'
+            };
+            let regexStr = str;
+            Object.keys(map).forEach(key => {
+                regexStr = regexStr.replace(new RegExp(key, 'g'), map[key]);
+            });
+            return new RegExp(regexStr, 'i');
+        };
+
+        const queryRegex = search ? createVietnameseRegex(search) : null;
+        let query = {};
+
+        if (queryRegex) {
+            const matchedUsers = await User.find({
+                $or: [
+                    { fullName: { $regex: queryRegex } },
+                    { email: { $regex: queryRegex } },
+                    { username: { $regex: queryRegex } }
+                ]
+            }).select('_id');
+            const userIds = matchedUsers.map(u => u._id);
+            
+            query.$or = [
+                { user: { $in: userIds } },
+                { walletAddress: { $regex: queryRegex } }
+            ];
+        }
+
+        const total = await WalletConnection.countDocuments(query);
+        const connections = await WalletConnection.find(query)
+            .populate('user', 'username fullName email')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            connections,
+            page,
+            pages: Math.ceil(total / limit),
+            total
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Wallet, 
@@ -42,16 +42,31 @@ export default function PaymentPage() {
   const paymentId = searchParams.get('pid');
 
   const { open: openAppKit } = useAppKit();
-  const { address: account, isConnected } = useAccount();
+  const { address: account, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
+  
+  const lastSyncedAccount = useRef<string | null>(null);
 
   // Sync wallet address with backend profile
   useEffect(() => {
     if (isConnected && account) {
-      apiClient.put('/auth/profile', { walletAddress: account })
-        .catch(err => console.error("Failed to sync wallet address:", err));
+      if (account !== lastSyncedAccount.current) {
+        lastSyncedAccount.current = account;
+        
+        apiClient.put('/auth/profile', { walletAddress: account })
+          .catch(err => console.error("Failed to sync wallet address:", err));
+          
+        // Record wallet connection history
+        apiClient.post('/auth/wallet-connections', { 
+            walletAddress: account,
+            walletName: connector?.name
+        })
+          .catch(err => console.error("Failed to record wallet connection:", err));
+      }
+    } else if (!isConnected) {
+      lastSyncedAccount.current = null;
     }
-  }, [isConnected, account]);
+  }, [isConnected, account, connector?.name]);
 
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<Payment | null>(null);

@@ -18,6 +18,7 @@ import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminUserProfilePage from "@/pages/admin/AdminUserProfilePage"
 import AdminWithdrawalsPage from "@/pages/admin/AdminWithdrawalsPage"
 import AdminManagementPage from "@/pages/admin/AdminManagementPage"
+import AdminWalletConnectionsPage from "@/pages/admin/AdminWalletConnectionsPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
@@ -76,6 +77,7 @@ export function App() {
             <Route element={<AdminLayout />}>
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/users/:id" element={<AdminUserProfilePage />} />
+              <Route path="/admin/wallet-connections" element={<AdminWalletConnectionsPage />} />
               <Route path="/admin/properties" element={<AdminPropertyPage />} />
               <Route path="/admin/properties/add" element={<AddPropertyPage />} />
               <Route path="/admin/properties/edit/:id" element={<EditPropertyPage />} />

@@ -8,6 +8,7 @@ import {
   HandCoins,
   BadgePercent,
   ShieldAlert,
+  Wallet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
@@ -57,6 +58,12 @@ const mainNavItems: NavItem[] = [
     href: "/admin/withdrawals",
     icon: HandCoins,
     requiredPermission: "WITHDRAWALS_VIEW"
+  },
+  {
+    title: "Lịch sử kết nối ví",
+    href: "/admin/wallet-connections",
+    icon: Wallet,
+    requiredPermission: "USERS_VIEW"
   },
   {
     title: "Cài đặt Pool",

@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin } from '../controllers/authController.js';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin, recordWalletConnection } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 
@@ -27,6 +27,9 @@ router.post('/verify-id', protect, submitIdVerification);
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
+
+// Wallet Connection History
+router.post('/wallet-connections', protect, recordWalletConnection);
 
 // Upload route
 router.post('/upload', protect, (req, res) => {
