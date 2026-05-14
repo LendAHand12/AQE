@@ -24,6 +24,7 @@ export const sendConfirmationEmail = async (email, token, fullName) => {
     const mailOptions = {
         from: `AQ Estate Support <${process.env.EMAIL_FROM}>`,
         to: email,
+        cc: process.env.SUPPORT_EMAIL,
         subject: 'Confirm your AQ Estate Account Registration',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -55,6 +56,7 @@ export const sendResetPasswordEmail = async (email, token, fullName) => {
     const mailOptions = {
         from: `AQ Estate Support <${process.env.EMAIL_FROM}>`,
         to: email,
+        cc: process.env.SUPPORT_EMAIL,
         subject: 'Reset your AQ Estate Account Password',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
