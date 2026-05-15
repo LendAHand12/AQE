@@ -11,10 +11,18 @@ const COUNTRIES = [
   { code: "+84", iso: "vn" },
   { code: "+1", iso: "us" },
   { code: "+44", iso: "gb" },
+  { code: "+49", iso: "de" }, // Germany
+  { code: "+33", iso: "fr" }, // France
   { code: "+81", iso: "jp" },
   { code: "+82", iso: "kr" },
+  { code: "+420", iso: "cz" }, // Czech Republic
   { code: "+86", iso: "cn" },
+  { code: "+886", iso: "tw" }, // Taiwan
   { code: "+91", iso: "in" },
+  { code: "+61", iso: "au" }, // Australia
+  { code: "+60", iso: "my" }, // Malaysia
+  { code: "+1", iso: "ca" }, // Canada
+  { code: "+971", iso: "ae" }, // UAE
   { code: "+66", iso: "th" },
   { code: "+65", iso: "sg" },
 ];
