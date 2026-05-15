@@ -42,9 +42,9 @@ export default function AdminSettingsPage() {
       });
       setQrCodeUrl(res.data.qrCodeUrl);
       setSecret(res.data.secret);
-      toast.info("Vui lòng quét mã QR bằng Google Authenticator");
+      toast.info("Please scan the QR code with Google Authenticator");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Lỗi khi tạo mã 2FA");
+      toast.error(error.response?.data?.message || "Error creating 2FA code");
     } finally {
       setProcessing(false);
     }
@@ -52,7 +52,7 @@ export default function AdminSettingsPage() {
 
   const handleEnable2FA = async () => {
     if (!code || code.length !== 6) {
-      toast.error("Vui lòng nhập đủ 6 số");
+      toast.error("Please enter all 6 digits");
       return;
     }
     try {
@@ -64,9 +64,9 @@ export default function AdminSettingsPage() {
       setQrCodeUrl("");
       setSecret("");
       setCode("");
-      toast.success("Bật 2FA thành công!");
+      toast.success("2FA enabled successfully!");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Mã xác nhận không đúng");
+      toast.error(error.response?.data?.message || "Incorrect confirmation code");
     } finally {
       setProcessing(false);
     }
@@ -74,7 +74,7 @@ export default function AdminSettingsPage() {
 
   const handleDisable2FA = async () => {
     if (!code || code.length !== 6) {
-      toast.error("Vui lòng nhập đủ 6 số");
+      toast.error("Please enter all 6 digits");
       return;
     }
     try {
@@ -84,9 +84,9 @@ export default function AdminSettingsPage() {
       });
       setIsTwoFactorEnabled(false);
       setCode("");
-      toast.success("Tắt 2FA thành công!");
+      toast.success("2FA disabled successfully!");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Mã xác nhận không đúng");
+      toast.error(error.response?.data?.message || "Incorrect confirmation code");
     } finally {
       setProcessing(false);
     }
@@ -103,15 +103,15 @@ export default function AdminSettingsPage() {
       <Card>
         <CardContent className="p-6 space-y-6">
           <div className="border-b pb-4">
-            <h2 className="text-lg font-bold">Bảo mật 2 lớp (2FA)</h2>
-            <p className="text-sm text-gray-500">Sử dụng ứng dụng Google Authenticator để bảo vệ tài khoản</p>
+            <h2 className="text-lg font-bold">Two-Factor Authentication (2FA)</h2>
+            <p className="text-sm text-gray-500">Use Google Authenticator to protect your account</p>
           </div>
 
           {!isTwoFactorEnabled && !qrCodeUrl && (
             <div>
               <Button onClick={handleGenerate2FA} disabled={processing} className="bg-[#276152]">
                 {processing ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
-                Bật 2FA
+                Enable 2FA
               </Button>
             </div>
           )}
@@ -120,11 +120,11 @@ export default function AdminSettingsPage() {
             <div className="space-y-4 max-w-sm">
               <div className="p-4 bg-gray-50 rounded-lg flex flex-col items-center border">
                 <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48 mb-4 bg-white p-2 rounded" />
-                <p className="text-xs text-gray-500 mb-1">Hoặc nhập mã thủ công:</p>
+                <p className="text-xs text-gray-500 mb-1">Or enter code manually:</p>
                 <code className="text-sm font-bold bg-white px-2 py-1 rounded">{secret}</code>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold">Nhập mã 6 số từ ứng dụng:</label>
+                <label className="text-sm font-bold">Enter 6-digit code from the app:</label>
                 <div className="flex justify-center py-2">
                     <InputOTP maxLength={6} value={code} onChange={setCode}>
                         <InputOTPGroup>
@@ -139,9 +139,9 @@ export default function AdminSettingsPage() {
                 </div>
                 <Button onClick={handleEnable2FA} disabled={processing} className="w-full bg-[#276152]">
                   {processing ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
-                  Xác nhận bật
+                  Confirm Enable
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={() => setQrCodeUrl("")}>Hủy</Button>
+                <Button variant="ghost" className="w-full" onClick={() => setQrCodeUrl("")}>Cancel</Button>
               </div>
             </div>
           )}
@@ -150,10 +150,10 @@ export default function AdminSettingsPage() {
             <div className="space-y-4 max-w-sm">
               <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5" />
-                <span className="text-sm font-bold">2FA đang được bật</span>
+                <span className="text-sm font-bold">2FA is currently enabled</span>
               </div>
               <div className="space-y-2 pt-4">
-                <label className="text-sm font-bold">Nhập mã 6 số để tắt 2FA:</label>
+                <label className="text-sm font-bold">Enter 6-digit code to disable 2FA:</label>
                 <div className="flex justify-center py-2">
                     <InputOTP maxLength={6} value={code} onChange={setCode}>
                         <InputOTPGroup>
@@ -168,7 +168,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <Button onClick={handleDisable2FA} disabled={processing} variant="destructive" className="w-full">
                   {processing ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : null}
-                  Xác nhận tắt
+                  Confirm Disable
                 </Button>
               </div>
             </div>

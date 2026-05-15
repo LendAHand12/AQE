@@ -45,7 +45,7 @@ export default function AdminCommissionHistoryPage() {
       setTotalItems(response.data.total)
 
     } catch (err: any) {
-      toast.error("Không thể tải danh sách hoa hồng")
+      toast.error("Could not load commission list")
     } finally {
       setLoading(false)
       setFetching(false)
@@ -89,7 +89,7 @@ export default function AdminCommissionHistoryPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input 
-            placeholder="Tìm theo tên người giới thiệu hoặc người được giới thiệu..." 
+            placeholder="Search by referrer or referee name..." 
             className="pl-12 h-12 border-none focus-visible:ring-0 text-md" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -101,13 +101,13 @@ export default function AdminCommissionHistoryPage() {
         <Table>
           <TableHeader className="bg-[#f8faf9]">
             <TableRow className="border-b border-gray-100">
-              <TableHead className="py-6 font-bold text-[#111827] pl-8">Thời gian</TableHead>
-              <TableHead className="font-bold text-[#111827]">Người được giới thiệu (F)</TableHead>
+              <TableHead className="py-6 font-bold text-[#111827] pl-8">Time</TableHead>
+              <TableHead className="font-bold text-[#111827]">Referee (F)</TableHead>
               <TableHead className="w-10"></TableHead>
-              <TableHead className="font-bold text-[#111827]">Người nhận hoa hồng</TableHead>
-              <TableHead className="font-bold text-[#111827] text-right">Doanh số</TableHead>
-              <TableHead className="font-bold text-[#111827] text-right">Hoa hồng</TableHead>
-              <TableHead className="font-bold text-[#111827] pr-8 text-right">Mô tả</TableHead>
+              <TableHead className="font-bold text-[#111827]">Recipient</TableHead>
+              <TableHead className="font-bold text-[#111827] text-right">Sales</TableHead>
+              <TableHead className="font-bold text-[#111827] text-right">Commission</TableHead>
+              <TableHead className="font-bold text-[#111827] pr-8 text-right">Description</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -151,7 +151,7 @@ export default function AdminCommissionHistoryPage() {
         {filteredCommissions.length === 0 && (
            <div className="py-20 text-center text-gray-400">
               <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              Chưa có dữ liệu hoa hồng nào được ghi nhận.
+              No commission data recorded yet.
            </div>
         )}
       </div>

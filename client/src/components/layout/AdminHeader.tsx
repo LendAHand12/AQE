@@ -17,53 +17,53 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
       case "/admin/dashboard":
         return { 
           title: "Admin Dashboard", 
-          description: "Tổng quan hệ thống AQE Estate" 
+          description: "AQE Estate system overview" 
         };
       case "/admin/users":
         return { 
-          title: "Quản lý thành viên", 
-          description: "Xem, chỉnh sửa và quản lý tất cả thành viên trong hệ thống" 
+          title: "User Management", 
+          description: "View, edit, and manage all system members" 
         };
       case "/admin/properties":
         return { 
-          title: "Quản lý Dự án", 
-          description: "Quản lý danh sách bất động sản và các dự án đầu tư" 
+          title: "Property Management", 
+          description: "Manage real estate listings and investment projects" 
         };
 
       case "/admin/transactions/payments":
         return { 
-          title: "Giao dịch USDT", 
-          description: "Theo dõi và quản lý các giao dịch nạp tiền của người dùng" 
+          title: "USDT Transactions", 
+          description: "Track and manage user deposit transactions" 
         };
       case "/admin/transactions/commissions":
         return { 
-          title: "Lịch sử hoa hồng", 
-          description: "Theo dõi các giao dịch trả thưởng hoa hồng hệ thống" 
+          title: "Commission History", 
+          description: "Track system commission reward transactions" 
         };
       case "/admin/withdrawals":
         return { 
-          title: "Quản lý Rút tiền", 
-          description: "Duyệt và theo dõi các yêu cầu rút tiền USDT của người dùng" 
+          title: "Withdrawal Management", 
+          description: "Approve and track user USDT withdrawal requests" 
         };
       case "/admin/wallet-connections":
         return { 
-          title: "Lịch sử kết nối ví", 
-          description: "Quản lý và đối chiếu các ví mà người dùng đã sử dụng để kết nối hệ thống" 
+          title: "Wallet Connections", 
+          description: "Manage and reconcile wallets used to connect to the system" 
         };
       case "/admin/token-settings":
         return { 
-          title: "Cài đặt Pool & Token", 
-          description: "Cấu hình thông số thanh khoản và giá trị token hệ thống" 
+          title: "Pool & Token Settings", 
+          description: "Configure liquidity parameters and system token values" 
         };
       case "/admin/settings":
         return { 
-          title: "Cài đặt tài khoản", 
-          description: "Quản lý thông tin cá nhân và bảo mật tài khoản Admin" 
+          title: "Account Settings", 
+          description: "Manage personal info and admin security" 
         };
       default:
         return { 
-          title: "Hệ thống quản trị", 
-          description: "Hệ thống quản trị AQ Estate" 
+          title: "Management System", 
+          description: "AQ Estate Management System" 
         };
     }
   };

@@ -79,7 +79,7 @@ export default function AdminWithdrawalsPage() {
       setTotalPages(response.data.pages)
       setTotalItems(response.data.total)
     } catch (err: any) {
-      toast.error("Không thể tải danh sách rút tiền")
+      toast.error("Could not load withdrawal list")
     } finally {
       setLoading(false)
       setFetching(false)
@@ -108,7 +108,7 @@ export default function AdminWithdrawalsPage() {
 
   const handleApprove = async () => {
     if (selectedWithdrawal.paymentMethod === 'WALLET' && !txHash.trim()) {
-      toast.error("Vui lòng nhập mã hash giao dịch")
+      toast.error("Please enter transaction hash")
       return
     }
     
@@ -117,12 +117,12 @@ export default function AdminWithdrawalsPage() {
       await apiClient.put(`/withdrawals/admin/${selectedWithdrawal._id}/approve`, {
         hash: txHash
       })
-      toast.success("Đã phê duyệt yêu cầu rút tiền")
+      toast.success("Withdrawal request approved")
       setIsApproveOpen(false)
       setTxHash("")
       fetchWithdrawals()
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi phê duyệt")
+      toast.error(err.response?.data?.message || "Error approving withdrawal")
     } finally {
       setProcessingId(null)
     }
@@ -134,12 +134,12 @@ export default function AdminWithdrawalsPage() {
       await apiClient.put(`/withdrawals/admin/${selectedWithdrawal._id}/reject`, {
         reason: rejectReason
       })
-      toast.success("Đã từ chối và hoàn tiền")
+      toast.success("Rejected and refunded")
       setIsRejectOpen(false)
       setRejectReason("")
       fetchWithdrawals()
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi từ chối")
+      toast.error(err.response?.data?.message || "Error rejecting withdrawal")
     } finally {
       setProcessingId(null)
     }
@@ -159,7 +159,7 @@ export default function AdminWithdrawalsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input 
-            placeholder="Tìm kiếm địa chỉ ví, mã hash..." 
+            placeholder="Search wallet address, hash..." 
             className="pl-12 h-12 border-gray-100 focus-visible:ring-[#276152] rounded-[16px] text-md" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -172,10 +172,10 @@ export default function AdminWithdrawalsPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">Tất cả trạng thái</option>
-            <option value="PENDING">Đang chờ</option>
-            <option value="SUCCESS">Thành công</option>
-            <option value="FAILED">Đã từ chối</option>
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="SUCCESS">Success</option>
+            <option value="FAILED">Rejected</option>
           </select>
         </div>
       </div>
@@ -185,13 +185,13 @@ export default function AdminWithdrawalsPage() {
           <Table>
             <TableHeader className="bg-gray-50/50">
               <TableRow className="border-b border-gray-100 hover:bg-transparent">
-                <TableHead className="py-6 font-bold text-[#111827] pl-8">Thời gian</TableHead>
-                <TableHead className="font-bold text-[#111827]">Người dùng</TableHead>
-                <TableHead className="font-bold text-[#111827]">Ví nhận</TableHead>
-                <TableHead className="font-bold text-[#111827] text-right">Số tiền</TableHead>
-                <TableHead className="font-bold text-[#111827] text-center">Phương thức</TableHead>
-                <TableHead className="font-bold text-[#111827] text-center">Trạng thái</TableHead>
-                <TableHead className="font-bold text-[#111827] pr-8 text-right">Thao tác</TableHead>
+                <TableHead className="py-6 font-bold text-[#111827] pl-8">Time</TableHead>
+                <TableHead className="font-bold text-[#111827]">User</TableHead>
+                <TableHead className="font-bold text-[#111827]">Recipient Wallet</TableHead>
+                <TableHead className="font-bold text-[#111827] text-right">Amount</TableHead>
+                <TableHead className="font-bold text-[#111827] text-center">Method</TableHead>
+                <TableHead className="font-bold text-[#111827] text-center">Status</TableHead>
+                <TableHead className="font-bold text-[#111827] pr-8 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -200,7 +200,7 @@ export default function AdminWithdrawalsPage() {
                   <TableCell colSpan={7} className="h-60 text-center text-gray-400">
                     <div className="flex flex-col items-center gap-2 opacity-50">
                       <Wallet size={48} />
-                      <p className="font-bold">Không tìm thấy yêu cầu rút tiền nào</p>
+                      <p className="font-bold">No withdrawal requests found</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -239,7 +239,7 @@ export default function AdminWithdrawalsPage() {
                             target="_blank" 
                             className="text-[10px] text-[#276152] hover:underline flex items-center gap-1 font-bold"
                           >
-                            Xem trên BscScan <ExternalLink size={10} />
+                            View on BscScan <ExternalLink size={10} />
                           </a>
                         )}
                       </div>
@@ -247,7 +247,7 @@ export default function AdminWithdrawalsPage() {
                     <TableCell className="text-right">
                       <div className="flex flex-col">
                         <span className="font-black text-[#111827]">{item.amount.toLocaleString()} USDT</span>
-                        <span className="text-[10px] text-gray-400 font-bold">Phí: {item.fee || 1} USDT</span>
+                        <span className="text-[10px] text-gray-400 font-bold">Fee: {item.fee || 1} USDT</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -270,8 +270,8 @@ export default function AdminWithdrawalsPage() {
                           "bg-amber-100 text-amber-700"
                         )}>
                           {item.status === 'PENDING' && <Clock size={12} className="animate-pulse" />}
-                          {item.status === 'SUCCESS' ? "Thành công" : 
-                           item.status === 'FAILED' ? "Đã từ chối" : "Đang chờ"}
+                          {item.status === 'SUCCESS' ? "Success" : 
+                           item.status === 'FAILED' ? "Rejected" : "Pending"}
                         </div>
                       </div>
                     </TableCell>
@@ -329,25 +329,25 @@ export default function AdminWithdrawalsPage() {
       <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
         <DialogContent className="rounded-[32px] max-w-md p-6">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-[26px] font-black text-gray-900 leading-tight">Phê duyệt rút tiền</DialogTitle>
+            <DialogTitle className="text-[26px] font-black text-gray-900 leading-tight">Approve Withdrawal</DialogTitle>
             <DialogDescription className="text-[14px] text-gray-500">
               {selectedWithdrawal?.paymentMethod === 'ZELLE' 
-                ? "Sau khi đã chuyển tiền qua Zelle cho người dùng, bạn có thể nhấn xác nhận ngay."
-                : "Vui lòng nhập mã giao dịch (Hash) sau khi bạn đã chuyển khoản thủ công cho người dùng."
+                ? "After transferring funds via Zelle to the user, you can click confirm immediately."
+                : "Please enter the transaction hash after manually transferring funds to the user."
               }
             </DialogDescription>
           </DialogHeader>
           <div className="py-6 space-y-5">
             <div className="p-5 bg-emerald-50 rounded-[20px] border border-emerald-100 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-emerald-700 font-bold text-sm">Số tiền cần chuyển:</span>
+                <span className="text-emerald-700 font-bold text-sm">Amount to transfer:</span>
                 <span className="font-black text-[28px] text-emerald-900 leading-none">
                   {selectedWithdrawal?.amount.toLocaleString()} <span className="text-lg">USDT</span>
                 </span>
               </div>
               <div className="space-y-1.5">
                 <span className="text-emerald-700 font-bold text-sm block">
-                  {selectedWithdrawal?.paymentMethod === 'ZELLE' ? "Thông tin Zelle:" : "Địa chỉ ví nhận:"}
+                  {selectedWithdrawal?.paymentMethod === 'ZELLE' ? "Zelle Info:" : "Recipient Wallet Address:"}
                 </span>
                 <div className="bg-white p-3 rounded-[12px] border border-emerald-100 break-all">
                    <span className="font-mono text-[13px] font-bold text-gray-700 leading-relaxed">
@@ -358,9 +358,9 @@ export default function AdminWithdrawalsPage() {
             </div>
             {selectedWithdrawal?.paymentMethod !== 'ZELLE' && (
               <div className="space-y-2">
-                <label className="text-md font-black text-gray-900">Mã Hash giao dịch (TxHash)</label>
+                <label className="text-md font-black text-gray-900">Transaction Hash (TxHash)</label>
                 <Input 
-                  placeholder="Dán mã giao dịch tại đây..." 
+                  placeholder="Paste transaction hash here..." 
                   value={txHash}
                   onChange={(e) => setTxHash(e.target.value)}
                   className="h-14 rounded-[14px] text-md border-gray-200 focus:ring-[#276152]"
@@ -369,13 +369,13 @@ export default function AdminWithdrawalsPage() {
             )}
           </div>
           <DialogFooter className="gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setIsApproveOpen(false)} className="rounded-[12px] font-bold h-12 px-6">Hủy</Button>
+            <Button variant="ghost" onClick={() => setIsApproveOpen(false)} className="rounded-[12px] font-bold h-12 px-6">Cancel</Button>
             <Button 
               onClick={handleApprove} 
               disabled={!!processingId}
               className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[14px] font-black px-8 h-12 text-md flex-1 shadow-md shadow-emerald-900/10"
             >
-              {processingId ? <Loader2 className="animate-spin size-5" /> : "Xác nhận & Duyệt ngay"}
+              {processingId ? <Loader2 className="animate-spin size-5" /> : "Confirm & Approve Now"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -385,26 +385,26 @@ export default function AdminWithdrawalsPage() {
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
         <DialogContent className="rounded-[32px] max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-[24px] font-black text-red-900">Từ chối rút tiền</DialogTitle>
+            <DialogTitle className="text-[24px] font-black text-red-900">Reject Withdrawal</DialogTitle>
             <DialogDescription className="text-gray-500">
-              Hành động này sẽ từ chối yêu cầu và **hoàn trả lại toàn bộ số dư** (bao gồm phí) cho tài khoản người dùng.
+              This action will reject the request and **refund the full balance** (including fee) to the user's account.
             </DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <div className="p-4 bg-red-50 rounded-[16px] border border-red-100 space-y-2">
               <div className="flex justify-between text-sm text-red-700">
-                <span>Người dùng:</span>
+                <span>User:</span>
                 <span className="font-bold">{selectedWithdrawal?.userId?.username}</span>
               </div>
               <div className="flex justify-between text-sm text-red-700">
-                <span>Số dư hoàn trả:</span>
+                <span>Refund Amount:</span>
                 <span className="font-black">{(selectedWithdrawal?.amount + (selectedWithdrawal?.fee || 1)).toLocaleString()} USDT</span>
               </div>
             </div>
             <div className="space-y-2 mt-4">
-              <label className="text-sm font-bold text-gray-700">Lý do từ chối (Gửi cho User):</label>
+              <label className="text-sm font-bold text-gray-700">Rejection Reason (Sent to User):</label>
               <Input 
-                placeholder="Nhập lý do (ví dụ: Tài khoản Zelle không chính xác...)" 
+                placeholder="Enter reason (e.g., Incorrect Zelle account...)" 
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 className="h-12 rounded-[12px] border-gray-200 focus:ring-red-500"
@@ -412,14 +412,14 @@ export default function AdminWithdrawalsPage() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" onClick={() => setIsRejectOpen(false)} className="rounded-[12px] font-bold">Hủy</Button>
+            <Button variant="ghost" onClick={() => setIsRejectOpen(false)} className="rounded-[12px] font-bold">Cancel</Button>
             <Button 
               onClick={handleReject} 
               disabled={!!processingId}
               variant="destructive"
               className="rounded-[12px] font-bold px-8 h-12"
             >
-              {processingId ? <Loader2 className="animate-spin size-4" /> : "Xác nhận Từ chối"}
+              {processingId ? <Loader2 className="animate-spin size-4" /> : "Confirm Reject"}
             </Button>
           </DialogFooter>
         </DialogContent>

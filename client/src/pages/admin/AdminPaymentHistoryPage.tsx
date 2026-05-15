@@ -39,30 +39,30 @@ export default function AdminPaymentHistoryPage() {
   const ITEMS_PER_PAGE = 10
 
   const handleApprove = async (paymentId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn DUYỆT giao dịch này?")) return;
+    if (!window.confirm("Are you sure you want to APPROVE this transaction?")) return;
     setActionLoading(paymentId);
     try {
       await apiClient.post('/admin/transactions/approve', { paymentId });
-      toast.success("Đã duyệt giao dịch thành công");
+      toast.success("Transaction approved successfully");
       fetchTransactions();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi duyệt giao dịch");
+      toast.error(err.response?.data?.message || "Error approving transaction");
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleReject = async (paymentId: string) => {
-    const reason = window.prompt("Lý do từ chối (không bắt buộc):");
+    const reason = window.prompt("Rejection reason (optional):");
     if (reason === null) return;
     
     setActionLoading(paymentId);
     try {
       await apiClient.post('/admin/transactions/reject', { paymentId, reason });
-      toast.error("Đã từ chối giao dịch");
+      toast.error("Transaction rejected");
       fetchTransactions();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi từ chối giao dịch");
+      toast.error(err.response?.data?.message || "Error rejecting transaction");
     } finally {
       setActionLoading(null);
     }
@@ -78,7 +78,7 @@ export default function AdminPaymentHistoryPage() {
       setTotalItems(response.data.total)
 
     } catch (err: any) {
-      toast.error("Không thể tải danh sách thanh toán")
+      toast.error("Could not load payment list")
     } finally {
       setLoading(false)
       setFetching(false)
@@ -122,7 +122,7 @@ export default function AdminPaymentHistoryPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input 
-            placeholder="Tìm kiếm người dùng, mã hash..." 
+            placeholder="Search users, hash..." 
             className="pl-12 h-12 border-none focus-visible:ring-0 text-md" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,14 +134,14 @@ export default function AdminPaymentHistoryPage() {
         <Table>
           <TableHeader className="bg-[#f8faf9]">
             <TableRow className="border-b border-gray-100">
-              <TableHead className="py-6 font-bold text-[#111827] pl-8">Thời gian</TableHead>
-              <TableHead className="font-bold text-[#111827]">Người thực hiện</TableHead>
+              <TableHead className="py-6 font-bold text-[#111827] pl-8">Time</TableHead>
+              <TableHead className="font-bold text-[#111827]">User</TableHead>
               <TableHead className="font-bold text-[#111827]">Payment ID</TableHead>
-              <TableHead className="font-bold text-[#111827]">Loại</TableHead>
-              <TableHead className="font-bold text-[#111827]">Phương thức</TableHead>
-              <TableHead className="font-bold text-[#111827] text-right">Số tiền (USDT)</TableHead>
-              <TableHead className="font-bold text-[#111827] text-center">Trạng thái</TableHead>
-              <TableHead className="font-bold text-[#111827] pr-8 text-right">Mã Hash</TableHead>
+              <TableHead className="font-bold text-[#111827]">Type</TableHead>
+              <TableHead className="font-bold text-[#111827]">Method</TableHead>
+              <TableHead className="font-bold text-[#111827] text-right">Amount (USDT)</TableHead>
+              <TableHead className="font-bold text-[#111827] text-center">Status</TableHead>
+              <TableHead className="font-bold text-[#111827] pr-8 text-right">Hash</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,7 +172,7 @@ export default function AdminPaymentHistoryPage() {
                      </Link>
                   ) : (
                     <Badge variant="outline" className="bg-blue-50 text-blue-600 border-none font-bold uppercase text-[10px]">
-                      {tx.from || "Hệ thống / Ví"}
+                      {tx.from || "System / Wallet"}
                     </Badge>
                   )}
                 </TableCell>
@@ -194,7 +194,7 @@ export default function AdminPaymentHistoryPage() {
                   <span className="text-xs font-bold text-gray-500">
                     {tx.metadata?.method === 'QR' ? (
                       <span className="flex items-center gap-1 text-purple-600">
-                        <span className="size-1.5 rounded-full bg-purple-600" /> Mã QR
+                        <span className="size-1.5 rounded-full bg-purple-600" /> QR Code
                       </span>
                     ) : tx.metadata?.method === 'ZELLE' ? (
                       <span className="flex items-center gap-1 text-orange-500">
@@ -202,7 +202,7 @@ export default function AdminPaymentHistoryPage() {
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-blue-600">
-                        <span className="size-1.5 rounded-full bg-blue-600" /> Chuyển ví
+                        <span className="size-1.5 rounded-full bg-blue-600" /> Wallet Transfer
                       </span>
                     )}
                   </span>
@@ -218,8 +218,8 @@ export default function AdminPaymentHistoryPage() {
                       tx.status === 'AWAITING_APPROVAL' ? "bg-amber-100 text-amber-700" :
                       "bg-gray-100 text-gray-600"
                     )}>
-                      {tx.status === 'SUCCESS' ? "Thành công" : 
-                       tx.status === 'AWAITING_APPROVAL' ? "Chờ duyệt" : "Đang xử lý"}
+                      {tx.status === 'SUCCESS' ? "Success" : 
+                       tx.status === 'AWAITING_APPROVAL' ? "Awaiting Approval" : "Processing"}
                     </Badge>
                   </div>
                 </TableCell>
@@ -231,7 +231,7 @@ export default function AdminPaymentHistoryPage() {
                           onClick={() => handleApprove(tx.paymentId)}
                           disabled={!!actionLoading}
                           className="size-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors"
-                          title="Duyệt"
+                          title="Approve"
                         >
                           {actionLoading === tx.paymentId ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                         </button>
@@ -239,7 +239,7 @@ export default function AdminPaymentHistoryPage() {
                           onClick={() => handleReject(tx.paymentId)}
                           disabled={!!actionLoading}
                           className="size-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
-                          title="Từ chối"
+                          title="Reject"
                         >
                           {actionLoading === tx.paymentId ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                         </button>

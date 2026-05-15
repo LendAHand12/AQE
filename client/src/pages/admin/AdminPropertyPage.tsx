@@ -42,21 +42,21 @@ export default function AdminPropertyPage() {
       const response = await apiClient.get('/admin/properties')
       setProperties(response.data)
     } catch (error) {
-      toast.error("Không thể tải danh sách dự án")
+      toast.error("Could not load projects list")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa dự án này?")) return
+    if (!window.confirm("Are you sure you want to delete this project?")) return
     
     try {
       await apiClient.delete(`/admin/properties/${id}`)
-      toast.success("Đã xóa dự án thành công")
+      toast.success("Project deleted successfully")
       fetchProperties()
     } catch (error) {
-      toast.error("Lỗi khi xóa dự án")
+      toast.error("Error deleting project")
     }
   }
 
@@ -83,7 +83,7 @@ export default function AdminPropertyPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input 
             type="text"
-            placeholder="Tìm kiếm dự án..." 
+            placeholder="Search projects..." 
             className="w-full pl-10 pr-4 h-[40px] border border-[#d5d7db] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -95,21 +95,21 @@ export default function AdminPropertyPage() {
             onClick={() => navigate('/admin/properties/add')}
             className="bg-[#276152] hover:bg-[#1e4a3f] text-white h-[40px] px-6 rounded-[12px] flex items-center gap-2 border-none shadow-md font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] transition-all active:scale-95"
           >
-            <span>Thêm dự án</span>
+            <span>Add Project</span>
             <Plus className="w-5 h-5" />
           </Button>
         )}
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[140px] bg-[rgba(239,239,239,0.5)] border-none h-[40px] py-0 rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
-            <SelectValue placeholder="Tất cả" />
+            <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent className="rounded-[12px] border-none shadow-lg">
-            <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">Tất cả</SelectItem>
-            <SelectItem value="funding" className="font-['SVN-Gilroy:Medium',sans-serif]">Đang huy động vốn</SelectItem>
+            <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">All</SelectItem>
+            <SelectItem value="funding" className="font-['SVN-Gilroy:Medium',sans-serif]">Funding</SelectItem>
             <SelectItem value="presales" className="font-['SVN-Gilroy:Medium',sans-serif]">Pre-sales</SelectItem>
-            <SelectItem value="completed" className="font-['SVN-Gilroy:Medium',sans-serif]">Hoàn thành</SelectItem>
-            <SelectItem value="paused" className="font-['SVN-Gilroy:Medium',sans-serif]">Tạm dừng</SelectItem>
+            <SelectItem value="completed" className="font-['SVN-Gilroy:Medium',sans-serif]">Completed</SelectItem>
+            <SelectItem value="paused" className="font-['SVN-Gilroy:Medium',sans-serif]">Paused</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -129,7 +129,7 @@ export default function AdminPropertyPage() {
       ) : (
         <div className="bg-white rounded-[16px] p-20 flex flex-col items-center justify-center border border-dashed border-gray-200">
           <AlertCircle className="w-12 h-12 text-gray-300 mb-4" />
-          <p className="text-gray-500 font-['SVN-Gilroy:Medium',sans-serif]">Không tìm thấy dự án nào</p>
+          <p className="text-gray-500 font-['SVN-Gilroy:Medium',sans-serif]">No projects found</p>
         </div>
       )}
     </div>
@@ -144,10 +144,10 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-      case 'funding': return 'Đang huy động vốn'
+      case 'funding': return 'Funding'
       case 'presales': return 'Pre-sales'
-      case 'completed': return 'Hoàn thành'
-      case 'paused': return 'Tạm dừng'
+      case 'completed': return 'Completed'
+      case 'paused': return 'Paused'
       default: return status
     }
   }
@@ -200,7 +200,7 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
               {property.title}
             </h3>
             <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[14px] text-[#276152] leading-[20px] tracking-[0.42px] shrink-0">
-              {property.totalFunding?.toLocaleString()}đ
+              {property.totalFunding?.toLocaleString()} USDT
             </p>
           </div>
           
@@ -213,7 +213,7 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
         {/* Progress */}
         <div className="flex flex-col gap-[7px]">
           <div className="flex justify-between items-center text-[14px] leading-[20px]">
-            <span className="font-['SVN-Gilroy:Medium',sans-serif] text-[#276152]">Huy động vốn</span>
+            <span className="font-['SVN-Gilroy:Medium',sans-serif] text-[#276152]">Funding</span>
             <span className="font-['SVN-Gilroy:Regular',sans-serif] text-[#636d7d]">{fundingPercent}%</span>
           </div>
           <div className="h-[6px] w-full bg-[#efefef] rounded-full overflow-hidden">
@@ -237,7 +237,7 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
               className="flex-1 bg-[#d9ede8] hover:bg-[#c4e3db] text-[#276152] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
             >
               <Pencil className="w-5 h-5" />
-              <span>Chỉnh sửa</span>
+              <span>Edit</span>
             </Button>
           )}
           
@@ -254,7 +254,7 @@ function PropertyCard({ property, onDelete, onEdit }: { property: any, onDelete:
               className="flex-1 bg-[rgba(239,68,68,0.1)] hover:bg-[rgba(239,68,68,0.2)] text-[#ef4444] h-[44px] rounded-[12px] flex items-center justify-center gap-[4px] p-0 border-none shadow-none font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] tracking-[0.48px]"
             >
               <Trash2 className="w-5 h-5" />
-              <span>Xóa</span>
+              <span>Delete</span>
             </Button>
           )}
         </div>

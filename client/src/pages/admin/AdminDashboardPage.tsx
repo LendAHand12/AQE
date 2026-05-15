@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
         const response = await apiClient.get('/admin/dashboard-stats')
         setData(response.data)
       } catch (error: any) {
-        toast.error("Không thể tải dữ liệu dashboard")
+        toast.error("Could not load dashboard data")
       } finally {
         setLoading(false)
       }
@@ -58,15 +58,15 @@ export default function AdminDashboardPage() {
 
   // Format chart data
   const chartData = monthlyRevenue.map((item: any) => ({
-    name: `T${item._id.month}`,
+    name: `M${item._id.month}`,
     total: item.total // USDT
   }))
 
   // Ensure we have 12 months (mocking missing ones if needed for visual)
   const finalChartData = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;
-    const existing = chartData.find((d: any) => d.name === `T${month}`);
-    return existing || { name: `T${month}`, total: 0 };
+    const existing = chartData.find((d: any) => d.name === `M${month}`);
+    return existing || { name: `M${month}`, total: 0 };
   });
 
   return (
@@ -74,22 +74,22 @@ export default function AdminDashboardPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          title="Tổng người dùng" 
+          title="Total Users" 
           value={stats.totalUsers.value.toLocaleString()} 
           change={stats.totalUsers.change} 
         />
         <StatCard 
-          title="Tài sản hoạt động" 
+          title="Active Assets" 
           value={stats.activeAssets.value.toLocaleString()} 
           change={stats.activeAssets.change} 
         />
         <StatCard 
-          title="Giao dịch hôm nay" 
+          title="Today's Transactions" 
           value={stats.todayTransactions.value.toLocaleString()} 
           change={stats.todayTransactions.change} 
         />
         <StatCard 
-          title="Doanh thu (USDT)" 
+          title="Revenue (USDT)" 
           value={`${stats.totalRevenue.value.toLocaleString()} USDT`} 
           change={stats.totalRevenue.change} 
         />
@@ -101,16 +101,16 @@ export default function AdminDashboardPage() {
           {/* Recent Transactions */}
           <section className="space-y-4">
             <h2 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">
-              Giao dịch gần đây
+              Recent Transactions
             </h2>
             <div className="bg-white rounded-[16px] border border-[#efefef] overflow-hidden">
               <table className="w-full text-left">
                 <thead className="bg-[#d9ede8]">
                   <tr>
-                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Người dùng</th>
-                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Số tiền</th>
-                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Trạng thái</th>
-                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Thời gian</th>
+                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">User</th>
+                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Amount</th>
+                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Status</th>
+                    <th className="px-4 py-3 font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#0d1f1d]">Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#efefef]/50">
@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
           {/* Revenue Chart */}
           <section className="bg-[rgba(239,239,239,0.5)] p-4 rounded-[16px] space-y-6">
             <h2 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">
-              Doanh thu theo tháng (USDT)
+              Monthly Revenue (USDT)
             </h2>
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -190,9 +190,9 @@ export default function AdminDashboardPage() {
           <section className="bg-white border border-[#efefef] rounded-[16px] overflow-hidden shadow-sm">
             <div className="bg-[#276152] p-4">
               <h2 className="font-['SVN-Gilroy:Bold',sans-serif] text-[18px] text-white tracking-[0.54px]">
-                Bảng xếp hạng doanh số
+                Sales Leaderboard
               </h2>
-              <p className="text-white/70 text-[12px]">Cập nhật mỗi giờ</p>
+              <p className="text-white/70 text-[12px]">Updated every hour</p>
             </div>
             <div className="p-0">
               <div className="divide-y divide-[#efefef] max-h-[420px] overflow-y-auto custom-scrollbar">
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
                     </div>
                   );
                 }) : (
-                  <p className="text-center py-10 text-gray-400 text-sm italic">Chưa có dữ liệu xếp hạng</p>
+                  <p className="text-center py-10 text-gray-400 text-sm italic">No ranking data yet</p>
                 )}
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function AdminDashboardPage() {
           <section className="bg-[rgba(239,239,239,0.5)] border border-white rounded-[16px] p-4 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#0d1f1d] tracking-[0.54px]">
-                KYC chờ duyệt
+                Pending KYC
               </h2>
             </div>
             <div className="space-y-0 divide-y divide-[#efefef]">
@@ -269,12 +269,12 @@ export default function AdminDashboardPage() {
                       onClick={() => navigate(`/admin/users/${user._id}`)}
                       className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[11px] text-[#276152] hover:underline"
                     >
-                      Xem
+                      View
                     </button>
                   )}
                 </div>
               )) : (
-                <p className="text-center py-4 text-gray-500 text-sm">Không có yêu cầu chờ duyệt</p>
+                <p className="text-center py-4 text-gray-500 text-sm">No pending requests</p>
               )}
             </div>
           </section>
@@ -305,7 +305,7 @@ function StatCard({ title, value, change }: { title: string, value: string, chan
           {isUp ? '+' : ''}{change}%
         </span>
         <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[14px] text-[#868f9e] tracking-[0.42px]">
-          so với tháng trước
+          vs last month
         </span>
       </div>
     </div>
@@ -321,10 +321,10 @@ function StatusBadge({ status }: { status: string }) {
   } as any
 
   const labels = {
-    SUCCESS: "Hoàn tất",
-    AWAITING_APPROVAL: "Chờ duyệt",
-    PENDING: "Đang xử lý",
-    FAILED: "Thất bại"
+    SUCCESS: "Success",
+    AWAITING_APPROVAL: "Awaiting Approval",
+    PENDING: "Processing",
+    FAILED: "Failed"
   } as any
 
   return (

@@ -40,7 +40,7 @@ export default function TokenSettingsPage() {
         currentPrice: response.data.currentPrice
       })
     } catch (err) {
-      toast.error("Không thể tải cấu hình Token")
+      toast.error("Could not load Token settings")
     } finally {
       setLoading(false)
     }
@@ -65,9 +65,9 @@ export default function TokenSettingsPage() {
     setSaving(true)
     try {
       await apiClient.put("/admin/token-settings", settings)
-      toast.success("Đã cập nhật cấu hình hệ thống thành công!")
+      toast.success("System configuration updated successfully!")
     } catch (err) {
-      toast.error("Cập nhật thất bại")
+      toast.error("Update failed")
     } finally {
       setSaving(false)
     }
@@ -90,13 +90,13 @@ export default function TokenSettingsPage() {
           <Card className="border-none shadow-sm rounded-[24px]">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Coins className="w-5 h-5 text-[#276152]" /> Thông tin Token
+                <Coins className="w-5 h-5 text-[#276152]" /> Token Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Tên Token</label>
+                  <label className="text-sm font-bold text-gray-500">Token Name</label>
                   <Input 
                     value={settings.name} 
                     onChange={(e) => setSettings({...settings, name: e.target.value})} 
@@ -104,7 +104,7 @@ export default function TokenSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Ký hiệu (Symbol)</label>
+                  <label className="text-sm font-bold text-gray-500">Symbol</label>
                   <Input 
                     value={settings.symbol} 
                     disabled
@@ -113,7 +113,7 @@ export default function TokenSettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500">Tổng cung (Total Supply)</label>
+                <label className="text-sm font-bold text-gray-500">Total Supply</label>
                 <div className="relative">
                   <Input 
                     type="number"
@@ -130,12 +130,12 @@ export default function TokenSettingsPage() {
           <Card className="border-none shadow-sm rounded-[24px]">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-[#276152]" /> Tính toán giá & Thanh khoản
+                <TrendingUp className="w-5 h-5 text-[#276152]" /> Price Calculation & Liquidity
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500">USDT Pool ban đầu</label>
+                <label className="text-sm font-bold text-gray-500">Initial USDT Pool</label>
                 <div className="relative">
                   <Input 
                     type="number"
@@ -147,10 +147,10 @@ export default function TokenSettingsPage() {
                     <span className="font-bold text-gray-400 text-[11px]">USDT</span>
                   </div>
                 </div>
-                <p className="text-[12px] text-gray-400 italic">Lượng USDT này sẽ dùng làm cơ sở để tính mức vốn hóa ban đầu.</p>
+                <p className="text-[12px] text-gray-400 italic">This USDT amount will be used as the basis for initial market cap calculation.</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500">Giá hiện tại (Current Price)</label>
+                <label className="text-sm font-bold text-gray-500">Current Price</label>
                 <div className="relative">
                   <Input 
                     type="number"
@@ -164,7 +164,7 @@ export default function TokenSettingsPage() {
                     <RefreshCw className="w-4 h-4 text-gray-400 animate-pulse" />
                   </div>
                 </div>
-                <p className="text-[12px] text-[#276152] italic font-medium">Giá được tính tự động: {settings.usdtPool} USDT / {settings.totalSupply.toLocaleString()} {settings.symbol}</p>
+                <p className="text-[12px] text-[#276152] italic font-medium">Price calculated automatically: {settings.usdtPool} USDT / {settings.totalSupply.toLocaleString()} {settings.symbol}</p>
               </div>
             </CardContent>
           </Card>
@@ -176,7 +176,7 @@ export default function TokenSettingsPage() {
                onClick={fetchSettings}
                className="h-12 px-6 rounded-[12px]"
             >
-              <RefreshCw className="w-4 h-4 mr-2" /> Làm mới
+              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </Button>
             <Button 
               type="submit"
@@ -184,7 +184,7 @@ export default function TokenSettingsPage() {
               className="h-12 px-8 rounded-[12px] bg-[#276152] hover:bg-[#1e4d41] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} 
-              {canEdit ? "Lưu thay đổi" : "Không có quyền sửa"}
+              {canEdit ? "Save Changes" : "No permission to edit"}
             </Button>
           </div>
         </div>
@@ -193,20 +193,20 @@ export default function TokenSettingsPage() {
           <Card className="border-none bg-[#276152] text-white rounded-[24px]">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-2 opacity-80 uppercase text-[11px] font-bold tracking-widest">
-                <Info className="w-4 h-4" /> Bản tóm tắt Token
+                <Info className="w-4 h-4" /> Token Summary
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between border-b border-white/10 pb-2">
-                  <span className="text-white/60 text-sm">Vốn hóa:</span>
+                  <span className="text-white/60 text-sm">Market Cap:</span>
                   <span className="font-bold">${(settings.totalSupply * settings.currentPrice).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/10 pb-2">
-                  <span className="text-white/60 text-sm">Tỷ lệ Pool:</span>
+                  <span className="text-white/60 text-sm">Pool Ratio:</span>
                   <span className="font-bold">{(settings.usdtPool / settings.totalSupply * 100).toFixed(6)}%</span>
                 </div>
               </div>
               <p className="text-[12px] text-white/50 italic leading-relaxed">
-                Lưu ý: Giá hiện tại được tính toán tự động dựa trên thanh khoản USDT và Tổng cung. Việc điều chỉnh Tổng cung sẽ trực tiếp ảnh hưởng đến giá trị Token trên toàn hệ thống.
+                Note: The current price is calculated automatically based on USDT liquidity and Total Supply. Adjusting the Total Supply will directly affect the Token's value throughout the system.
               </p>
             </CardContent>
           </Card>

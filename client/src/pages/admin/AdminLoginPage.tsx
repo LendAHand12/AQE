@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
       if (showTwoFa) {
         const otp = twoFaCode.join("")
         if (otp.length < 6) {
-          toast.error("Vui lòng nhập đầy đủ mã OTP 6 chữ số")
+          toast.error("Please enter all 6 digits of OTP")
           setLoading(false)
           return
         }
@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
         localStorage.setItem("admin_token", response.data.token)
         localStorage.setItem("admin_info", JSON.stringify(response.data))
         localStorage.setItem("token", response.data.token)
-        toast.success("Xác thực thành công!")
+        toast.success("Authentication successful!")
         navigate("/admin/dashboard")
         return
       }
@@ -55,16 +55,16 @@ export default function AdminLoginPage() {
       if (response.data.requires2FA) {
         setShowTwoFa(true)
         setAdminId(response.data.id)
-        toast.info("Vui lòng nhập mã xác thực Google Authenticator")
+        toast.info("Please enter Google Authenticator code")
       } else {
         localStorage.setItem("admin_token", response.data.token)
         localStorage.setItem("admin_info", JSON.stringify(response.data))
         localStorage.setItem("token", response.data.token)
-        toast.success("Đăng nhập hệ thống quản trị thành công!")
+        toast.success("Admin login successful!")
         navigate("/admin/dashboard")
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Thông tin đăng nhập không chính xác")
+      toast.error(err.response?.data?.message || "Incorrect login credentials")
     } finally {
       setLoading(false)
     }
@@ -122,24 +122,24 @@ export default function AdminLoginPage() {
           {/* Center Content Section */}
           <div className="space-y-12">
              <div className="space-y-0">
-                <h2 className="text-white text-[52px] font-extrabold leading-[1.1] tracking-tight">Hệ thống</h2>
-                <h2 className="text-[#6dbfab] text-[52px] font-extrabold leading-[1.1] tracking-tight">Quản trị</h2>
+                <h2 className="text-white text-[52px] font-extrabold leading-[1.1] tracking-tight">System</h2>
+                <h2 className="text-[#6dbfab] text-[52px] font-extrabold leading-[1.1] tracking-tight">Admin</h2>
                 <h2 className="text-[#3b9a84] text-[52px] font-extrabold leading-[1.1] tracking-tight">AQ Estate</h2>
                 <div className="h-[3px] w-[72px] bg-[#3b9a84] rounded-full mt-6" />
              </div>
 
              <div className="text-[#9dd5c6] text-[14px] max-w-[500px] leading-relaxed font-medium">
-                <p>Nền tảng bất động sản token hóa hàng đầu Việt Nam.</p>
-                <p>Quản lý toàn bộ dự án, người dùng và giao dịch từ một nơi.</p>
+                <p>Vietnam's leading tokenized real estate platform.</p>
+                <p>Manage all projects, users, and transactions in one place.</p>
              </div>
 
              {/* Feature Pills List */}
              <div className="space-y-3.5 max-w-[524px]">
                 {[
-                  { icon: '🏘', label: 'Quản lý dự án & tài sản' },
-                  { icon: '👥', label: 'Phân quyền người dùng & KYC' },
-                  { icon: '⚡', label: 'Pre-sales & huy động vốn thông minh' },
-                  { icon: '📊', label: 'Báo cáo thời gian thực' }
+                  { icon: '🏘', label: 'Project & Asset Management' },
+                  { icon: '👥', label: 'User Permissions & KYC' },
+                  { icon: '⚡', label: 'Pre-sales & Smart Fundraising' },
+                  { icon: '📊', label: 'Real-time Reports' }
                 ].map((item, idx) => (
                   <div key={idx} className="h-11 bg-white/5 border border-[#3b9a84]/30 backdrop-blur-sm rounded-[12px] flex items-center px-4 gap-4 group hover:bg-white/10 transition-all cursor-default">
                      <span className="text-[18px] opacity-80 group-hover:opacity-100 transition-opacity">{item.icon}</span>
@@ -155,15 +155,15 @@ export default function AdminLoginPage() {
             <div className="relative h-[96px] flex items-center px-12 divide-x divide-[#3b9a84]/30">
                <div className="pr-12">
                   <p className="text-white text-[19px] font-extrabold">342</p>
-                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Dự án</p>
+                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Projects</p>
                </div>
                <div className="px-12">
                   <p className="text-white text-[19px] font-extrabold">12,847</p>
-                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Người dùng</p>
+                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Users</p>
                </div>
                <div className="pl-12">
-                  <p className="text-white text-[19px] font-extrabold">4.8 tỷ đ</p>
-                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Doanh thu</p>
+                  <p className="text-white text-[19px] font-extrabold">4.8B VND</p>
+                  <p className="text-[#9dd5c6] text-[11px] font-medium tracking-wide">Revenue</p>
                </div>
             </div>
           </div>
@@ -177,13 +177,13 @@ export default function AdminLoginPage() {
           {/* Header Texts */}
           <div className="space-y-3">
              <p className="text-[#9CA3AF] text-[13px] font-medium">
-                Chào mừng trở lại 👋
+                Welcome back 👋
              </p>
              <h3 className="text-[#111827] text-[36px] font-extrabold tracking-tight leading-none">
-                Đăng nhập
+                Login
              </h3>
              <p className="text-[#6B7280] text-[14px]">
-                Vui lòng xác thực danh tính quản trị viên để tiếp tục
+                Please authenticate admin identity to continue
              </p>
           </div>
 
@@ -193,7 +193,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
-               <label className="text-[12px] font-bold text-[#374151]">Email quản trị viên</label>
+               <label className="text-[12px] font-bold text-[#374151]">Admin Email</label>
                <div className="relative group">
                   <div className="absolute left-[13px] top-1/2 -translate-y-1/2 size-6 bg-[#E8F5F1] rounded-lg flex items-center justify-center text-[#276152]">
                      <Mail size={14} />
@@ -213,8 +213,8 @@ export default function AdminLoginPage() {
             {/* Password Field */}
             <div className="space-y-2">
                <div className="flex justify-between items-center">
-                  <label className="text-[12px] font-bold text-[#374151]">Mật khẩu</label>
-                  {!showTwoFa && <button type="button" className="text-[#276152] text-[12px] font-semibold hover:underline">Quên mật khẩu?</button>}
+                  <label className="text-[12px] font-bold text-[#374151]">Password</label>
+                  {!showTwoFa && <button type="button" className="text-[#276152] text-[12px] font-semibold hover:underline">Forgot password?</button>}
                </div>
                <div className="relative group">
                   <div className="absolute left-[13px] top-1/2 -translate-y-1/2 size-6 bg-[#E8F5F1] rounded-lg flex items-center justify-center text-[#276152]">
@@ -246,10 +246,10 @@ export default function AdminLoginPage() {
               <div className="bg-[#F9FAF9] border border-[#276152] rounded-[14px] p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                       <label className="text-[12px] font-bold text-[#276152]">Mã xác thực 2FA</label>
-                       <span className="text-[10px] bg-[#E8F5F1] text-[#276152] px-2 py-0.5 rounded-full font-bold">BẮT BUỘC</span>
+                       <label className="text-[12px] font-bold text-[#276152]">2FA Authentication Code</label>
+                       <span className="text-[10px] bg-[#E8F5F1] text-[#276152] px-2 py-0.5 rounded-full font-bold">REQUIRED</span>
                     </div>
-                    <p className="text-[11px] text-[#6B7280]">Nhập mã 6 chữ số từ ứng dụng Authenticator của bạn</p>
+                    <p className="text-[11px] text-[#6B7280]">Enter 6-digit code from your Authenticator app</p>
                  </div>
                  
                  <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export default function AdminLoginPage() {
                         autoFocus={i === 0}
                       />
                     ))}
-                    <button type="button" className="text-[#276152] text-[11px] font-bold ml-auto hover:underline" onClick={() => setShowTwoFa(false)}>Quay lại</button>
+                    <button type="button" className="text-[#276152] text-[11px] font-bold ml-auto hover:underline" onClick={() => setShowTwoFa(false)}>Back</button>
                  </div>
               </div>
             )}
@@ -281,7 +281,7 @@ export default function AdminLoginPage() {
             >
                {loading ? <Loader2 className="animate-spin" /> : (
                  <div className="flex items-center justify-center gap-2">
-                    <span>{showTwoFa ? "Xác nhận truy cập" : "Tiếp tục đăng nhập"}</span>
+                    <span>{showTwoFa ? "Confirm Access" : "Continue Login"}</span>
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                  </div>
                )}
@@ -292,12 +292,12 @@ export default function AdminLoginPage() {
           {/* Footer Info */}
           <div className="pt-2 space-y-4">
              <p className="text-[11px] text-[#9CA3AF] flex items-center justify-center gap-2">
-                <span className="text-[#276152]">🔒</span> Kết nối được mã hóa SSL · Phiên làm việc hết hạn sau 8 giờ
+                <span className="text-[#276152]">🔒</span> SSL Encrypted connection · Session expires in 8 hours
              </p>
              <div className="h-px bg-[#E5E7EB] w-full" />
              <div className="flex justify-between items-start gap-4">
                 <p className="text-[11px] text-[#9CA3AF] leading-relaxed flex-1">
-                   AQE Estate © 2026 · Hệ thống quản trị nội bộ · Chỉ dành cho nhân viên được phân quyền
+                   AQE Estate © 2026 · Internal Management System · Authorized Personnel Only
                 </p>
                 <div className="bg-[#E8F5F1] rounded-full px-3 py-1 text-[#276152] text-[10px] font-bold shrink-0">
                    v2.0 · Admin

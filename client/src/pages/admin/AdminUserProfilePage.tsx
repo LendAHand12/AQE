@@ -70,7 +70,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
         const res = await apiClient.get(`/admin/users/${user._id}/referrals`);
         setChildren(res.data);
       } catch (err) {
-        toast.error("Không thể tải danh sách cấp dưới");
+        toast.error("Could not load referral list");
       } finally {
         setLoading(false);
       }
@@ -125,15 +125,15 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
 
         <div className="flex items-center gap-10">
           <div className="text-right">
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Toàn hệ thống</p>
-            <p className="text-[16px] font-bold text-amber-600">{user.totalNetwork || 0} <span className="text-[11px]">thành viên</span></p>
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Entire Network</p>
+            <p className="text-[16px] font-bold text-amber-600">{user.totalNetwork || 0} <span className="text-[11px]">members</span></p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Cá nhân nạp</p>
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Personal Deposit</p>
             <p className="text-[16px] font-bold text-blue-600">{user.personalPaid?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Doanh số hệ thống</p>
+            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">System Sales</p>
             <p className="text-[16px] font-bold text-emerald-700">{user.totalSales?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
           </div>
           <Button 
@@ -166,7 +166,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
               </div>
             ) : !loading && (
               <div className="py-3 text-[12px] text-gray-400 italic ml-20">
-                 Không có cấp dưới
+                 No referrals
               </div>
             )}
           </motion.div>
@@ -200,7 +200,7 @@ export default function AdminUserProfilePage() {
       const res = await apiClient.get(`/admin/users/${id}`)
       setData(res.data)
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Không thể tải thông tin người dùng")
+      toast.error(err.response?.data?.message || "Could not load user info")
       navigate("/admin/users")
     } finally {
       setLoading(false)
@@ -211,11 +211,11 @@ export default function AdminUserProfilePage() {
     setUpdating(true)
     try {
       await apiClient.put(`/admin/users/${id}`, editingUser)
-      toast.success("Cập nhật thông tin thành công")
+      toast.success("Information updated successfully")
       setIsEditDialogOpen(false)
       fetchUserDetails() // Refresh data
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Không thể cập nhật thông tin")
+      toast.error(err.response?.data?.message || "Could not update information")
     } finally {
       setUpdating(false)
     }
@@ -247,7 +247,7 @@ export default function AdminUserProfilePage() {
             <ArrowLeft size={20} />
           </Button>
           <div className="space-y-1">
-            <h1 className="text-[28px] font-extrabold text-[#111827] tracking-tight">Chi tiết người dùng</h1>
+            <h1 className="text-[28px] font-extrabold text-[#111827] tracking-tight">User Details</h1>
             <p className="text-[#6b7280] text-[14px]">ID: {user._id}</p>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default function AdminUserProfilePage() {
              "h-11 px-6 rounded-full text-[13px] font-bold border-none flex items-center justify-center min-w-[120px]",
              user.isActive ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
            )}>
-             {user.isActive ? "Hoạt động" : "Khóa"}
+             {user.isActive ? "Active" : "Locked"}
            </Badge>
            <Button 
              className="h-11 bg-[#276152] hover:bg-[#1e4d41] rounded-full px-8 font-bold shadow-lg shadow-[#276152]/10"
@@ -273,7 +273,7 @@ export default function AdminUserProfilePage() {
                setIsEditDialogOpen(true)
              }}
            >
-             Chỉnh sửa
+             Edit
            </Button>
         </div>
       </div>
@@ -308,17 +308,17 @@ export default function AdminUserProfilePage() {
 
               <div className="grid grid-cols-2 gap-3 mt-8">
                 <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left border border-gray-100">
-                  <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">Số dư USDT</p>
+                  <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">USDT Balance</p>
                   <p className="text-[18px] font-extrabold text-[#276152]">{user.usdtBalance?.toLocaleString()} <span className="text-xs">USDT</span></p>
                 </div>
                 <div className="bg-[#f8faf9] p-4 rounded-[16px] text-left border border-gray-100">
-                  <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">Số dư AQE</p>
+                  <p className="text-[11px] text-[#868f9e] font-bold uppercase tracking-wider mb-1">AQE Balance</p>
                   <p className="text-[18px] font-extrabold text-amber-600">{user.aqeBalance?.toLocaleString()} <span className="text-xs">AQE</span></p>
                 </div>
               </div>
 
               <div className="mt-3 bg-[#276152] p-4 rounded-[16px] text-left shadow-md shadow-[#276152]/10 border border-[#276152]/20">
-                <p className="text-[11px] text-white/70 font-bold uppercase tracking-wider mb-1">Doanh số hệ thống (Toàn cấp)</p>
+                <p className="text-[11px] text-white/70 font-bold uppercase tracking-wider mb-1">System Sales (All Levels)</p>
                 <div className="flex justify-between items-end">
                   <p className="text-[20px] font-black text-white">{data.totalSales?.toLocaleString() || 0} <span className="text-xs font-bold">USDT</span></p>
                   <TrendingUp className="text-white/40 w-5 h-5" />
@@ -329,7 +329,7 @@ export default function AdminUserProfilePage() {
 
           <Card className="rounded-[24px] border-gray-100 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-[18px] font-bold">Thông tin liên hệ</CardTitle>
+              <CardTitle className="text-[18px] font-bold">Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function AdminUserProfilePage() {
                   <Phone size={16} />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-[11px] text-gray-400 font-bold uppercase">Số điện thoại</p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase">Phone Number</p>
                   <p className="text-[14px] font-medium text-gray-700">{user.countryCode} {user.phone}</p>
                 </div>
               </div>
@@ -355,8 +355,8 @@ export default function AdminUserProfilePage() {
                   <Wallet size={16} />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-[11px] text-gray-400 font-bold uppercase">Ví Web3</p>
-                  <p className="text-[12px] font-mono font-medium text-gray-700 truncate">{user.walletAddress || "Chưa kết nối"}</p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase">Web3 Wallet</p>
+                  <p className="text-[12px] font-mono font-medium text-gray-700 truncate">{user.walletAddress || "Not connected"}</p>
                 </div>
               </div>
             </CardContent>
@@ -371,19 +371,19 @@ export default function AdminUserProfilePage() {
                 value="info" 
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
-                Thông tin
+                Information
               </TabsTrigger>
               <TabsTrigger 
                 value="transactions" 
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
-                Giao dịch
+                Transactions
               </TabsTrigger>
               <TabsTrigger 
                 value="commissions" 
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
-                Hoa hồng
+                Commissions
               </TabsTrigger>
               <TabsTrigger 
                 value="referrals" 
@@ -399,31 +399,31 @@ export default function AdminUserProfilePage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab: Thông tin bổ sung & Pledge History */}
+            {/* Tab: Information & Pledge History */}
             <TabsContent value="info" className="space-y-6 outline-none">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <Card className="rounded-[24px] border-gray-100 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                         <TrendingUp size={20} className="text-[#276152]" />
-                        Đợt mua hiện tại
+                        Current Funding Round
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                        <div className="flex justify-between items-end border-b border-gray-50 pb-4">
                           <div>
-                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Mục tiêu đăng ký</p>
+                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Registration Goal</p>
                              <p className="text-[22px] font-extrabold text-[#111827]">{user.pledgeUsdt?.toLocaleString()} USDT</p>
                           </div>
                           <div className="text-right">
-                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Đã thanh toán</p>
+                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Paid</p>
                              <p className="text-[22px] font-extrabold text-[#276152]">{user.paidUsdtPreRegister?.toLocaleString()} USDT</p>
                           </div>
                        </div>
 
                        <div className="space-y-2">
                           <div className="flex justify-between text-[13px] font-bold">
-                             <span className="text-gray-500">Tiến độ đợt hiện tại</span>
+                             <span className="text-gray-500">Current Round Progress</span>
                              <span className="text-[#276152]">
                                {user.pledgeUsdt > 0 ? Math.round((user.paidUsdtPreRegister / user.pledgeUsdt) * 100) : 0}%
                              </span>
@@ -438,7 +438,7 @@ export default function AdminUserProfilePage() {
                        
                        <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 bg-gray-50 p-3 rounded-[12px]">
                          <Clock size={16} />
-                         <span>Trạng thái: <strong>{user.isPledgeCompleted ? "Đã hoàn thành" : "Đang thực hiện"}</strong></span>
+                         <span>Status: <strong>{user.isPledgeCompleted ? "Completed" : "In Progress"}</strong></span>
                        </div>
                     </CardContent>
                  </Card>
@@ -447,52 +447,52 @@ export default function AdminUserProfilePage() {
                     <CardHeader>
                       <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                         <User size={20} className="text-[#276152]" />
-                        Chi tiết cá nhân
+                        Personal Details
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 gap-y-4">
                         <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Giới tính</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Gender</p>
                           <p className="text-[14px] font-medium text-gray-700">{user.gender || "—"}</p>
                         </div>
                         <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Ngày sinh</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Date of Birth</p>
                           <p className="text-[14px] font-medium text-gray-700">{user.birthday ? dayjs(user.birthday).format("DD/MM/YYYY") : "—"}</p>
                         </div>
                         <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Quốc tịch</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Nationality</p>
                           <div className="flex items-center gap-1.5">
                             <Flag size={14} className="text-gray-400" />
                             <p className="text-[14px] font-medium text-gray-700">{user.nation || "—"}</p>
                           </div>
                         </div>
                         <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Địa chỉ</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Address</p>
                           <div className="flex items-center gap-1.5">
                             <MapPin size={14} className="text-gray-400" />
                             <p className="text-[14px] font-medium text-gray-700 truncate max-w-[150px]">{user.address || "—"}</p>
                           </div>
                         </div>
                         <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Ngày đăng ký</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Registration Date</p>
                           <p className="text-[14px] font-medium text-gray-700">{dayjs(user.createdAt).format("DD/MM/YYYY")}</p>
                         </div>
                     </CardContent>
                  </Card>
               </div>
 
-              {/* Hồ sơ KYC */}
+              {/* KYC Profile */}
               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
                 <CardHeader>
                   <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                     <ShieldCheck size={20} className="text-[#276152]" />
-                    Hồ sơ KYC & Giấy tờ tùy thân
+                    KYC Profile & Identity Documents
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pb-8">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-3">
-                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Mặt trước CCCD/Passport</p>
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">ID Card/Passport Front</p>
                       <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
                         {user.idCardFront ? (
                           <>
@@ -509,14 +509,14 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
                             <ImageIcon size={32} strokeWidth={1} />
-                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                            <span className="text-xs font-medium">Not updated</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Mặt sau CCCD/Passport</p>
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">ID Card/Passport Back</p>
                       <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
                         {user.idCardBack ? (
                           <>
@@ -533,14 +533,14 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
                             <ImageIcon size={32} strokeWidth={1} />
-                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                            <span className="text-xs font-medium">Not updated</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Ảnh chân dung</p>
+                      <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wider ml-1">Portrait Photo</p>
                       <div className="group relative aspect-[3/2] rounded-[20px] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner">
                         {user.portraitPhoto ? (
                           <>
@@ -557,7 +557,7 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
                             <ImageIcon size={32} strokeWidth={1} />
-                            <span className="text-xs font-medium">Chưa cập nhật</span>
+                            <span className="text-xs font-medium">Not updated</span>
                           </div>
                         )}
                       </div>
@@ -566,27 +566,27 @@ export default function AdminUserProfilePage() {
                 </CardContent>
               </Card>
 
-              {/* Lịch sử các đợt mua */}
+              {/* Pre-registration History */}
               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                     <History size={20} className="text-[#276152]" />
-                    Lịch sử các đợt đăng ký mua sớm
+                    Pre-registration History
                   </CardTitle>
                   <Badge variant="outline" className="rounded-full bg-blue-50 text-blue-600 border-none font-bold">
-                    {user.pledgeRounds?.length || 0} Đợt
+                    {user.pledgeRounds?.length || 0} Rounds
                   </Badge>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
                     <TableHeader className="bg-gray-50/50">
                       <TableRow>
-                        <TableHead className="pl-6 font-bold">Đợt</TableHead>
-                        <TableHead className="font-bold">Ngày hoàn tất</TableHead>
-                        <TableHead className="font-bold text-right">Số tiền đăng ký</TableHead>
-                        <TableHead className="font-bold text-right">Đã thanh toán</TableHead>
+                        <TableHead className="pl-6 font-bold">Round</TableHead>
+                        <TableHead className="font-bold">Completed At</TableHead>
+                        <TableHead className="font-bold text-right">Pledged Amount</TableHead>
+                        <TableHead className="font-bold text-right">Paid</TableHead>
                         <TableHead className="font-bold text-center">Bonus</TableHead>
-                        <TableHead className="pr-6 font-bold text-right">Token nhận</TableHead>
+                        <TableHead className="pr-6 font-bold text-right">Tokens Received</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -610,7 +610,7 @@ export default function AdminUserProfilePage() {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="py-12 text-center text-gray-400">
-                             Chưa có lịch sử các đợt mua hoàn tất
+                             No completed rounds history
                           </TableCell>
                         </TableRow>
                       )}
@@ -620,25 +620,25 @@ export default function AdminUserProfilePage() {
               </Card>
             </TabsContent>
 
-            {/* Tab: Giao dịch */}
+            {/* Tab: Transactions */}
             <TabsContent value="transactions" className="outline-none">
                <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
                   <CardHeader>
                     <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                       <CreditCard size={20} className="text-[#276152]" />
-                      Lịch sử giao dịch (Gần đây nhất)
+                      Transaction History (Recent)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow>
-                          <TableHead className="pl-6 font-bold">Thời gian</TableHead>
-                          <TableHead className="font-bold">Loại</TableHead>
-                          <TableHead className="font-bold">Phương thức</TableHead>
-                          <TableHead className="font-bold text-right">Số tiền</TableHead>
-                          <TableHead className="font-bold">Mô tả</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Mã Hash</TableHead>
+                          <TableHead className="pl-6 font-bold">Time</TableHead>
+                          <TableHead className="font-bold">Type</TableHead>
+                          <TableHead className="font-bold">Method</TableHead>
+                          <TableHead className="font-bold text-right">Amount</TableHead>
+                          <TableHead className="font-bold">Description</TableHead>
+                          <TableHead className="pr-6 font-bold text-right">Hash</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -661,9 +661,9 @@ export default function AdminUserProfilePage() {
                               <TableCell>
                                 <span className="text-[10px] font-bold">
                                   {tx.metadata?.method === 'QR' ? (
-                                    <span className="text-purple-600">Mã QR</span>
+                                    <span className="text-purple-600">QR Code</span>
                                   ) : (
-                                    <span className="text-blue-600">Chuyển ví</span>
+                                    <span className="text-blue-600">Wallet Transfer</span>
                                   )}
                                 </span>
                               </TableCell>
@@ -685,7 +685,7 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               Chưa có dữ liệu giao dịch
+                               No transaction data
                             </TableCell>
                           </TableRow>
                         )}
@@ -695,24 +695,24 @@ export default function AdminUserProfilePage() {
                </Card>
             </TabsContent>
 
-            {/* Tab: Hoa hồng */}
+            {/* Tab: Commissions */}
             <TabsContent value="commissions" className="outline-none">
                <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
                   <CardHeader>
                     <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                       <TrendingUp size={20} className="text-[#276152]" />
-                      Hoa hồng nhận được
+                      Commissions Received
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow>
-                          <TableHead className="pl-6 font-bold">Thời gian</TableHead>
-                          <TableHead className="font-bold">Từ F</TableHead>
-                          <TableHead className="font-bold text-right">Doanh số</TableHead>
-                          <TableHead className="font-bold text-right">Hoa hồng</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Mô tả</TableHead>
+                          <TableHead className="pl-6 font-bold">Time</TableHead>
+                          <TableHead className="font-bold">From Referree</TableHead>
+                          <TableHead className="font-bold text-right">Sales</TableHead>
+                          <TableHead className="font-bold text-right">Commission</TableHead>
+                          <TableHead className="pr-6 font-bold text-right">Description</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -739,7 +739,7 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               Chưa nhận được hoa hồng nào
+                               No commissions received yet
                             </TableCell>
                           </TableRow>
                         )}
@@ -761,7 +761,7 @@ export default function AdminUserProfilePage() {
                             <Users size={28} />
                           </div>
                           <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Trực tiếp (F1)</p>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Direct (F1)</p>
                             <h3 className="text-2xl font-black text-[#111827]">{data.referrals?.length || 0}</h3>
                           </div>
                         </div>
@@ -775,7 +775,7 @@ export default function AdminUserProfilePage() {
                             <Network size={28} />
                           </div>
                           <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Toàn hệ thống</p>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Entire Network</p>
                             <h3 className="text-2xl font-black text-[#111827]">{data.totalNetwork || 0}</h3>
                           </div>
                         </div>
@@ -789,8 +789,8 @@ export default function AdminUserProfilePage() {
                             <TrendingUp size={28} />
                           </div>
                           <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Doanh số hệ thống</p>
-                            <h3 className="text-2xl font-black text-[#111827]">{data.totalSales?.toLocaleString()} <span className="text-sm font-bold">USDT</span></h3>
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">System Sales</p>
+                            <h3 className="text-2xl font-black text-[#111827]">{user.totalSales?.toLocaleString()} <span className="text-sm font-bold">USDT</span></h3>
                           </div>
                         </div>
                       </CardContent>
@@ -802,10 +802,10 @@ export default function AdminUserProfilePage() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                           <Users size={20} className="text-[#276152]" />
-                          Cây hệ thống giới thiệu
+                          Referral Network Tree
                         </CardTitle>
                         <Badge className="bg-[#276152] text-white border-none font-bold px-4 py-1.5 rounded-full">
-                          {data.totalNetwork || 0} thành viên
+                          {data.totalNetwork || 0} members
                         </Badge>
                       </div>
                     </CardHeader>
@@ -820,7 +820,7 @@ export default function AdminUserProfilePage() {
                              <div className="size-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-300">
                                 <Users size={40} />
                              </div>
-                             <p className="text-gray-400 font-medium italic">Người dùng này chưa giới thiệu ai</p>
+                             <p className="text-gray-400 font-medium italic">This user has not referred anyone yet</p>
                           </div>
                         )}
                       </div>
@@ -834,18 +834,18 @@ export default function AdminUserProfilePage() {
                   <CardHeader>
                     <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                       <Building2 size={20} className="text-amber-600" />
-                      Lịch sử phân phối AQE
+                      AQE Distribution History
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow>
-                          <TableHead className="pl-6 font-bold">Thời gian</TableHead>
-                          <TableHead className="font-bold">Loại</TableHead>
-                          <TableHead className="font-bold text-right">Số lượng</TableHead>
-                          <TableHead className="font-bold">Trạng thái</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Mô tả</TableHead>
+                          <TableHead className="pl-6 font-bold">Time</TableHead>
+                          <TableHead className="font-bold">Type</TableHead>
+                          <TableHead className="font-bold text-right">Quantity</TableHead>
+                          <TableHead className="font-bold">Status</TableHead>
+                          <TableHead className="pr-6 font-bold text-right">Description</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -875,7 +875,7 @@ export default function AdminUserProfilePage() {
                                   "text-[10px] font-bold border-none",
                                   bh.isOfficial ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
                                 )}>
-                                  {bh.isOfficial ? "Chính thức" : "Ghi nhận (Chờ release)"}
+                                  {bh.isOfficial ? "Official" : "Recorded (Pending release)"}
                                 </Badge>
                               </TableCell>
                               <TableCell className="pr-6 text-right text-sm text-gray-600">
@@ -886,7 +886,7 @@ export default function AdminUserProfilePage() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               Chưa có lịch sử phân phối AQE
+                               No AQE distribution history
                             </TableCell>
                           </TableRow>
                         )}
@@ -903,33 +903,33 @@ export default function AdminUserProfilePage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[700px] rounded-[24px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-2xl font-bold text-[#111827]">Chỉnh sửa người dùng</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-[#111827]">Edit User</DialogTitle>
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
             <div className="grid gap-6 py-4">
               {/* Basic Info */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Thông tin cá nhân</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Personal Information</h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Họ và Tên</label>
+                    <label className="text-sm font-bold text-gray-500">Full Name</label>
                     <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Ngày sinh</label>
+                    <label className="text-sm font-bold text-gray-500">Date of Birth</label>
                     <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({...editingUser, birthday: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Giới tính</label>
+                    <label className="text-sm font-bold text-gray-500">Gender</label>
                     <Select value={editingUser?.gender} onValueChange={(v) => setEditingUser({...editingUser, gender: v})}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Nam">Nam</SelectItem>
-                        <SelectItem value="Nữ">Nữ</SelectItem>
-                        <SelectItem value="Khác">Khác</SelectItem>
+                        <SelectItem value="Nam">Male</SelectItem>
+                        <SelectItem value="Nữ">Female</SelectItem>
+                        <SelectItem value="Khác">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -938,14 +938,14 @@ export default function AdminUserProfilePage() {
 
               {/* Contact & Address */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Liên hệ & Địa chỉ</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Contact & Address</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Email</label>
                     <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Số điện thoại</label>
+                    <label className="text-sm font-bold text-gray-500">Phone Number</label>
                     <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
@@ -954,23 +954,23 @@ export default function AdminUserProfilePage() {
                   <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({...editingUser, telegram: e.target.value})} className="h-11 rounded-[8px] border-gray-200" placeholder="@username" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Địa chỉ cụ thể</label>
+                  <label className="text-sm font-bold text-gray-500">Specific Address</label>
                   <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({...editingUser, address: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Quốc gia</label>
+                    <label className="text-sm font-bold text-gray-500">Country</label>
                     <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({...editingUser, nation: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Trạng thái KYC</label>
+                    <label className="text-sm font-bold text-gray-500">KYC Status</label>
                     <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({...editingUser, kycStatus: v})}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="unverified">Chưa KYC</SelectItem>
-                        <SelectItem value="pending">Chờ xác minh</SelectItem>
-                        <SelectItem value="verified">Đã xác minh</SelectItem>
-                        <SelectItem value="rejected">Từ chối (Yêu cầu làm lại)</SelectItem>
+                        <SelectItem value="unverified">Unverified</SelectItem>
+                        <SelectItem value="pending">Pending Verification</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="rejected">Rejected (Request resubmission)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -979,18 +979,18 @@ export default function AdminUserProfilePage() {
 
               {/* Finance */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Tài chính & Tài khoản</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Finance & Account</h4>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Địa chỉ ví (USDT BEP20)</label>
+                  <label className="text-sm font-bold text-gray-500">Wallet Address (USDT BEP20)</label>
                   <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Trạng thái hoạt động</label>
+                  <label className="text-sm font-bold text-gray-500">Account Status</label>
                   <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isActive: v === "true"})}>
                     <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Đã kích hoạt (Active)</SelectItem>
-                      <SelectItem value="false">Khóa tài khoản / Chưa kích hoạt</SelectItem>
+                      <SelectItem value="true">Activated (Active)</SelectItem>
+                      <SelectItem value="false">Account Locked / Not activated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -999,9 +999,9 @@ export default function AdminUserProfilePage() {
           </div>
           
           <DialogFooter className="p-6 pt-4 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Hủy</Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Cancel</Button>
             <Button onClick={handleUpdate} disabled={updating} className="bg-[#276152] rounded-[8px] px-8">
-              {updating ? <Loader2 className="animate-spin" /> : "Lưu thay đổi"}
+              {updating ? <Loader2 className="animate-spin" /> : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

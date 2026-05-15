@@ -30,49 +30,49 @@ const mainNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Người dùng",
+    title: "Users",
     href: "/admin/users",
     icon: Users,
     requiredPermission: "USERS_VIEW"
   },
   {
-    title: "Bất động sản",
+    title: "Properties",
     href: "/admin/properties",
     icon: Building2,
     requiredPermission: "PROPERTIES_VIEW"
   },
   {
-    title: "Giao dịch",
+    title: "Transactions",
     href: "/admin/transactions/payments",
     icon: HandCoins,
     requiredPermission: "TRANSACTIONS_VIEW"
   },
   {
-    title: "Hoa hồng",
+    title: "Commissions",
     href: "/admin/transactions/commissions",
     icon: BadgePercent,
     requiredPermission: "TRANSACTIONS_VIEW"
   },
   {
-    title: "Quản lý Rút tiền",
+    title: "Withdrawals",
     href: "/admin/withdrawals",
     icon: HandCoins,
     requiredPermission: "WITHDRAWALS_VIEW"
   },
   {
-    title: "Lịch sử kết nối ví",
+    title: "Wallet Connections",
     href: "/admin/wallet-connections",
     icon: Wallet,
     requiredPermission: "USERS_VIEW"
   },
   {
-    title: "Cài đặt Pool",
+    title: "Pool Settings",
     href: "/admin/token-settings",
     icon: Settings,
     requiredPermission: "SETTINGS_VIEW"
   },
   {
-    title: "Quản lý Admin",
+    title: "Admin Management",
     href: "/admin/accounts",
     icon: ShieldAlert,
     superOnly: true,
@@ -81,7 +81,7 @@ const mainNavItems: NavItem[] = [
 
 const bottomNavItems = [
   {
-    title: "Cài đặt cá nhân",
+    title: "Personal Settings",
     href: "/admin/settings",
     icon: Settings,
   },
@@ -170,7 +170,7 @@ export default function AdminSidebar() {
           className="w-full flex items-center gap-3 px-4 py-2.5 text-[#868f9e] hover:bg-red-50 hover:text-red-500 rounded-[12px] transition-all duration-200 font-semibold text-[16px] tracking-[0.48px]"
         >
           <LogOut className="w-[22px] h-[22px]" />
-          <span>Đăng xuất</span>
+          <span>Logout</span>
         </button>
       </div>
     </div>

@@ -80,7 +80,7 @@ export default function UserManagementPage() {
       setTotalPages(response.data.pages)
 
     } catch (err: any) {
-      toast.error("Không thể tải danh sách người dùng")
+      toast.error("Could not load user list")
     } finally {
       setLoading(false)
       setFetching(false)
@@ -116,14 +116,14 @@ export default function UserManagementPage() {
 
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này? Thao tác này sẽ cho phép người dùng đăng ký lại bằng email cũ.")) return
+    if (!window.confirm("Are you sure you want to delete this user? This will allow the user to register again with the same email.")) return
     
     try {
       await apiClient.delete(`/admin/users/${id}`)
-      toast.success("Xóa người dùng thành công")
+      toast.success("User deleted successfully")
       setUsers(users.filter(u => u._id !== id))
     } catch (err: any) {
-      toast.error("Xóa người dùng thất bại")
+      toast.error("Failed to delete user")
     }
   }
 
@@ -131,11 +131,11 @@ export default function UserManagementPage() {
     if (!editingUser) return
     try {
       await apiClient.put(`/admin/users/${editingUser._id}`, editingUser)
-      toast.success("Cập nhật thành công")
+      toast.success("Updated successfully")
       setIsEditDialogOpen(false)
       fetchUsers()
     } catch (err: any) {
-      toast.error("Cập nhật thất bại")
+      toast.error("Update failed")
     }
   }
 
@@ -148,39 +148,36 @@ export default function UserManagementPage() {
   }
 
   return (
-
-    <div className="space-y-12 max-w-[1400px] mx-auto pb-10">
-      {/* Stats Section */}
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-10">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[rgba(239,239,239,0.5)] border-[#276152] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Tổng người dùng</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Total Users</p>
           <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.total.toLocaleString()}</p>
         </div>
         <div className="bg-[rgba(239,239,239,0.5)] border-[#16a34a] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Đã xác minh KYC</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">KYC Verified</p>
           <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.verified.toLocaleString()}</p>
         </div>
         <div className="bg-[rgba(239,239,239,0.5)] border-[#d97706] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Chờ xác minh</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Pending Verification</p>
           <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.pending.toLocaleString()}</p>
         </div>
         <div className="bg-[rgba(239,239,239,0.5)] border-[#ef4444] border-l-4 p-5 rounded-r-[16px] flex flex-col justify-center h-[109px]">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Chưa hoạt động</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#636d7d] tracking-[0.48px] mb-2">Inactive</p>
           <p className="font-['SVN-Gilroy:Bold',sans-serif] text-[36px] text-[#0d1f1d] leading-tight tracking-[1.08px]">{stats.locked.toLocaleString()}</p>
         </div>
-
       </div>
 
       <div className="space-y-4">
         {/* Filter Area */}
         <div className="flex justify-between items-center">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">Danh sách thành viên</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">User List</p>
           <div className="flex gap-3">
             <div className="relative w-[320px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input 
                 type="text"
-                placeholder="Tìm kiếm người dùng..." 
+                placeholder="Search users..." 
                 className="w-full pl-10 pr-4 py-2.5 border border-[#d5d7db] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -188,12 +185,12 @@ export default function UserManagementPage() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px] bg-[rgba(239,239,239,0.5)] border-none h-[44px] rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-[12px] border-none shadow-lg">
-                <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">Tất cả</SelectItem>
-                <SelectItem value="active" className="font-['SVN-Gilroy:Medium',sans-serif]">Đang hoạt động</SelectItem>
-                <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Chưa hoạt động</SelectItem>
+                <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">All</SelectItem>
+                <SelectItem value="active" className="font-['SVN-Gilroy:Medium',sans-serif]">Active</SelectItem>
+                <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -205,14 +202,14 @@ export default function UserManagementPage() {
           <Table>
             <TableHeader className="bg-[#d9ede8]">
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Người dùng</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">User</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Email</TableHead>
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Thời gian đăng ký</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Registration Date</TableHead>
 
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Số dư</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Balance</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">KYC</TableHead>
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Trạng thái</TableHead>
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px] text-center">Thao tác</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Status</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,20 +243,20 @@ export default function UserManagementPage() {
                       <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Level 2</span>
                     )}
                     {user.kycStatus === 'pending' && (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#d97706] tracking-[0.48px]">Chờ duyệt</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#d97706] tracking-[0.48px]">Pending</span>
                     )}
                     {user.kycStatus === 'unverified' && (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-gray-400 tracking-[0.48px]">Chưa xác minh</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-gray-400 tracking-[0.48px]">Unverified</span>
                     )}
                     {user.kycStatus === 'rejected' && (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-red-400 tracking-[0.48px]">Bị từ chối</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-red-400 tracking-[0.48px]">Rejected</span>
                     )}
                   </TableCell>
                   <TableCell className="py-4 px-4">
                     {user.isActive ? (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Đang hoạt động</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Active</span>
                     ) : (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#ef4444] tracking-[0.48px]">Chưa hoạt động</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#ef4444] tracking-[0.48px]">Inactive</span>
                     )}
                   </TableCell>
 
@@ -305,7 +302,7 @@ export default function UserManagementPage() {
           {users.length === 0 && (
             <div className="py-20 text-center space-y-4">
               <Search className="w-12 h-12 text-gray-200 mx-auto" />
-              <p className="text-gray-400 font-medium">Không tìm thấy người dùng nào phù hợp với từ khóa.</p>
+              <p className="text-gray-400 font-medium">No users found matching the search criteria.</p>
             </div>
           )}
         </div>
@@ -331,32 +328,32 @@ export default function UserManagementPage() {
           }}
         >
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-2xl font-bold text-[#111827]">Chỉnh sửa người dùng</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-[#111827]">Edit User</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
             <div className="grid gap-6 py-4">
               {/* Basic Info */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Thông tin cá nhân</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Personal Information</h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Họ và Tên</label>
+                    <label className="text-sm font-bold text-gray-500">Full Name</label>
                     <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Ngày sinh</label>
+                    <label className="text-sm font-bold text-gray-500">Birthday</label>
                     <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({...editingUser, birthday: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Giới tính</label>
+                    <label className="text-sm font-bold text-gray-500">Gender</label>
                     <Select value={editingUser?.gender} onValueChange={(v) => setEditingUser({...editingUser, gender: v})}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Nam">Nam</SelectItem>
-                        <SelectItem value="Nữ">Nữ</SelectItem>
-                        <SelectItem value="Khác">Khác</SelectItem>
+                        <SelectItem value="Nam">Male</SelectItem>
+                        <SelectItem value="Nữ">Female</SelectItem>
+                        <SelectItem value="Khác">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -365,14 +362,14 @@ export default function UserManagementPage() {
 
               {/* Contact & Address */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Liên hệ & Địa chỉ</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Contact & Address</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Email</label>
                     <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Số điện thoại</label>
+                    <label className="text-sm font-bold text-gray-500">Phone Number</label>
                     <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
@@ -381,23 +378,23 @@ export default function UserManagementPage() {
                   <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({...editingUser, telegram: e.target.value})} className="h-11 rounded-[8px] border-gray-200" placeholder="@username" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Địa chỉ cụ thể</label>
+                  <label className="text-sm font-bold text-gray-500">Specific Address</label>
                   <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({...editingUser, address: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Quốc gia</label>
+                    <label className="text-sm font-bold text-gray-500">Country</label>
                     <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({...editingUser, nation: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Trạng thái KYC</label>
+                    <label className="text-sm font-bold text-gray-500">KYC Status</label>
                     <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({...editingUser, kycStatus: v})}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="unverified">Chưa KYC</SelectItem>
-                        <SelectItem value="pending">Chờ xác minh</SelectItem>
-                        <SelectItem value="verified">Đã xác minh</SelectItem>
-                        <SelectItem value="rejected">Từ chối (Yêu cầu làm lại)</SelectItem>
+                        <SelectItem value="unverified">Not Verified</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="rejected">Rejected (Request resubmission)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -406,10 +403,10 @@ export default function UserManagementPage() {
 
               {/* KYC Images */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Hình ảnh KYC</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">KYC Images</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Mặt trước ID</label>
+                    <label className="text-sm font-bold text-gray-500">Front ID</label>
                     <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
                       {editingUser?.idCardFront ? (
                         <img 
@@ -419,12 +416,12 @@ export default function UserManagementPage() {
                           onClick={() => setPreviewImage(getImageUrl(editingUser.idCardFront))}
                         />
                       ) : (
-                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                        <span className="text-xs text-gray-400">Not updated</span>
                       )}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Mặt sau ID</label>
+                    <label className="text-sm font-bold text-gray-500">Back ID</label>
                     <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
                       {editingUser?.idCardBack ? (
                         <img 
@@ -434,12 +431,12 @@ export default function UserManagementPage() {
                           onClick={() => setPreviewImage(getImageUrl(editingUser.idCardBack))}
                         />
                       ) : (
-                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                        <span className="text-xs text-gray-400">Not updated</span>
                       )}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-500">Ảnh chân dung</label>
+                    <label className="text-sm font-bold text-gray-500">Portrait Photo</label>
                     <div className="border border-gray-200 rounded-[8px] h-32 flex items-center justify-center overflow-hidden bg-gray-50">
                       {editingUser?.portraitPhoto ? (
                         <img 
@@ -449,7 +446,7 @@ export default function UserManagementPage() {
                           onClick={() => setPreviewImage(getImageUrl(editingUser.portraitPhoto))}
                         />
                       ) : (
-                        <span className="text-xs text-gray-400">Chưa cập nhật</span>
+                        <span className="text-xs text-gray-400">Not updated</span>
                       )}
                     </div>
                   </div>
@@ -458,18 +455,18 @@ export default function UserManagementPage() {
 
               {/* Finance */}
               <div className="space-y-4">
-                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Tài chính</h4>
+                <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Finance</h4>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Địa chỉ ví (USDT BEP20)</label>
+                  <label className="text-sm font-bold text-gray-500">Wallet Address (USDT BEP20)</label>
                   <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Trạng thái hoạt động</label>
+                  <label className="text-sm font-bold text-gray-500">Active Status</label>
                   <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isActive: v === "true"})}>
                     <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Đã kích hoạt (Active)</SelectItem>
-                      <SelectItem value="false">Khóa tài khoản / Chưa kích hoạt</SelectItem>
+                      <SelectItem value="true">Activated (Active)</SelectItem>
+                      <SelectItem value="false">Account Locked / Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -477,8 +474,8 @@ export default function UserManagementPage() {
             </div>
           </div>
           <DialogFooter className="p-6 pt-4 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Hủy</Button>
-            <Button onClick={handleUpdate} className="bg-[#276152] rounded-[8px] px-8">Lưu tất cả thay đổi</Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Cancel</Button>
+            <Button onClick={handleUpdate} className="bg-[#276152] rounded-[8px] px-8">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

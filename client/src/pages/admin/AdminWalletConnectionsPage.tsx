@@ -45,7 +45,7 @@ export default function AdminWalletConnectionsPage() {
       setTotalPages(response.data.pages)
       setTotalItems(response.data.total)
     } catch (err: any) {
-      toast.error("Không thể tải lịch sử kết nối ví")
+      toast.error("Could not load wallet connection history")
     } finally {
       setLoading(false)
       setFetching(false)
@@ -90,13 +90,13 @@ export default function AdminWalletConnectionsPage() {
       <div className="space-y-4">
         {/* Filter Area */}
         <div className="flex justify-between items-center">
-          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">Danh sách kết nối</p>
+          <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">Connection List</p>
           <div className="flex gap-3">
             <div className="relative w-[320px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input 
                 type="text"
-                placeholder="Tìm kiếm người dùng..." 
+                placeholder="Search users..." 
                 className="w-full pl-10 pr-4 py-2.5 border border-[#d5d7db] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -110,10 +110,10 @@ export default function AdminWalletConnectionsPage() {
           <Table>
             <TableHeader className="bg-[#d9ede8]">
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Thời gian</TableHead>
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Người dùng</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Time</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">User</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Email</TableHead>
-                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Địa chỉ ví</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Wallet Address</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,7 +169,7 @@ export default function AdminWalletConnectionsPage() {
           {connections.length === 0 && (
             <div className="py-20 text-center space-y-4">
               <Search className="w-12 h-12 text-gray-200 mx-auto" />
-              <p className="text-gray-400 font-medium">Không tìm thấy lịch sử kết nối ví nào phù hợp với từ khóa.</p>
+              <p className="text-gray-400 font-medium">No wallet connection history found matching the search criteria.</p>
             </div>
           )}
         </div>

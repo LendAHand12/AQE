@@ -55,7 +55,7 @@ export default function AddPropertyPage() {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files)
       if (images.length + filesArray.length > 10) {
-        toast.error("Tối đa 10 ảnh")
+        toast.error("Maximum 10 images")
         return
       }
       
@@ -104,10 +104,10 @@ export default function AddPropertyPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
 
-      toast.success("Thêm dự án thành công")
+      toast.success("Project added successfully")
       navigate('/admin/properties')
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Không thể thêm dự án")
+      toast.error(err.response?.data?.message || "Could not add project")
     } finally {
       setLoading(false)
     }
@@ -126,10 +126,10 @@ export default function AddPropertyPage() {
           >
             <CaretLeft className="w-6 h-6" />
           </Button>
-          <h2 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[24px] text-[#276152]">Thêm dự án mới</h2>
+          <h2 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[24px] text-[#276152]">Add New Project</h2>
         </div>
         <p className="font-['SVN-Gilroy:Regular',sans-serif] text-[16px] text-[#636d7d] ml-12">
-          Điền đầy đủ thông tin để tạo dự án bất động sản mới
+          Fill in all the information to create a new real estate project
         </p>
       </div>
 
@@ -137,8 +137,8 @@ export default function AddPropertyPage() {
         {/* Images Section */}
         <div className="bg-white border border-[#e5e7ea] p-6 rounded-[16px] space-y-6">
           <div className="flex flex-col gap-1">
-            <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Hình ảnh dự án</h3>
-            <p className="text-[14px] text-[#636d7d]">Tối đa 10 ảnh · Ảnh đầu tiên là ảnh bìa chính</p>
+            <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Project Images</h3>
+            <p className="text-[14px] text-[#636d7d]">Maximum 10 images · The first image is the main cover image</p>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -154,7 +154,7 @@ export default function AddPropertyPage() {
                 </button>
                 {index === 0 && (
                   <div className="absolute bottom-0 left-0 right-0 bg-[#276152]/80 text-white text-[10px] text-center py-1 font-bold">
-                    ẢNH BÌA
+                    COVER IMAGE
                   </div>
                 )}
               </div>
@@ -164,7 +164,7 @@ export default function AddPropertyPage() {
               <label className="aspect-video border-2 border-dashed border-[#d5d7db] rounded-[12px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 transition-colors">
                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                 <UploadCloud className="w-6 h-6 text-[#868f9e]" />
-                <span className="text-[14px] text-[#868f9e]">Thêm ảnh ({images.length}/10)</span>
+                <span className="text-[14px] text-[#868f9e]">Add images ({images.length}/10)</span>
               </label>
             )}
           </div>
@@ -172,11 +172,11 @@ export default function AddPropertyPage() {
 
         {/* Basic Info Section */}
         <div className="bg-white border border-[#e5e7ea] p-6 rounded-[16px] space-y-8">
-          <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Thông tin cơ bản</h3>
+          <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Basic Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Tên dự án *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Project Name *</Label>
               <Input 
                 required
                 placeholder="VD: AQE Tower Suite 12"
@@ -186,10 +186,10 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Địa chỉ *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Address *</Label>
               <Input 
                 required
-                placeholder="VD: Quận 1, TP.HCM"
+                placeholder="e.g. District 1, HCM City"
                 className="h-[44px] rounded-[8px] border-[#9ca3af]"
                 value={formData.address}
                 onChange={e => setFormData({...formData, address: e.target.value})}
@@ -199,7 +199,7 @@ export default function AddPropertyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Tổng số tiền gọi vốn (USDT) *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Total Funding Amount (USDT) *</Label>
               <Input 
                 required
                 type="number"
@@ -210,7 +210,7 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Giá 1 Token (USDT) *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Price per Token (USDT) *</Label>
               <Input 
                 required
                 type="number"
@@ -222,7 +222,7 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Đầu tư tối thiểu (USDT) *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Minimum Investment (USDT) *</Label>
               <Input 
                 required
                 type="number"
@@ -236,7 +236,7 @@ export default function AddPropertyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">APY dự kiến (%) *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Expected APY (%) *</Label>
               <Input 
                 required
                 type="number"
@@ -247,21 +247,21 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Trạng thái dự án</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Project Status</Label>
               <Select value={formData.status} onValueChange={val => setFormData({...formData, status: val})}>
                 <SelectTrigger className="h-[44px] rounded-[8px] border-[#9ca3af]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="presales">Pre-sales</SelectItem>
-                  <SelectItem value="funding">Đang huy động vốn</SelectItem>
-                  <SelectItem value="completed">Hoàn thành</SelectItem>
-                  <SelectItem value="paused">Tạm dừng</SelectItem>
+                  <SelectItem value="funding">Funding</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Thời hạn (Tháng) *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Duration (Months) *</Label>
               <Input 
                 required
                 type="number"
@@ -275,7 +275,7 @@ export default function AddPropertyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Ngày mở bán *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Sales Start Date *</Label>
               <Input 
                 required
                 type="date"
@@ -285,7 +285,7 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Đóng huy động vốn *</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Funding Close Date *</Label>
               <Input 
                 required
                 type="date"
@@ -297,10 +297,10 @@ export default function AddPropertyPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#0d1f1d] text-[16px] font-semibold">Mô tả chi tiết *</Label>
+            <Label className="text-[#0d1f1d] text-[16px] font-semibold">Detailed Description *</Label>
             <Textarea 
               required
-              placeholder="Nhập mô tả: vị trí, tiện ích, pháp lý, cơ hội đầu tư, tiềm năng sinh lời..."
+              placeholder="Enter description: location, amenities, legal, investment opportunities, potential returns..."
               className="min-h-[120px] rounded-[8px] border-[#9ca3af]"
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
@@ -310,11 +310,11 @@ export default function AddPropertyPage() {
 
         {/* Financial & Legal Section */}
         <div className="bg-white border border-[#e5e7ea] p-6 rounded-[16px] space-y-8">
-          <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Chi tiết tài chính & Pháp lý</h3>
+          <h3 className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152]">Financial & Legal Details</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">ROI hàng năm (%)</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Annual ROI (%)</Label>
               <Input 
                 type="number"
                 placeholder="0"
@@ -324,7 +324,7 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Tăng giá kỳ vọng (%)</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Expected Appreciation (%)</Label>
               <Input 
                 type="number"
                 placeholder="0"
@@ -337,7 +337,7 @@ export default function AddPropertyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Phí quản lý (%)</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Management Fee (%)</Label>
               <Input 
                 type="number"
                 placeholder="0"
@@ -347,9 +347,9 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Loại hình bất động sản</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Property Type</Label>
               <Input 
-                placeholder="VD: Căn hộ / Biệt thự..."
+                placeholder="e.g. Apartment / Villa..."
                 className="h-[44px] rounded-[8px] border-[#9ca3af]"
                 value={formData.propertyType}
                 onChange={e => setFormData({...formData, propertyType: e.target.value})}
@@ -359,7 +359,7 @@ export default function AddPropertyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Số đăng ký pháp lý</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Legal Registration Number</Label>
               <Input 
                 placeholder="VD: GP-0001/2025/BXD"
                 className="h-[44px] rounded-[8px] border-[#9ca3af]"
@@ -368,7 +368,7 @@ export default function AddPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Đơn vị quản lý</Label>
+              <Label className="text-[#0d1f1d] text-[16px] font-semibold">Management Unit</Label>
               <Input 
                 placeholder="VD: AQE Property Management"
                 className="h-[44px] rounded-[8px] border-[#9ca3af]"
@@ -383,9 +383,9 @@ export default function AddPropertyPage() {
         <div className="bg-[#e1f1ee]/50 p-6 rounded-[16px] space-y-8">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <h3 className="font-['SVN-Gilroy:Bold',sans-serif] text-[24px] text-[#276152]">Kích hoạt Pre-sales - Đăng ký sớm</h3>
+              <h3 className="font-['SVN-Gilroy:Bold',sans-serif] text-[24px] text-[#276152]">Enable Pre-sales - Early Registration</h3>
               <p className="text-[16px] text-[#0d1f1d]">
-                Nhà đầu tư <strong>đặt cọc 30%</strong> trước mở bán | <strong>Thanh toán đủ</strong> → +10% token bonus | <strong>Không đủ</strong> → token = tiền cọc.
+                Investors **deposit 30%** before opening | <strong>Full payment</strong> → +10% token bonus | <strong>Insufficient</strong> → token = deposit amount.
               </p>
             </div>
             <Switch 
@@ -398,7 +398,7 @@ export default function AddPropertyPage() {
           {formData.preSalesActive && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Ngày mở Pre-sales</Label>
+                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Pre-sales Opening Date</Label>
                 <Input 
                   type="date"
                   className="h-[44px] rounded-[8px] border-white bg-white"
@@ -407,17 +407,17 @@ export default function AddPropertyPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Slot giới hạn</Label>
+                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Limited Slots</Label>
                 <Input 
                   type="number"
-                  placeholder="VD: 500 người"
+                  placeholder="e.g. 500 people"
                   className="h-[44px] rounded-[8px] border-white bg-white"
                   value={formData.preSalesSlots}
                   onChange={e => setFormData({...formData, preSalesSlots: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Bonus token (%)</Label>
+                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Bonus tokens (%)</Label>
                 <Input 
                   type="number"
                   placeholder="10"
@@ -427,7 +427,7 @@ export default function AddPropertyPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Hạn thanh toán cọc</Label>
+                <Label className="text-[#0d1f1d] text-[16px] font-semibold">Deposit Payment Deadline</Label>
                 <Input 
                   type="date"
                   className="h-[44px] rounded-[8px] border-white bg-white"
@@ -447,7 +447,7 @@ export default function AddPropertyPage() {
             onClick={() => navigate(-1)}
             className="h-[48px] px-8 rounded-[12px] border-[#276152] text-[#276152] hover:bg-[#d9ede8]"
           >
-            Hủy bỏ
+            Cancel
           </Button>
           <Button 
             type="submit"
@@ -455,7 +455,7 @@ export default function AddPropertyPage() {
             className="h-[48px] px-12 rounded-[12px] bg-[#276152] hover:bg-[#1e4a3f] text-white"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-            Tạo dự án
+            Create Project
           </Button>
         </div>
       </form>
