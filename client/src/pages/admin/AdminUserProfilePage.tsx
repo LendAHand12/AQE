@@ -186,6 +186,15 @@ export default function AdminUserProfilePage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
+
+  // Manual Deposit state
+  const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false)
+  const [depositData, setDepositData] = useState<any>({
+    pledgeAmount: "",
+    paidAmount: "",
+    hash: ""
+  })
+  const [depositing, setDepositing] = useState(false)
   
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -218,6 +227,25 @@ export default function AdminUserProfilePage() {
       toast.error(err.response?.data?.message || "Could not update information")
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleManualDeposit = async () => {
+    if (!depositData.paidAmount || !depositData.hash) {
+      toast.error("Please fill in all required fields (Amount and Hash)")
+      return
+    }
+    setDepositing(true)
+    try {
+      await apiClient.post(`/admin/users/${id}/manual-deposit`, depositData)
+      toast.success("Manual deposit processed successfully")
+      setIsDepositDialogOpen(false)
+      fetchUserDetails()
+      setDepositData({ pledgeAmount: "", paidAmount: "", hash: "" })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not process manual deposit")
+    } finally {
+      setDepositing(false)
     }
   }
 
@@ -266,6 +294,19 @@ export default function AdminUserProfilePage() {
            )}>
              {user.isActive ? "Active" : "Locked"}
            </Badge>
+           <Button 
+             className="h-11 bg-amber-600 hover:bg-amber-700 rounded-full px-6 font-bold shadow-lg shadow-amber-600/10"
+             onClick={() => {
+               setDepositData({
+                 pledgeAmount: (user.pledgeUsdt || 0).toString(),
+                 paidAmount: "",
+                 hash: ""
+               })
+               setIsDepositDialogOpen(true)
+             }}
+           >
+             Manual Deposit
+           </Button>
            <Button 
              className="h-11 bg-[#276152] hover:bg-[#1e4d41] rounded-full px-8 font-bold shadow-lg shadow-[#276152]/10"
              onClick={() => {
@@ -649,14 +690,21 @@ export default function AdminUserProfilePage() {
                                 {dayjs(tx.createdAt).format("DD/MM/YYYY HH:mm")}
                               </TableCell>
                               <TableCell>
-                                <Badge className={cn(
-                                  "rounded-full text-[10px] font-bold border-none",
-                                  tx.type === 'PAYMENT' ? "bg-emerald-100 text-emerald-700" :
-                                  tx.type === 'DEPOSIT' ? "bg-blue-100 text-blue-700" :
-                                  tx.type === 'WITHDRAW' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
-                                )}>
-                                  {tx.type}
-                                </Badge>
+                                <div className="flex flex-col gap-1">
+                                  <Badge className={cn(
+                                    "w-fit rounded-full text-[10px] font-bold border-none",
+                                    tx.type === 'PAYMENT' ? "bg-emerald-100 text-emerald-700" :
+                                    tx.type === 'DEPOSIT' ? "bg-blue-100 text-blue-700" :
+                                    tx.type === 'WITHDRAW' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
+                                  )}>
+                                    {tx.type}
+                                  </Badge>
+                                  {tx.metadata?.isManual && (
+                                    <Badge className="w-fit bg-amber-100 text-amber-700 border-none text-[9px] font-black uppercase">
+                                      Manual
+                                    </Badge>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell>
                                 <span className="text-[10px] font-bold">
@@ -1006,6 +1054,54 @@ export default function AdminUserProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+ 
+      {/* Manual Deposit Dialog */}
+      <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-[24px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#111827]">Manual Deposit</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-500">Pledge Amount (USDT)</label>
+              <Input 
+                type="number" 
+                value={depositData.pledgeAmount} 
+                onChange={(e) => setDepositData({...depositData, pledgeAmount: e.target.value})} 
+                placeholder="Target registration amount"
+                className="h-11 rounded-[8px] border-gray-200"
+              />
+              <p className="text-[11px] text-gray-400 italic">This will set or update the user's registration goal.</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-500">Paid Amount (USDT) *</label>
+              <Input 
+                type="number" 
+                value={depositData.paidAmount} 
+                onChange={(e) => setDepositData({...depositData, paidAmount: e.target.value})} 
+                placeholder="Actual amount paid by user"
+                className="h-11 rounded-[8px] border-gray-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-500">Transaction Hash *</label>
+              <Input 
+                value={depositData.hash} 
+                onChange={(e) => setDepositData({...depositData, hash: e.target.value})} 
+                placeholder="Blockchain transaction hash"
+                className="h-11 rounded-[8px] border-gray-200 font-mono text-xs"
+              />
+            </div>
+          </div>
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setIsDepositDialogOpen(false)} className="rounded-[8px]">Cancel</Button>
+            <Button onClick={handleManualDeposit} disabled={depositing} className="bg-amber-600 hover:bg-amber-700 rounded-[8px] px-8 font-bold">
+              {depositing ? <Loader2 className="animate-spin" /> : "Confirm Deposit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Image Preview Overlay */}
       {previewImage && (

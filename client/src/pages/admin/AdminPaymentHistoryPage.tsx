@@ -180,15 +180,23 @@ export default function AdminPaymentHistoryPage() {
                   {tx.paymentId || "N/A"}
                 </TableCell>
                 <TableCell>
-                  <Badge className={cn(
-                    "rounded-full font-bold border-none",
-                    tx.type === 'DEPOSIT' ? "bg-blue-100 text-blue-700" : 
-                    tx.type === 'WITHDRAW' ? "bg-amber-100 text-amber-700" :
-                    tx.type === 'BUY' ? "bg-emerald-100 text-emerald-800" :
-                    "bg-gray-100 text-gray-700"
-                  )}>
-                    {tx.type}
-                  </Badge>
+                  <div className="flex flex-col gap-1">
+                    <Badge className={cn(
+                      "w-fit rounded-full font-bold border-none",
+                      tx.type === 'DEPOSIT' ? "bg-blue-100 text-blue-700" : 
+                      tx.type === 'WITHDRAW' ? "bg-amber-100 text-amber-700" :
+                      tx.type === 'BUY' ? "bg-emerald-100 text-emerald-800" :
+                      tx.type === 'PAYMENT' ? "bg-emerald-100 text-emerald-700" :
+                      "bg-gray-100 text-gray-700"
+                    )}>
+                      {tx.type}
+                    </Badge>
+                    {tx.metadata?.isManual && (
+                      <Badge className="w-fit bg-amber-100 text-amber-700 border-none text-[9px] font-black uppercase">
+                        Manual
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <span className="text-xs font-bold text-gray-500">

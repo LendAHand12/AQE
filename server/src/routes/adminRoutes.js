@@ -16,7 +16,8 @@ import {
     createSubadmin,
     updateSubadmin,
     deleteAdminAccount,
-    getWalletConnections
+    getWalletConnections,
+    manualDepositUser
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
@@ -56,6 +57,7 @@ router.route('/users/:id')
     .delete(adminProtect, deleteUser);
 
 router.get('/users/:id/referrals', adminProtect, getDirectReferrals);
+router.post('/users/:id/manual-deposit', adminProtect, manualDepositUser);
 
 router.route('/token-settings')
     .get(adminProtect, getExplorerStats)

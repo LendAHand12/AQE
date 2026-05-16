@@ -14,6 +14,7 @@ import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
+import { manualDepositFinalization } from '../services/paymentService.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -852,4 +853,47 @@ export const getWalletConnections = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Admin manual deposit for user
+// @route   POST /api/admin/users/:id/manual-deposit
+export const manualDepositUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { pledgeAmount, paidAmount, hash } = req.body;
+
+        if (!paidAmount || !hash) {
+            return res.status(400).json({ message: 'Missing paidAmount or hash' });
+        }
+
+        // Check for duplicate hash
+        const existingTx = await Transaction.findOne({ hash });
+        if (existingTx) {
+            return res.status(400).json({ message: 'Transaction hash already exists in the system' });
+        }
+
+        const result = await manualDepositFinalization(
+            userId,
+            Number(pledgeAmount),
+            Number(paidAmount),
+            hash,
+            req.admin.username
+        );
+
+        // Log Admin Action
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'MANUAL_DEPOSIT',
+            target: userId,
+            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}`,
+            ipAddress: req.ip
+        });
+
+        res.json({ message: 'Manual deposit processed successfully', result });
+    } catch (error) {
+        console.error('[AdminManualDeposit] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 

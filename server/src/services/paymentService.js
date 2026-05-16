@@ -275,3 +275,134 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         console.error('[Blockchain] Error finalizing payment:', error);
     }
 };
+
+/**
+ * Process a manual deposit by Admin
+ */
+export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount, hash, adminUsername) => {
+    console.log('[Manual Deposit] Processing for user:', adminUsername);
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    const nowVN = getVietnamTime();
+    const may31VN = new Date('2026-05-31T23:59:59+07:00');
+    const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+
+    let price = 1.0;
+    if (nowVN >= julyFirstVN) {
+        const stats = await TokenState.findOne({ symbol: 'AQE' });
+        price = stats ? stats.currentPrice : 1.0;
+    }
+
+    const tokensCalculated = paidAmount / price;
+    const isLivePhase = nowVN >= julyFirstVN;
+
+    // 1. Update Pledge if changed or new round
+    if (pledgeAmount > 0 && (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted)) {
+        if (user.isPledgeCompleted) {
+            user.pledgeRounds.push({
+                roundNumber: user.pledgeRounds.length + 1,
+                pledgeUsdt: user.pledgeUsdt,
+                paidUsdt: user.paidUsdtPreRegister,
+                tokensReceived: user.preRegisterTokens,
+                bonusPercent: 0,
+                completedAt: new Date()
+            });
+            user.paidUsdtPreRegister = 0;
+            user.preRegisterTokens = 0;
+            user.isPledgeCompleted = false;
+        }
+        user.pledgeUsdt = pledgeAmount;
+    }
+
+    // 2. Create Transaction Record
+    const transaction = await Transaction.create({
+        hash,
+        from: user._id,
+        to: 'System',
+        amount: paidAmount,
+        symbol: 'USDT',
+        type: 'PAYMENT',
+        status: 'SUCCESS',
+        description: `Manual Deposit by Admin (${adminUsername})`,
+        metadata: {
+            isManual: true,
+            admin: adminUsername
+        }
+    });
+
+    // 3. Log Balance History
+    await BalanceHistory.create({
+        userId: user._id,
+        amount: tokensCalculated,
+        symbol: 'AQE',
+        type: 'RECEIVE',
+        status: 'SUCCESS',
+        isOfficial: isLivePhase ? true : false,
+        balanceBefore: user.aqeBalance + user.preRegisterTokens,
+        balanceAfter: user.aqeBalance + user.preRegisterTokens + tokensCalculated,
+        description: `Manual Deposit Approved by ${adminUsername}`
+    });
+
+    // 4. Update User Profile
+    user.paidUsdtPreRegister += paidAmount;
+    user.preRegisterTokens += tokensCalculated;
+
+    // 5. Handle Pledge Completion
+    if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
+        user.isPledgeCompleted = true;
+        
+        let bonusPercent = 0;
+        if (nowVN <= may31VN) bonusPercent = 0.10;
+        else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+
+        const bonusTokens = user.preRegisterTokens * bonusPercent;
+        const totalTokens = user.preRegisterTokens + bonusTokens;
+        
+        user.aqeBalance += totalTokens;
+        user.preRegisterTokens = 0;
+        user.hasReceivedPromotion = true;
+
+        if (bonusTokens > 0) {
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: bonusTokens,
+                symbol: 'AQE',
+                type: 'REWARD',
+                status: 'SUCCESS',
+                isOfficial: true,
+                balanceBefore: user.aqeBalance - bonusTokens,
+                balanceAfter: user.aqeBalance,
+                description: `Bonus ${bonusPercent * 100}% for completing pledge (Manual Deposit)`
+            });
+        }
+    }
+
+    if (isLivePhase) {
+        user.aqeBalance += tokensCalculated;
+    }
+
+    await user.save();
+
+    // 6. Process Commissions
+    await processCommissions(user, paidAmount);
+
+    // 7. Notify User
+    const title = 'Deposit Confirmed';
+    await Notification.create({
+        userId: user._id,
+        title,
+        message: `Your manual deposit of ${paidAmount} USDT has been confirmed by Admin. You received ${tokensCalculated.toFixed(2)} AQE tokens.`,
+        type: 'PAYMENT'
+    });
+
+    emitNotification(user._id, {
+        title: 'notifications.payment_approved_title',
+        message: 'notifications.payment_approved_msg',
+        messageParams: { amount: paidAmount, paymentId: 'Manual' },
+        type: 'PAYMENT'
+    });
+
+    return { success: true, transactionId: transaction._id };
+};
+
