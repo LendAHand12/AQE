@@ -36,9 +36,25 @@ import {
     deleteProperty 
 } from '../controllers/propertyController.js';
 import { upload } from '../middleware/uploadMiddleware.js';
+import { exportUsers, exportTransactions, exportWithdrawals } from '../controllers/exportController.js';
 
 
 const router = express.Router();
+
+// Helper middleware for specific permissions
+const checkPermission = (permission) => {
+    return (req, res, next) => {
+        if (req.admin.role === 'superadmin') return next();
+        if (req.admin.permissions && req.admin.permissions.includes(permission)) {
+            return next();
+        }
+        res.status(403).json({ message: 'Không có quyền truy cập chức năng này' });
+    };
+};
+
+router.get('/export/users', adminProtect, checkPermission('USERS_EXPORT'), exportUsers);
+router.get('/export/transactions', adminProtect, checkPermission('TRANSACTIONS_EXPORT'), exportTransactions);
+router.get('/export/withdrawals', adminProtect, checkPermission('WITHDRAWALS_EXPORT'), exportWithdrawals);
 
 router.post('/login', loginAdmin);
 router.post('/login/2fa', verify2FALogin);

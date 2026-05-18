@@ -8,7 +8,8 @@ import {
   ExternalLink,
   Wallet,
   Clock,
-  Filter
+  Filter,
+  FileSpreadsheet
 } from "lucide-react"
 import { 
   Table, 
@@ -35,6 +36,7 @@ import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
 import { useAdminPermissions } from "@/hooks/useAdminPermissions"
+import { ExportExcelModal } from "@/components/admin/ExportExcelModal"
 
 export default function AdminWithdrawalsPage() {
   const { hasPermission } = useAdminPermissions()
@@ -60,6 +62,8 @@ export default function AdminWithdrawalsPage() {
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null)
   const [txHash, setTxHash] = useState("")
   const [rejectReason, setRejectReason] = useState("")
+
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
 
   const ITEMS_PER_PAGE = 10
 
@@ -145,6 +149,29 @@ export default function AdminWithdrawalsPage() {
     }
   }
 
+  const handleExport = async (startDate: string, endDate: string) => {
+    try {
+      let url = "/admin/export/withdrawals?"
+      if (startDate && endDate) {
+        url += `startDate=${startDate}&endDate=${endDate}`
+      }
+      
+      const response = await apiClient.get(url, { responseType: 'blob' })
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', `withdrawals_export_${dayjs().format('YYYYMMDD')}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      
+      toast.success("Exported successfully!")
+    } catch (err) {
+      console.error("Export error", err)
+      toast.error("Failed to export data")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -166,6 +193,16 @@ export default function AdminWithdrawalsPage() {
           />
         </div>
         <div className="flex items-center gap-2">
+          {hasPermission('WITHDRAWALS_EXPORT') && (
+            <Button
+              variant="outline"
+              className="h-12 rounded-[16px] border-[#276152] text-[#276152] hover:bg-[#276152] hover:text-white font-bold px-4 bg-white"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              <FileSpreadsheet className="w-5 h-5 mr-2" />
+              Export
+            </Button>
+          )}
           <Filter className="w-5 h-5 text-gray-400 ml-2" />
           <select 
             className="h-12 px-4 rounded-[16px] border border-gray-100 focus:outline-none focus:ring-2 focus:ring-[#276152] bg-white text-sm font-bold"
@@ -427,6 +464,13 @@ export default function AdminWithdrawalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ExportExcelModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        title="Export Withdrawals"
+      />
     </div>
   )
 }

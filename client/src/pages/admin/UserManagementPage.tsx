@@ -5,7 +5,8 @@ import {
   Trash2, 
   Eye, 
   Loader2,
-  Pencil
+  Pencil,
+  FileSpreadsheet
 } from "lucide-react"
 import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 import { 
@@ -37,6 +38,7 @@ import apiClient from "@/lib/axios"
 import { getImageUrl } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
 import dayjs from "dayjs"
+import { ExportExcelModal } from "@/components/admin/ExportExcelModal"
 
 export default function UserManagementPage() {
   const navigate = useNavigate()
@@ -59,6 +61,7 @@ export default function UserManagementPage() {
   // Edit State
   const [editingUser, setEditingUser] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   
   const { hasPermission } = useAdminPermissions()
@@ -139,6 +142,32 @@ export default function UserManagementPage() {
     }
   }
 
+  const handleExport = async (startDate: string, endDate: string) => {
+    try {
+      let url = "/admin/export/users?"
+      if (startDate && endDate) {
+        url += `startDate=${startDate}&endDate=${endDate}`
+      }
+      
+      const response = await apiClient.get(url, {
+        responseType: 'blob' // Important for downloading files
+      })
+      
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', `users_export_${dayjs().format('YYYYMMDD')}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      
+      toast.success("Exported successfully!")
+    } catch (err) {
+      console.error("Export error", err)
+      toast.error("Failed to export data")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -172,19 +201,29 @@ export default function UserManagementPage() {
         {/* Filter Area */}
         <div className="flex justify-between items-center">
           <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">User List</p>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            {hasPermission('USERS_EXPORT') && (
+              <Button
+                variant="outline"
+                className="h-[44px] rounded-[12px] border-[#276152] text-[#276152] hover:bg-[#276152] hover:text-white font-bold px-4 bg-white"
+                onClick={() => setIsExportModalOpen(true)}
+              >
+                <FileSpreadsheet className="w-5 h-5 mr-2" />
+                Export
+              </Button>
+            )}
             <div className="relative w-[320px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input 
                 type="text"
                 placeholder="Search users..." 
-                className="w-full pl-10 pr-4 py-2.5 border border-[#d5d7db] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px]"
+                className="w-full pl-10 pr-4 h-[44px] border border-[#d5d7db] rounded-[12px] focus:outline-none focus:ring-1 focus:ring-[#276152] font-['SVN-Gilroy:Regular',sans-serif] text-[16px] bg-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-[rgba(239,239,239,0.5)] border-none h-[44px] rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
+              <SelectTrigger className="w-[180px] bg-white border border-[#d5d7db] !h-[44px] rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-[12px] border-none shadow-lg">
@@ -507,6 +546,13 @@ export default function UserManagementPage() {
           />
         </div>
       )}
+
+      <ExportExcelModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        title="Export Users"
+      />
     </div>
   )
 }

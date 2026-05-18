@@ -5,7 +5,8 @@ import {
   Loader2,
   Check,
   X,
-  ExternalLink
+  ExternalLink,
+  FileSpreadsheet
 } from "lucide-react"
 import { 
   Table, 
@@ -22,8 +23,12 @@ import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
+import { ExportExcelModal } from "@/components/admin/ExportExcelModal"
+import { Button } from "@/components/ui/button"
 
 export default function AdminPaymentHistoryPage() {
+  const { hasPermission } = useAdminPermissions()
   const [searchParams, setSearchParams] = useSearchParams()
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +42,31 @@ export default function AdminPaymentHistoryPage() {
   const [fetching, setFetching] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
+
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
+
+  const handleExport = async (startDate: string, endDate: string) => {
+    try {
+      let url = "/admin/export/transactions?"
+      if (startDate && endDate) {
+        url += `startDate=${startDate}&endDate=${endDate}`
+      }
+      
+      const response = await apiClient.get(url, { responseType: 'blob' })
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', `transactions_export_${dayjs().format('YYYYMMDD')}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      
+      toast.success("Exported successfully!")
+    } catch (err) {
+      console.error("Export error", err)
+      toast.error("Failed to export data")
+    }
+  }
 
   const handleApprove = async (paymentId: string) => {
     if (!window.confirm("Are you sure you want to APPROVE this transaction?")) return;
@@ -118,17 +148,27 @@ export default function AdminPaymentHistoryPage() {
     <div className="space-y-8 max-w-[1400px] mx-auto">
 
 
-      <div className="flex gap-4 items-center bg-white p-2 rounded-[16px] shadow-sm border border-gray-100">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input 
-            placeholder="Search users, hash..." 
-            className="pl-12 h-12 border-none focus-visible:ring-0 text-md" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input 
+              placeholder="Search username, transaction hash..." 
+              className="pl-10 h-11 border-gray-200 focus-visible:ring-[#276152] rounded-[12px] bg-white w-full max-w-md" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          {hasPermission('TRANSACTIONS_EXPORT') && (
+            <Button
+              variant="outline"
+              className="h-11 rounded-[12px] border-[#276152] text-[#276152] hover:bg-[#276152] hover:text-white font-bold px-4 bg-white"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              <FileSpreadsheet className="w-5 h-5 mr-2" />
+              Export
+            </Button>
+          )}
         </div>
-      </div>
 
       <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
         <Table>
@@ -283,6 +323,12 @@ export default function AdminPaymentHistoryPage() {
         itemsPerPage={ITEMS_PER_PAGE}
       />
 
+      <ExportExcelModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        title="Export Transactions"
+      />
     </div>
   )
 }

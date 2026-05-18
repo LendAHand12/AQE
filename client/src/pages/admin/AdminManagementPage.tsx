@@ -44,6 +44,7 @@ const PERMISSION_GROUPS = [
       { id: "USERS_VIEW", label: "View List" },
       { id: "USERS_EDIT", label: "Edit Information" },
       { id: "USERS_DELETE", label: "Delete Account" },
+      { id: "USERS_EXPORT", label: "Export Data" },
     ]
   },
   {
@@ -74,6 +75,7 @@ const PERMISSION_GROUPS = [
     permissions: [
       { id: "WITHDRAWALS_VIEW", label: "View Withdrawal Requests" },
       { id: "WITHDRAWALS_APPROVE", label: "Approve Withdrawals" },
+      { id: "WITHDRAWALS_EXPORT", label: "Export Data" },
     ]
   },
   {
