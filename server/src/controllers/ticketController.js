@@ -1,5 +1,6 @@
 import Ticket from '../models/Ticket.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { sendTicketCreatedEmailToAdmin, sendTicketRepliedEmailToUser, sendUserRepliedEmailToAdmin } from '../utils/emailService.js';
 import { emitNotification } from '../utils/socket.js';
 
@@ -273,9 +274,17 @@ export const replyTicket = async (req, res) => {
 
         await ticket.save();
 
-        // Send email and socket notification
+        // Send email, push DB notification, and socket notification
         sendTicketRepliedEmailToUser(ticket.userId.email, ticket.subject, adminResponse, ticket._id).catch(console.error);
         
+        await Notification.create({
+            userId: ticket.userId._id,
+            title: 'Ticket Replied',
+            message: `Admin has replied to your ticket: ${ticket.subject}`,
+            type: 'SYSTEM',
+            metadata: { ticketId: ticket._id }
+        });
+
         emitNotification(ticket.userId._id, {
             title: 'Ticket Replied',
             message: `Admin has replied to your ticket: ${ticket.subject}`,
