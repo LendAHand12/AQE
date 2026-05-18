@@ -129,7 +129,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Admin Response (Backward compatibility) */}
-      {ticket.adminResponse && (
+      {ticket.adminResponse && !ticket.replies?.some((r: any) => r.message === ticket.adminResponse) && (
         <div className="bg-gray-50/80 border border-[#EFEFEF] p-6 sm:p-8 rounded-[16px]">
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheck className="text-[#276152] w-5 h-5" />

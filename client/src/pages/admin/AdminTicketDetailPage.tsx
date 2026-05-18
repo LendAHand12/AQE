@@ -203,7 +203,7 @@ export default function AdminTicketDetailPage() {
           </div>
 
           {/* Admin Response (Backward compatibility) */}
-          {ticket.adminResponse && (
+          {ticket.adminResponse && !ticket.replies?.some((r: any) => r.message === ticket.adminResponse) && (
             <div className="bg-gray-50/80 border border-[#EFEFEF] rounded-[16px] shadow-sm overflow-hidden">
               <div className="p-6 border-b border-[#EFEFEF]">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2">

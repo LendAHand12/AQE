@@ -266,10 +266,6 @@ export const replyTicket = async (req, res) => {
             images,
             createdAt: new Date()
         });
-
-        // Keep for backward compatibility / summary
-        ticket.adminResponse = adminResponse;
-        ticket.adminResponseAt = new Date();
         
         if (ticket.status === 'PENDING') {
             ticket.status = 'IN_PROGRESS';
