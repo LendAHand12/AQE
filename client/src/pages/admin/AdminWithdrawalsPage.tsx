@@ -225,9 +225,12 @@ export default function AdminWithdrawalsPage() {
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         {item.paymentMethod === 'ZELLE' ? (
-                          <span className="font-bold text-[13px] text-orange-600 bg-orange-50 px-2 py-1 rounded w-fit border border-orange-100">
-                            Zelle: {item.zelleInfo}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-[13px] text-orange-600 bg-orange-50 px-2 py-1 rounded w-fit border border-orange-100">
+                              Zelle: {item.zelleName || "N/A"}
+                            </span>
+                            <span className="text-xs text-gray-500 font-medium">{item.zelleInfo}</span>
+                          </div>
                         ) : (
                           <span className="font-mono text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded w-fit border border-gray-100">
                             {item.walletAddress?.substring(0, 8)}...{item.walletAddress?.substring(item.walletAddress.length - 8)}

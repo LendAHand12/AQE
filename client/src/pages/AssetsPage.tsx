@@ -47,8 +47,9 @@ export default function AssetsPage() {
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.walletAddress ? 'WALLET' : 'ZELLE')
+  const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET')
   const [zelleInfo, setZelleInfo] = useState('')
+  const [zelleName, setZelleName] = useState('')
 
   useEffect(() => {
     fetchData()
@@ -79,9 +80,15 @@ export default function AssetsPage() {
       return;
     }
 
-    if (paymentMethod === 'ZELLE' && !zelleInfo) {
-      toast.error(t("assets.withdraw_dialog.zelle_info_placeholder"));
-      return;
+    if (paymentMethod === 'ZELLE') {
+      if (!zelleName) {
+        toast.error(t("assets.withdraw_dialog.zelle_name_placeholder"));
+        return;
+      }
+      if (!zelleInfo) {
+        toast.error(t("assets.withdraw_dialog.zelle_info_placeholder"));
+        return;
+      }
     }
 
     const currentBalance = summary.usdtBalance;
@@ -98,6 +105,7 @@ export default function AssetsPage() {
       const res = await apiClient.post("/withdrawals/request", {
         walletAddress: paymentMethod === 'WALLET' ? user?.walletAddress : undefined,
         zelleInfo: paymentMethod === 'ZELLE' ? zelleInfo : undefined,
+        zelleName: paymentMethod === 'ZELLE' ? zelleName : undefined,
         paymentMethod: paymentMethod
       });
 
@@ -124,6 +132,7 @@ export default function AssetsPage() {
   )
 
   const hasWallet = !!user?.walletAddress;
+  const canUseZelle = user?.countryCode === '+1';
   const currentBalance = summary.usdtBalance;
   const fee = 1.0;
   const receiveAmount = Math.max(0, currentBalance - fee);
@@ -235,7 +244,8 @@ export default function AssetsPage() {
                         {item.paymentMethod === 'ZELLE' ? (
                            <div className="flex flex-col">
                              <span className="text-[13px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full w-fit">Zelle</span>
-                             <span className="text-[14px] font-medium text-[#111827] mt-1">{item.zelleInfo}</span>
+                             <span className="text-[14px] font-medium text-[#111827] mt-1">{item.zelleName || "N/A"}</span>
+                             <span className="text-[12px] text-gray-500">{item.zelleInfo}</span>
                            </div>
                         ) : (
                            <p className="text-[14px] text-[#111827] font-mono font-medium">
@@ -322,7 +332,7 @@ export default function AssetsPage() {
 
               <div className="space-y-4">
                 {/* Method Selection */}
-                <div className="grid grid-cols-2 gap-2 p-1.5 bg-gray-100 rounded-[16px]">
+                <div className={cn("grid gap-2 p-1.5 bg-gray-100 rounded-[16px]", canUseZelle ? "grid-cols-2" : "grid-cols-1")}>
                   <button
                     disabled={!hasWallet}
                     onClick={() => setPaymentMethod('WALLET')}
@@ -334,15 +344,17 @@ export default function AssetsPage() {
                   >
                     {t("assets.withdraw_dialog.method_wallet")}
                   </button>
-                  <button
-                    onClick={() => setPaymentMethod('ZELLE')}
-                    className={cn(
-                      "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
-                      paymentMethod === 'ZELLE' ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"
-                    )}
-                  >
-                    {t("assets.withdraw_dialog.method_zelle")}
-                  </button>
+                  {canUseZelle && (
+                    <button
+                      onClick={() => setPaymentMethod('ZELLE')}
+                      className={cn(
+                        "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
+                        paymentMethod === 'ZELLE' ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"
+                      )}
+                    >
+                      {t("assets.withdraw_dialog.method_zelle")}
+                    </button>
+                  )}
                 </div>
 
                 {!hasWallet && paymentMethod === 'WALLET' && (
@@ -359,14 +371,25 @@ export default function AssetsPage() {
                       <p className="text-[14px] font-mono font-bold text-[#276152] break-all">{user?.walletAddress}</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                      <p className="text-[12px] font-bold text-gray-700 uppercase tracking-wider pl-1">{t("assets.withdraw_dialog.zelle_info_label")}</p>
-                      <Input 
-                          value={zelleInfo}
-                          onChange={(e) => setZelleInfo(e.target.value)}
-                          placeholder={t("assets.withdraw_dialog.zelle_info_placeholder")}
-                          className="h-[52px] rounded-[16px] border-gray-200 focus:ring-[#276152] font-medium"
-                      />
+                  <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-[12px] font-bold text-gray-700 uppercase tracking-wider pl-1">{t("assets.withdraw_dialog.zelle_name_label")}</p>
+                        <Input 
+                            value={zelleName}
+                            onChange={(e) => setZelleName(e.target.value)}
+                            placeholder={t("assets.withdraw_dialog.zelle_name_placeholder")}
+                            className="h-[52px] rounded-[16px] border-gray-200 focus:ring-[#276152] font-medium"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[12px] font-bold text-gray-700 uppercase tracking-wider pl-1">{t("assets.withdraw_dialog.zelle_info_label")}</p>
+                        <Input 
+                            value={zelleInfo}
+                            onChange={(e) => setZelleInfo(e.target.value)}
+                            placeholder={t("assets.withdraw_dialog.zelle_info_placeholder")}
+                            className="h-[52px] rounded-[16px] border-gray-200 focus:ring-[#276152] font-medium"
+                        />
+                      </div>
                   </div>
                 )}
 

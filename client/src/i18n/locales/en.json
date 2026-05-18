@@ -359,9 +359,11 @@
       "insufficient_balance": "Insufficient USDT balance",
       "method_label": "Withdrawal Method",
       "method_wallet": "Crypto Wallet (USDT-BEP20)",
-      "method_zelle": "Zelle (US Only)",
+      "method_zelle": "Zelle",
+      "zelle_name_label": "Account Name",
+      "zelle_name_placeholder": "Enter account name (e.g. John Doe)",
       "zelle_info_label": "Zelle Email or Phone",
-      "zelle_info_placeholder": "Enter your Zelle account"
+      "zelle_info_placeholder": "Enter Email or Phone number"
     },
     "empty_history": "No withdrawal history yet",
     "status": {

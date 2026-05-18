@@ -15,7 +15,7 @@ import Notification from '../models/Notification.js';
  * @access  Private
  */
 export const requestWithdrawal = async (req, res) => {
-    const { walletAddress, zelleInfo, paymentMethod = 'WALLET' } = req.body;
+    const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET' } = req.body;
     const { user } = req;
     const fee = 1.0;
 
@@ -23,8 +23,9 @@ export const requestWithdrawal = async (req, res) => {
         if (paymentMethod === 'WALLET' && !walletAddress) {
             return res.status(400).json({ message: 'withdrawals.errors.wallet_required' });
         }
-        if (paymentMethod === 'ZELLE' && !zelleInfo) {
-            return res.status(400).json({ message: 'withdrawals.errors.zelle_required' });
+        if (paymentMethod === 'ZELLE') {
+            if (!zelleInfo) return res.status(400).json({ message: 'withdrawals.errors.zelle_required' });
+            if (!zelleName) return res.status(400).json({ message: 'Tên tài khoản Zelle là bắt buộc' });
         }
 
         // 1. Check Balance (Withdraw ALL)
@@ -51,6 +52,7 @@ export const requestWithdrawal = async (req, res) => {
                 userId: user._id, 
                 walletAddress,
                 zelleInfo,
+                zelleName,
                 paymentMethod,
                 amount: withdrawalAmount 
             }, 
@@ -85,7 +87,7 @@ export const completeWithdrawal = async (req, res) => {
 
         // 1. Verify Token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-        const { userId, walletAddress, amount, zelleInfo, paymentMethod } = decoded;
+        const { userId, walletAddress, amount, zelleInfo, zelleName, paymentMethod } = decoded;
 
         if (userId !== req.user._id.toString()) {
             return res.status(403).json({ message: 'withdrawals.errors.invalid_token' });
@@ -114,20 +116,21 @@ export const completeWithdrawal = async (req, res) => {
             status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
             balanceBefore: balanceBefore,
             balanceAfter: user.usdtBalance,
-            description: `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
+            description: `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleName + ' - ' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
         });
 
         const withdrawal = await Withdrawal.create({
             userId: user._id,
             walletAddress: walletAddress,
             zelleInfo: zelleInfo,
+            zelleName: zelleName,
             paymentMethod: paymentMethod,
             amount: withdrawalAmount,
             fee: fee,
             symbol: 'USDT',
             method: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'AUTO' : 'MANUAL',
             status: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'SUCCESS' : 'PENDING',
-            description: `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleInfo : walletAddress}`
+            description: `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleName + ' (' + zelleInfo + ')' : walletAddress}`
         });
 
         if (paymentMethod === 'WALLET' && withdrawalAmount <= 200) {
@@ -166,6 +169,7 @@ export const completeWithdrawal = async (req, res) => {
             const teleMsg = `🚀 <b>Yêu cầu Rút tiền Zelle Mới</b>\n\n` +
                 `👤 User: @${user.username}\n` +
                 `💰 Số tiền: ${withdrawalAmount} USDT\n` +
+                `Tên TK: <code>${zelleName}</code>\n` +
                 `🏦 Zelle: <code>${zelleInfo}</code>\n\n` +
                 `👉 Vui lòng kiểm tra trang quản trị để xử lý.`;
             sendTelegramNotification(teleMsg);

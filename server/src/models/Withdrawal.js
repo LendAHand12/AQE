@@ -13,6 +13,9 @@ const withdrawalSchema = mongoose.Schema({
     zelleInfo: {
         type: String // Email or Phone
     },
+    zelleName: {
+        type: String // Account Name
+    },
     paymentMethod: {
         type: String,
         enum: ['WALLET', 'ZELLE'],

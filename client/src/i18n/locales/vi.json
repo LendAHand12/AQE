@@ -359,9 +359,11 @@
       "insufficient_balance": "Số dư USDT không đủ để thực hiện giao dịch này",
       "method_label": "Phương thức rút tiền",
       "method_wallet": "Ví Crypto (USDT-BEP20)",
-      "method_zelle": "Zelle (Dành cho US)",
+      "method_zelle": "Zelle",
+      "zelle_name_label": "Tên tài khoản (Account Name)",
+      "zelle_name_placeholder": "Nhập tên tài khoản (VD: John Doe)",
       "zelle_info_label": "Email hoặc Số điện thoại Zelle",
-      "zelle_info_placeholder": "Nhập thông tin Zelle của bạn"
+      "zelle_info_placeholder": "Nhập Email hoặc SĐT của bạn"
     },
     "empty_history": "Chưa có lịch sử rút tiền",
     "status": {
