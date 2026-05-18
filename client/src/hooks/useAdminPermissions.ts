@@ -16,6 +16,8 @@ export type AdminPermission =
   | "WITHDRAWALS_APPROVE" 
   | "SETTINGS_VIEW" 
   | "SETTINGS_EDIT"
+  | "TICKETS_VIEW"
+  | "TICKETS_MANAGE"
 
 export const useAdminPermissions = () => {
   const adminInfo = useMemo(() => {

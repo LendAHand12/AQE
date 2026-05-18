@@ -82,6 +82,13 @@ const PERMISSION_GROUPS = [
       { id: "SETTINGS_VIEW", label: "View Pool Settings" },
       { id: "SETTINGS_EDIT", label: "Update Pool Settings" },
     ]
+  },
+  {
+    category: "Support Tickets",
+    permissions: [
+      { id: "TICKETS_VIEW", label: "View Tickets" },
+      { id: "TICKETS_MANAGE", label: "Reply and Resolve Tickets" },
+    ]
   }
 ]
 

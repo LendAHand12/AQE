@@ -19,6 +19,8 @@ import AdminUserProfilePage from "@/pages/admin/AdminUserProfilePage"
 import AdminWithdrawalsPage from "@/pages/admin/AdminWithdrawalsPage"
 import AdminManagementPage from "@/pages/admin/AdminManagementPage"
 import AdminWalletConnectionsPage from "@/pages/admin/AdminWalletConnectionsPage"
+import AdminTicketsPage from "@/pages/admin/AdminTicketsPage"
+import AdminTicketDetailPage from "@/pages/admin/AdminTicketDetailPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
@@ -36,6 +38,9 @@ import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import PublicRoute from "./components/auth/PublicRoute"
+import TicketsPage from "@/pages/TicketsPage"
+import CreateTicketPage from "@/pages/CreateTicketPage"
+import TicketDetailPage from "@/pages/TicketDetailPage"
 
 export function App() {
   return (
@@ -67,6 +72,9 @@ export function App() {
                 <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
                 <Route path="/user/claim" element={<ClaimPage />} />
                 <Route path="/referrals" element={<ReferralPage />} />
+                <Route path="/tickets" element={<TicketsPage />} />
+                <Route path="/tickets/create" element={<CreateTicketPage />} />
+                <Route path="/tickets/:id" element={<TicketDetailPage />} />
               </Route>
             </Route>
 
@@ -90,6 +98,8 @@ export function App() {
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
               <Route path="/admin/accounts" element={<AdminManagementPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/tickets" element={<AdminTicketsPage />} />
+              <Route path="/admin/tickets/:id" element={<AdminTicketDetailPage />} />
             </Route>
 
             <Route path="/pay" element={<PaymentPage />} />

@@ -9,6 +9,7 @@ import {
   BadgePercent,
   ShieldAlert,
   Wallet,
+  Headset,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
@@ -64,6 +65,12 @@ const mainNavItems: NavItem[] = [
     href: "/admin/wallet-connections",
     icon: Wallet,
     requiredPermission: "USERS_VIEW"
+  },
+  {
+    title: "Support Tickets",
+    href: "/admin/tickets",
+    icon: Headset,
+    requiredPermission: "TICKETS_VIEW"
   },
   {
     title: "Pool Settings",

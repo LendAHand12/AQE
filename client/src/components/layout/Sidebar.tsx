@@ -9,7 +9,8 @@ import {
   History,
   Users,
   X,
-  Wallet
+  Wallet,
+  Headset
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logo from "@/assets/logo_green.svg"
@@ -40,6 +41,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
     { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },
+    { icon: Headset, label: t("sidebar.tickets", { defaultValue: "Support Tickets" }), path: "/tickets", key: "tickets" },
   ]
 
   const bottomMenuItems: SidebarItem[] = [

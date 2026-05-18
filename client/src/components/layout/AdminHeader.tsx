@@ -13,6 +13,13 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
   const getHeaderInfo = () => {
     if (title && description) return { title, description };
     
+    if (location.pathname.startsWith("/admin/tickets/")) {
+      return { 
+        title: "Ticket Details", 
+        description: "View and resolve user support ticket" 
+      };
+    }
+
     switch (location.pathname) {
       case "/admin/dashboard":
         return { 
@@ -59,6 +66,11 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
         return { 
           title: "Account Settings", 
           description: "Manage personal info and admin security" 
+        };
+      case "/admin/tickets":
+        return { 
+          title: "Support Tickets", 
+          description: "Manage user support requests" 
         };
       default:
         return { 
