@@ -144,7 +144,9 @@ export const getUsers = async (req, res) => {
 // @route   GET /api/admin/users/:id
 export const getUserById = async (req, res) => {
     try {
-        const user = await User.findOne({ _id: req.params.id, isDeleted: false }).select('-password');
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false })
+            .select('-password')
+            .populate('referredBy', 'username fullName email');
         
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });

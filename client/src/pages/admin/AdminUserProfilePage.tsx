@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { 
   User, 
   Mail, 
@@ -504,7 +504,9 @@ export default function AdminUserProfilePage() {
                           <p className="text-[11px] text-gray-400 font-bold uppercase">Nationality</p>
                           <div className="flex items-center gap-1.5">
                             <Flag size={14} className="text-gray-400" />
-                            <p className="text-[14px] font-medium text-gray-700">{user.nation || "—"}</p>
+                            <p className="text-[14px] font-medium text-gray-700">
+                              {user.countryCode === "+1" ? "United States (+1)" : user.countryCode === "+84" ? "Vietnam (+84)" : `${user.nation || "Other"} (${user.countryCode || ""})`}
+                            </p>
                           </div>
                         </div>
                         <div>
@@ -517,6 +519,19 @@ export default function AdminUserProfilePage() {
                         <div>
                           <p className="text-[11px] text-gray-400 font-bold uppercase">Registration Date</p>
                           <p className="text-[14px] font-medium text-gray-700">{dayjs(user.createdAt).format("DD/MM/YYYY")}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase">Referred By</p>
+                          {user.referredBy ? (
+                            <Link 
+                              to={`/admin/users/${user.referredBy._id}`}
+                              className="text-[14px] font-bold text-[#276152] hover:underline"
+                            >
+                              @{user.referredBy.username}
+                            </Link>
+                          ) : (
+                            <p className="text-[14px] font-medium text-gray-400">None (Root)</p>
+                          )}
                         </div>
                     </CardContent>
                  </Card>
