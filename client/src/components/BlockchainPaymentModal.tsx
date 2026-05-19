@@ -76,10 +76,15 @@ export function BlockchainPaymentModal({
     }
   };
 
-  const handleSelectMethod = async (method: 'wallet' | 'zelle') => {
-    const data = await initPayment(method.toUpperCase());
+  const handleSelectMethod = async (method: 'wallet' | 'zelle' | 'qr') => {
+    const backendMethod = method === 'zelle' ? 'ZELLE' : 'WALLET';
+    const data = await initPayment(backendMethod);
     if (data) {
-      window.location.href = `/pay?pid=${data.paymentId}&method=${method}`;
+      if (method === 'qr') {
+        window.location.href = `/pay?pid=${data.paymentId}&method=wallet&connect=qr`;
+      } else {
+        window.location.href = `/pay?pid=${data.paymentId}&method=${method}`;
+      }
     }
   };
 
@@ -125,6 +130,23 @@ export function BlockchainPaymentModal({
                   <div>
                     <p className="font-bold text-[#0d1f1d]">{t("payments.page.method_wallet") || "Ví Crypto"}</p>
                     <p className="text-xs text-gray-500">{t("payments.modal.pay_this_device_desc") || "Kết nối ví và thanh toán trực tiếp"}</p>
+                  </div>
+                </div>
+                {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
+              </button>
+
+              <button 
+                onClick={() => handleSelectMethod('qr')}
+                disabled={loading}
+                className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="size-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <Smartphone size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#0d1f1d]">{t("payments.modal.scan_qr") || "Quét mã QR (Mobile)"}</p>
+                    <p className="text-xs text-gray-500">{t("payments.modal.scan_qr_desc") || "Quét bằng Camera hoặc Ví Web3 (Trust, SafePal...)"}</p>
                   </div>
                 </div>
                 {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}

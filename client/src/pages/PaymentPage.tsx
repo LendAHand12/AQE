@@ -100,6 +100,16 @@ export default function PaymentPage() {
     }
   };
 
+  useEffect(() => {
+    const connectParam = searchParams.get('connect');
+    if (connectParam === 'qr' && !isConnected && !loading) {
+      const timer = setTimeout(() => {
+        connectWalletConnectOnly();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, loading, searchParams]);
+
   // Start polling status when successful
   useEffect(() => {
     let interval: any;
@@ -121,6 +131,15 @@ export default function PaymentPage() {
   const connectWallet = async () => {
     try {
       await openAppKit();
+    } catch (error) {
+      console.error(error);
+      toast.error(t("payments.page.errors.connect_failed"));
+    }
+  };
+
+  const connectWalletConnectOnly = async () => {
+    try {
+      await openAppKit({ view: 'ConnectingWalletConnectBasic' });
     } catch (error) {
       console.error(error);
       toast.error(t("payments.page.errors.connect_failed"));
@@ -305,12 +324,12 @@ export default function PaymentPage() {
                 <div className="space-y-4">
                   {!account ? (
                     <Button 
-                      onClick={connectWallet} 
+                      onClick={searchParams.get('connect') === 'qr' ? connectWalletConnectOnly : connectWallet} 
                       disabled={status === 'connecting'}
                       className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
                     >
                       {status === 'connecting' ? <Loader2 className="animate-spin" /> : <Wallet size={20} />}
-                      {t("payments.page.connect_wallet")}
+                      {searchParams.get('connect') === 'qr' ? t("payments.modal.scan_qr") : t("payments.page.connect_wallet")}
                     </Button>
                   ) : (
                     <div className="space-y-4">
