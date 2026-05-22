@@ -22,6 +22,7 @@ import {
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
 import { adminProtect } from '../middleware/auth.js';
+import { ipWhitelistAdmin } from '../middleware/ipWhitelist.js';
 import { 
     getAllTransactionsForAdmin, 
     getAllCommissionsForAdmin,
@@ -41,6 +42,9 @@ import { exportUsers, exportTransactions, exportWithdrawals } from '../controlle
 
 const router = express.Router();
 
+// Apply IP Whitelist middleware globally to all admin routes
+router.use(ipWhitelistAdmin);
+
 // Helper middleware for specific permissions
 const checkPermission = (permission) => {
     return (req, res, next) => {
@@ -48,7 +52,7 @@ const checkPermission = (permission) => {
         if (req.admin.permissions && req.admin.permissions.includes(permission)) {
             return next();
         }
-        res.status(403).json({ message: 'Không có quyền truy cập chức năng này' });
+        res.status(403).json({ message: 'You do not have permission to access this feature' });
     };
 };
 

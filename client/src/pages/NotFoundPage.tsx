@@ -22,7 +22,7 @@ const NotFoundPage: React.FC = () => {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-primary/10 p-6 rounded-3xl backdrop-blur-md border border-primary/20 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
               <span className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent font-heading">
-                Lost?
+                {t('notfound.lost')}
               </span>
             </div>
           </div>
@@ -44,7 +44,7 @@ const NotFoundPage: React.FC = () => {
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="mr-2 h-5 w-5" />
-            Go Back
+            {t('notfound.go_back')}
           </Button>
           <Button 
             size="lg" 

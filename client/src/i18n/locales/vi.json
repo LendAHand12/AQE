@@ -595,5 +595,12 @@
     "error_title": "Xác thực thất bại",
     "error_desc": "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
     "back_to_login": "Quay lại đăng nhập"
+  },
+  "notfound": {
+    "lost": "Lạc đường?",
+    "title": "Không Tìm Thấy Trang",
+    "description": "Trang bạn đang tìm kiếm có thể đã bị xóa, thay đổi tên hoặc tạm thời không khả dụng.",
+    "go_back": "Quay Lại",
+    "back_home": "Về Bảng Điều Khiển"
   }
 }

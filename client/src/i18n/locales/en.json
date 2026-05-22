@@ -596,5 +596,12 @@
     "error_title": "Verification Failed",
     "error_desc": "The authentication code is invalid or has expired. Please try again or contact support.",
     "back_to_login": "Back to Login"
+  },
+  "notfound": {
+    "lost": "Lost?",
+    "title": "Page Not Found",
+    "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "go_back": "Go Back",
+    "back_home": "Back to Dashboard"
   }
 }
