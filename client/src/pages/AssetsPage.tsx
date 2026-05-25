@@ -43,6 +43,12 @@ export default function AssetsPage() {
     officialAQE: 0,
     temporaryAQE: 0,
   })
+  const [interestInfo, setInterestInfo] = useState<any>({
+    provisionalAqeInterest: 0,
+    claimableAqeInterest: 0,
+    firstPaymentDate: null
+  })
+  const [claimingInterest, setClaimingInterest] = useState(false)
 
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
@@ -67,6 +73,9 @@ export default function AssetsPage() {
       
       const summaryRes = await apiClient.get(`/payments/my-balance-history?limit=0`)
       setSummary(summaryRes.data.summary)
+
+      const interestRes = await apiClient.get(`/interest/info`)
+      setInterestInfo(interestRes.data)
     } catch (err) {
       console.error("Fetch Error:", err)
     } finally {
@@ -125,6 +134,25 @@ export default function AssetsPage() {
     }
   };
 
+  const handleClaimInterest = async () => {
+    if (interestInfo.claimableAqeInterest <= 0) {
+      toast.error(t("assets.interest.no_claimable", "Không có lãi để nhận (No claimable interest)"));
+      return;
+    }
+
+    setClaimingInterest(true);
+    try {
+      const res = await apiClient.post("/interest/claim");
+      toast.success(res.data.message);
+      fetchData();
+      syncProfile();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || t("auth.errors.unknown"));
+    } finally {
+      setClaimingInterest(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
       <Loader2 className="h-10 w-10 animate-spin text-[#276152]" />
@@ -162,7 +190,7 @@ export default function AssetsPage() {
       </div>
 
       {/* Asset Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-gradient-to-br from-[#276152] to-[#1e4d40] text-white p-6 relative">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <Wallet size={120} />
@@ -207,6 +235,42 @@ export default function AssetsPage() {
               </div>
             </div>
           </div>
+        </Card>
+
+        {/* AQE Interest Card */}
+        <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white p-6 relative border border-gray-100 flex flex-col justify-between">
+          <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500">
+            <ShieldCheck size={120} />
+          </div>
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="size-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                  <ArrowUpRight size={20} />
+                </div>
+                <span className="text-[14px] font-bold uppercase tracking-wider text-gray-500">{t("assets.interest.title", "AQE Interest")}</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[32px] font-black tracking-tight text-[#111827]">
+                {interestInfo.claimableAqeInterest.toFixed(2)} <span className="text-[16px] font-bold text-gray-400 ml-1">AQE</span>
+              </p>
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500">{t("assets.interest.provisional", "Provisional")}</span>
+                  <span className="font-bold text-[#276152]">+{interestInfo.provisionalAqeInterest.toFixed(2)} AQE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Button
+            onClick={handleClaimInterest}
+            disabled={claimingInterest || interestInfo.claimableAqeInterest <= 0}
+            className="w-full mt-4 h-[44px] bg-amber-500 hover:bg-amber-600 text-white rounded-[12px] font-bold shadow-sm disabled:opacity-50"
+          >
+            {claimingInterest ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {t("assets.interest.claim_btn", "Claim to USDT")}
+          </Button>
         </Card>
       </div>
 

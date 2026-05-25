@@ -23,6 +23,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
+import interestRoutes from './routes/interestRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 import { initPaymentListener } from './services/paymentListener.js';
 import { createServer } from 'http';
@@ -61,6 +62,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/interest', interestRoutes);
 
 // Root route
 app.get('/', (req, res) => {

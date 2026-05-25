@@ -352,6 +352,12 @@
     "subtitle": "Manage your USDT and AQE balances",
     "usdt_available": "Available USDT Balance",
     "aqe_total": "Total AQE Assets",
+    "interest": {
+      "title": "AQE Interest",
+      "provisional": "Provisional Interest",
+      "claim_btn": "Claim to USDT",
+      "no_claimable": "No claimable interest available"
+    },
     "withdraw_btn": "Withdraw USDT",
     "withdraw_history": "Withdrawal History",
     "table": {
@@ -470,7 +476,9 @@
       "buy": "Buy Token",
       "reward": "Reward",
       "receive": "Receive",
-      "refund": "Refund"
+      "refund": "Refund",
+      "interest": "Daily Interest",
+      "claim_interest": "Claim Interest USDT"
     },
     "status": {
       "official": "Official",

@@ -195,6 +195,8 @@ export default function BalanceHistoryPage() {
                           item.type === 'WITHDRAW' ? "bg-orange-100 text-orange-700" :
                           item.type === 'COMMISSION' ? "bg-amber-100 text-amber-700" :
                           item.type === 'BUY' ? "bg-emerald-100 text-emerald-800" :
+                          item.type === 'INTEREST' ? "bg-purple-100 text-purple-700" :
+                          item.type === 'CLAIM_INTEREST' ? "bg-[#276152]/10 text-[#276152]" :
                           "bg-gray-100 text-gray-700"
                         )}>
                           {t(`balance_history.types.${item.type.toLowerCase()}`) || item.type}

@@ -164,6 +164,18 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: null
     },
+    firstPaymentDate: {
+        type: Date,
+        default: null
+    },
+    provisionalAqeInterest: {
+        type: Number,
+        default: 0
+    },
+    claimableAqeInterest: {
+        type: Number,
+        default: 0
+    },
     bankAccounts: [bankAccountSchema]
 }, {
     timestamps: true

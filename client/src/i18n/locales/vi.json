@@ -352,6 +352,12 @@
     "subtitle": "Quản lý số dư USDT và AQE trong tài khoản của bạn",
     "usdt_available": "Số dư USDT khả dụng",
     "aqe_total": "Tổng tài sản AQE",
+    "interest": {
+      "title": "AQE Interest (Lãi)",
+      "provisional": "Lãi tạm tính (Provisional)",
+      "claim_btn": "Nhận lãi USDT",
+      "no_claimable": "Không có lãi để nhận (No claimable interest)"
+    },
     "withdraw_btn": "Rút tiền USDT",
     "withdraw_history": "Lịch sử rút tiền",
     "table": {
@@ -469,7 +475,9 @@
       "commission": "Hoa hồng",
       "buy": "Mua Token",
       "reward": "Thưởng",
-      "receive": "Nhận tiền"
+      "receive": "Nhận tiền",
+      "interest": "Lãi hàng ngày",
+      "claim_interest": "Nhận lãi USDT"
     },
     "status": {
       "official": "Chính thức",
