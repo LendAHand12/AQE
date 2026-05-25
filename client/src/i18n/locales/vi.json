@@ -1,6 +1,7 @@
 {
   "common": {
-    "copied": "Đã sao chép vào bộ nhớ tạm"
+    "copied": "Đã sao chép vào bộ nhớ tạm",
+    "of": "của"
   },
   "header": {
     "good_morning": "Chào buổi sáng",
@@ -354,9 +355,25 @@
     "aqe_total": "Tổng tài sản AQE",
     "interest": {
       "title": "AQE Interest (Lãi)",
+      "total_received": "Tổng lãi AQE đã nhận",
       "provisional": "Lãi tạm tính (Provisional)",
+      "claimable": "Lãi khả dụng (rút)",
       "claim_btn": "Nhận lãi USDT",
-      "no_claimable": "Không có lãi để nhận (No claimable interest)"
+      "already_claimed": "Đã nhận lãi tháng này",
+      "claim_success": "Nhận lãi thành công",
+      "error_already_claimed": "Bạn đã nhận lãi trong tháng này rồi. Vui lòng quay lại vào đầu tháng sau.",
+      "error_no_interest": "Không có lãi AQE nào để nhận",
+      "no_claimable": "Không có lãi để nhận (No claimable interest)",
+      "confirm_title": "Xác nhận nhận lãi",
+      "confirm_desc": "Bạn chỉ được nhận lãi duy nhất một lần mỗi tháng. Bạn có chắc chắn muốn quy đổi {{amount}} AQE lãi khả dụng sang {{amount}} USDT ngay bây giờ không?",
+      "confirm_cancel": "Hủy bỏ",
+      "remaining": "Tổng lãi còn lại sẽ nhận",
+      "schedule_title": "Lịch nhận lãi dự kiến",
+      "schedule_desc": "Chi tiết dòng thời gian nhận lãi AQE hàng ngày dựa trên các giao dịch mua của bạn.",
+      "table_date": "Ngày nhận lãi",
+      "table_amount": "Lãi dự kiến nhận",
+      "view_schedule_btn": "Xem lịch nhận lãi",
+      "no_schedule": "Không có lịch nhận lãi sắp tới"
     },
     "withdraw_btn": "Rút tiền USDT",
     "withdraw_history": "Lịch sử rút tiền",
@@ -512,9 +529,15 @@
     "table": {
       "date": "Ngày thanh toán",
       "description": "Nội dung",
+      "method": "Phương thức",
       "amount": "Số tiền",
       "status": "Trạng thái",
       "details": "Mã giao dịch"
+    },
+    "method": {
+      "qr": "Mã QR",
+      "zelle": "Zelle",
+      "wallet": "Chuyển ví"
     },
     "status": {
       "success": "Thành công",

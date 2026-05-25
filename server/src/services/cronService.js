@@ -15,11 +15,11 @@ export const initCronJobs = () => {
     // Pattern: 0 0 1 6,7 * (June=6, July=7)
     cron.schedule('0 0 1 6,7 *', async () => {
         console.log('[CRON] Starting Monthly Token Release Checkpoint...');
-        
+
         try {
             // 1. Find all users with pending pre-register tokens
             const usersToRelease = await User.find({ preRegisterTokens: { $gt: 0 } });
-            
+
             if (usersToRelease.length === 0) {
                 console.log('[CRON] No users found for token release.');
                 return;
@@ -29,19 +29,19 @@ export const initCronJobs = () => {
 
             for (const user of usersToRelease) {
                 const releasedAmount = user.preRegisterTokens;
-                
+
                 // Update User Balance
                 user.aqeBalance += releasedAmount;
                 user.preRegisterTokens = 0;
-                
+
                 await user.save();
 
                 // Mark all previous unreleased transactions for this user as released
                 await Transaction.updateMany(
-                    { 
-                        $or: [{ from: user._id }, { to: user._id }], 
-                        isReleased: false, 
-                        status: 'SUCCESS' 
+                    {
+                        $or: [{ from: user._id }, { to: user._id }],
+                        isReleased: false,
+                        status: 'SUCCESS'
                     },
                     { isReleased: true }
                 );
@@ -58,7 +58,7 @@ export const initCronJobs = () => {
                 // Emit socket event
                 try {
                     emitNotification(user._id, notif);
-                } catch (e) {}
+                } catch (e) { }
             }
 
             console.log('[CRON] Monthly Token Release completed successfully.');

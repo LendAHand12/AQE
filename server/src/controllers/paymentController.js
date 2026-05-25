@@ -20,12 +20,12 @@ const getVietnamTime = () => {
 export const submitPreRegisterPledge = async (req, res) => {
     const { pledgeAmount } = req.body;
     try {
-        if (pledgeAmount < 100) {
+        if (pledgeAmount < 10) {
             return res.status(400).json({ message: 'payments.errors.min_pledge' });
         }
 
         const user = await User.findById(req.user._id);
-        
+
         if (user.pledgeUsdt > 0) {
             if (!user.isPledgeCompleted) {
                 if (user.paidUsdtPreRegister > 0) {
@@ -97,14 +97,11 @@ export const submitPreRegisterPayment = async (req, res) => {
             user.pledgeUsdt = pledgeAmountNum;
         }
 
-        let price = 1.0;
-        if (nowVN >= julyFirstVN) {
-            const stats = await TokenState.findOne({ symbol: 'AQE' });
-            price = stats ? stats.currentPrice : 1.0;
-        }
+        // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
+        const price = 1.0;
 
         const tokensCalculated = amountNum / price;
-        
+
         await Transaction.create({
             hash,
             from: user._id,
@@ -124,7 +121,7 @@ export const submitPreRegisterPayment = async (req, res) => {
 
             if (user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
                 user.isPledgeCompleted = true;
-                
+
                 let bonusPercent = 0;
                 if (nowVN <= may31VN) {
                     bonusPercent = 0.10;
@@ -134,13 +131,13 @@ export const submitPreRegisterPayment = async (req, res) => {
 
                 const bonusTokens = user.preRegisterTokens * bonusPercent;
                 const totalTokens = user.preRegisterTokens + bonusTokens;
-                
+
                 user.aqeBalance += totalTokens;
                 user.preRegisterTokens = 0;
                 user.hasReceivedPromotion = true;
 
                 if (bonusTokens > 0) {
-                     await BalanceHistory.create({
+                    await BalanceHistory.create({
                         userId: user._id,
                         amount: bonusTokens,
                         symbol: 'AQE',
@@ -167,9 +164,9 @@ export const submitPreRegisterPayment = async (req, res) => {
 export const getMyPreRegister = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        
-        const transactions = await Transaction.find({ 
-            from: req.user._id, 
+
+        const transactions = await Transaction.find({
+            from: req.user._id,
             type: 'PAYMENT',
             status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
         }).sort({ createdAt: -1 });
@@ -217,12 +214,12 @@ export const getUserPayments = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const query = { 
-            from: req.user._id, 
+        const query = {
+            from: req.user._id,
             type: 'PAYMENT',
             status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
         };
-        
+
         const total = await Transaction.countDocuments(query);
         const history = await Transaction.find(query)
             .sort({ createdAt: -1 })
@@ -235,7 +232,7 @@ export const getUserPayments = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
-        res.json({ 
+        res.json({
             transactions: history,
             page,
             pages: Math.ceil(total / limit),
@@ -267,7 +264,7 @@ export const createPayment = async (req, res) => {
         }
 
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
-        
+
         const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
         const description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
 
@@ -303,7 +300,7 @@ export const getPaymentById = async (req, res) => {
     try {
         const transaction = await Transaction.findOne({ paymentId })
             .populate('from', 'username fullName email');
-            
+
         if (!transaction) {
             return res.status(404).json({ message: 'Payment not found' });
         }
@@ -317,7 +314,7 @@ export const getPaymentById = async (req, res) => {
 // @desc    Get user payment history
 export const getPaymentHistory = async (req, res) => {
     try {
-        const history = await Transaction.find({ 
+        const history = await Transaction.find({
             from: req.user._id,
             type: 'PAYMENT',
             status: 'SUCCESS'
@@ -348,14 +345,14 @@ export const confirmTransactionHash = async (req, res) => {
         }
 
         console.log(`[ConfirmHash] Auto-finalizing hash ${hash} for payment ${paymentId} (Instant Success)`);
-        
+
         // Auto-finalize without checking blockchain
         // Use the amount from the transaction record since we're not checking the chain
         await finalizeBlockchainPayment(Number(paymentId), hash, transaction.amount);
-        
-        return res.json({ 
-            message: 'Payment confirmed successfully', 
-            status: 'SUCCESS' 
+
+        return res.json({
+            message: 'Payment confirmed successfully',
+            status: 'SUCCESS'
         });
 
     } catch (error) {
@@ -381,7 +378,7 @@ export const confirmManualPayment = async (req, res) => {
         await transaction.save();
 
         const user = await User.findById(req.user._id);
-        
+
         // Notify Admin via Telegram
         const telegramMsg = `
 🚀 <b>New Manual Payment Submission</b>
@@ -396,7 +393,7 @@ export const confirmManualPayment = async (req, res) => {
 
         await sendTelegramNotification(telegramMsg);
 
-        res.json({ 
+        res.json({
             message: 'payments.manual_confirm_success',
             status: 'AWAITING_APPROVAL'
         });
@@ -428,7 +425,7 @@ export const approveManualPayment = async (req, res) => {
                     pledgeUsdt: user.pledgeUsdt,
                     paidUsdt: user.paidUsdtPreRegister,
                     tokensReceived: user.preRegisterTokens,
-                    bonusPercent: 0, 
+                    bonusPercent: 0,
                     completedAt: new Date()
                 });
                 user.paidUsdtPreRegister = 0;
@@ -472,7 +469,7 @@ export const approveManualPayment = async (req, res) => {
         // Auto-complete pledge if reached
         if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
             user.isPledgeCompleted = true;
-            
+
             let bonusPercent = 0;
             if (nowVN <= may31VN) bonusPercent = 0.10;
             else if (nowVN < julyFirstVN) bonusPercent = 0.05;
@@ -483,7 +480,7 @@ export const approveManualPayment = async (req, res) => {
             user.hasReceivedPromotion = true;
 
             if (bonusTokens > 0) {
-                 await BalanceHistory.create({
+                await BalanceHistory.create({
                     userId: user._id,
                     amount: bonusTokens,
                     symbol: 'AQE',
@@ -500,7 +497,7 @@ export const approveManualPayment = async (req, res) => {
 
         // Process Commissions
         await processCommissions(user, transaction.amount);
-        
+
         // Notify User
         await Notification.create({
             userId: user._id,
@@ -565,8 +562,8 @@ export const getAllTransactionsForAdmin = async (req, res) => {
         const skip = (page - 1) * limit;
         const search = req.query.search || '';
 
-        let query = req.query.category === 'ALL' 
-            ? { status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } } 
+        let query = req.query.category === 'ALL'
+            ? { status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } }
             : { symbol: req.query.category || 'USDT', status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } };
 
         if (search) {
@@ -594,7 +591,7 @@ export const getAllTransactionsForAdmin = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        res.json({ 
+        res.json({
             transactions,
             page,
             pages: Math.ceil(total / limit),
@@ -649,7 +646,7 @@ export const getAllCommissionsForAdmin = async (req, res) => {
             createdAt: c.createdAt
         }));
 
-        res.json({ 
+        res.json({
             transactions,
             page,
             pages: Math.ceil(total / limit),

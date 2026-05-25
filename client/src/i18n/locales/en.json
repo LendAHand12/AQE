@@ -1,6 +1,7 @@
 {
   "common": {
-    "copied": "Copied to clipboard"
+    "copied": "Copied to clipboard",
+    "of": "of"
   },
   "header": {
     "good_morning": "Good morning",
@@ -354,9 +355,25 @@
     "aqe_total": "Total AQE Assets",
     "interest": {
       "title": "AQE Interest",
+      "total_received": "Total AQE Interest Received",
       "provisional": "Provisional Interest",
+      "claimable": "Claimable Interest",
       "claim_btn": "Claim to USDT",
-      "no_claimable": "No claimable interest available"
+      "already_claimed": "Already Claimed This Month",
+      "claim_success": "Claim successful",
+      "error_already_claimed": "You have already claimed interest this month. Please return at the beginning of next month.",
+      "error_no_interest": "No claimable AQE interest",
+      "no_claimable": "No claimable interest available",
+      "confirm_title": "Confirm Interest Claim",
+      "confirm_desc": "You can only claim interest once per calendar month. Are you sure you want to convert {{amount}} claimable AQE interest to {{amount}} USDT right now?",
+      "confirm_cancel": "Cancel",
+      "remaining": "Remaining Interest to Receive",
+      "schedule_title": "Upcoming Payout Schedule",
+      "schedule_desc": "Detailed timeline of daily AQE interest payouts based on your purchases.",
+      "table_date": "Payout Date",
+      "table_amount": "Daily Yield",
+      "view_schedule_btn": "View Payout Schedule",
+      "no_schedule": "No upcoming payouts"
     },
     "withdraw_btn": "Withdraw USDT",
     "withdraw_history": "Withdrawal History",
@@ -513,9 +530,15 @@
     "table": {
       "date": "Payment Date",
       "description": "Content",
+      "method": "Method",
       "amount": "Amount",
       "status": "Status",
       "details": "Transaction Hash"
+    },
+    "method": {
+      "qr": "QR Code",
+      "zelle": "Zelle",
+      "wallet": "Wallet Transfer"
     },
     "status": {
       "success": "Success",

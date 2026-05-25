@@ -10,6 +10,7 @@
     "create-user": "node src/scripts/createUser.js",
     "test-tele": "node src/scripts/testTelegram.js",
     "test-email": "node src/scripts/testEmail.js",
+    "aqe": "node src/scripts/runInterestCalculation.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -120,7 +120,7 @@ export default function PaymentHistoryPage() {
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.date")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">Payment ID</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.description")}</th>
-                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">Phương thức</th>
+                  <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("payments.table.method")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("payments.table.amount")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.status")}</th>
                   <th className="px-6 py-3 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-center">{t("payments.table.details")}</th>
@@ -168,11 +168,11 @@ export default function PaymentHistoryPage() {
                       <td className="px-6 py-5">
                          <span className="text-[12px] font-bold">
                             {p.metadata?.method === 'QR' ? (
-                               <span className="text-purple-600">Mã QR</span>
+                               <span className="text-purple-600">{t("payments.method.qr")}</span>
                             ) : p.metadata?.method === 'ZELLE' ? (
-                               <span className="text-orange-500">Zelle</span>
+                               <span className="text-orange-500">{t("payments.method.zelle")}</span>
                             ) : (
-                               <span className="text-blue-600">Chuyển ví</span>
+                               <span className="text-blue-600">{t("payments.method.wallet")}</span>
                             )}
                          </span>
                       </td>

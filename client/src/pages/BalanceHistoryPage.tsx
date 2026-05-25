@@ -14,6 +14,9 @@ import { Pagination } from "@/components/common/Pagination"
 
 export default function BalanceHistoryPage() {
   const { t } = useTranslation()
+  const formatAmount = (num: number) => {
+    return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+  };
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -211,36 +214,36 @@ export default function BalanceHistoryPage() {
                         </p>
                       </td>
                        <td className="px-4 py-5 text-right whitespace-nowrap">
-                         {item.symbol === 'AQE' ? (
-                            <div className="flex flex-col items-end">
-                               <span className={cn(
-                                 "text-[14px] font-bold",
-                                 item.isOfficial ? "text-[#16A34A]" : "text-amber-600"
-                               )}>
-                                 {item.amount.toLocaleString()} AQE
-                               </span>
-                               <span className="text-[10px] font-bold uppercase opacity-60">
-                                 {item.isOfficial ? t("balance_history.status.official") : t("balance_history.status.estimated")}
-                               </span>
-                            </div>
-                         ) : (
-                            <span className={cn(
-                              "text-[14px] font-bold",
-                              item.type === 'RECEIVE' || item.type === 'REWARD' || item.type === 'COMMISSION' ? "text-[#16A34A]" : "text-[#EF4444]"
-                            )}>
-                              {item.type === 'RECEIVE' || item.type === 'REWARD' || item.type === 'COMMISSION' ? "+" : "-"}{item.amount.toLocaleString()} USDT
-                            </span>
-                         )}
-                      </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#0D1F1D]">
-                        {item.fee ? item.fee.toLocaleString() : "0"}
-                      </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#868F9E]">
-                        {item.balanceBefore !== undefined ? item.balanceBefore.toLocaleString() : "---"}
-                      </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#111827]">
-                        {item.balanceAfter !== undefined ? item.balanceAfter.toLocaleString() : "---"}
-                      </td>
+                          {item.symbol === 'AQE' ? (
+                             <div className="flex flex-col items-end">
+                                <span className={cn(
+                                  "text-[14px] font-bold",
+                                  item.isOfficial ? "text-[#16A34A]" : "text-amber-600"
+                                )}>
+                                  {formatAmount(item.amount)} AQE
+                                </span>
+                                <span className="text-[10px] font-bold uppercase opacity-60">
+                                  {item.isOfficial ? t("balance_history.status.official") : t("balance_history.status.estimated")}
+                                </span>
+                             </div>
+                          ) : (
+                             <span className={cn(
+                               "text-[14px] font-bold",
+                               ['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_INTEREST', 'REFUND'].includes(item.type) ? "text-[#16A34A]" : "text-[#EF4444]"
+                             )}>
+                               {['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_INTEREST', 'REFUND'].includes(item.type) ? "+" : "-"}{formatAmount(item.amount)} USDT
+                             </span>
+                          )}
+                       </td>
+                       <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#0D1F1D]">
+                         {item.fee ? formatAmount(item.fee) : "0"}
+                       </td>
+                       <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#868F9E]">
+                         {item.balanceBefore !== undefined ? formatAmount(item.balanceBefore) : "---"}
+                       </td>
+                       <td className="px-4 py-5 text-right whitespace-nowrap text-[14px] font-bold text-[#111827]">
+                         {item.balanceAfter !== undefined ? formatAmount(item.balanceAfter) : "---"}
+                       </td>
                       <td className="px-4 py-5">
                         <div className="flex justify-center">
                           <div className={cn(
@@ -286,7 +289,7 @@ function SummaryCard({ label, value, bgColor, textColor, symbol }: { label: stri
     <div className={cn("p-4 rounded-[12px] flex flex-col gap-1 transition-transform hover:scale-[1.02]", bgColor)}>
       <p className="text-[16px] text-[#0D1F1D]">{label}</p>
       <p className={cn("text-[24px] font-bold tracking-tight", textColor)}>
-        {value.toLocaleString()} {symbol || "USDT"}
+        {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })} {symbol || "USDT"}
       </p>
     </div>
   )

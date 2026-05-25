@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface PaginationProps {
   currentPage: number
@@ -19,6 +20,7 @@ export function Pagination({
   totalItems,
   itemsPerPage = 10
 }: PaginationProps) {
+  const { t } = useTranslation()
   if (totalPages <= 1 && !totalItems) return null
 
   const getPages = () => {
@@ -45,26 +47,27 @@ export function Pagination({
     <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full px-4 py-2">
       {/* Left side: Item Info */}
       {totalItems !== undefined && (
-        <div className="flex-1">
-          <p className="font-['SVN-Gilroy:Regular',sans-serif] text-[18px] text-[#636d7d] leading-[28px]">
-            {startItem}–{endItem} của {totalItems}
+        <div className="flex-1 text-center md:text-left">
+          <p className="font-['SVN-Gilroy:Regular',sans-serif] text-[14px] md:text-[16px] text-[#636d7d] leading-normal">
+            {startItem}–{endItem} {t("common.of")} {totalItems}
           </p>
         </div>
       )}
 
       {/* Right side: Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-center gap-3 md:gap-4">
         <Button
           variant="outline"
           size="icon"
-          className="h-10 w-10 rounded-full border-[#efefef] bg-white transition-all hover:bg-gray-50"
+          className="h-10 w-10 rounded-full border-[#efefef] bg-white transition-all hover:bg-gray-50 shrink-0"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || disabled}
         >
           <ChevronLeft size={16} />
         </Button>
 
-        <div className="flex items-center gap-1">
+        {/* Desktop Page Numbers */}
+        <div className="hidden sm:flex items-center gap-1">
           {getPages().map((page, index, array) => {
             const showEllipsis = index > 0 && page - array[index - 1] > 1;
             return (
@@ -87,10 +90,15 @@ export function Pagination({
           })}
         </div>
 
+        {/* Mobile Page Indicator */}
+        <span className="sm:hidden text-[14px] font-medium text-gray-600 px-2 min-w-[50px] text-center select-none">
+          {currentPage} / {totalPages}
+        </span>
+
         <Button
           variant="outline"
           size="icon"
-          className="h-10 w-10 rounded-full border-[#efefef] bg-white transition-all hover:bg-gray-50"
+          className="h-10 w-10 rounded-full border-[#efefef] bg-white transition-all hover:bg-gray-50 shrink-0"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || disabled}
         >
