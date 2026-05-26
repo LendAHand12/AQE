@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, FileText, Printer, Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { motion } from "framer-motion"
 
 interface Section {
   id: string;

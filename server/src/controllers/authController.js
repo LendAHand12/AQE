@@ -210,7 +210,7 @@ export const updateUserProfile = async (req, res) => {
             user.nation = req.body.nation || user.nation;
             user.walletAddress = req.body.walletAddress || user.walletAddress;
             user.avatar = req.body.avatar || user.avatar;
-            user.walletAddress = req.body.walletAddress || user.walletAddress;
+            user.countryCode = req.body.countryCode || user.countryCode;
 
             if (req.body.bankAccounts) {
                 user.bankAccounts = req.body.bankAccounts;
@@ -228,6 +228,7 @@ export const updateUserProfile = async (req, res) => {
                 lastName: updatedUser.lastName,
                 email: updatedUser.email,
                 phone: updatedUser.phone,
+                countryCode: updatedUser.countryCode,
                 birthday: updatedUser.birthday,
                 gender: updatedUser.gender,
                 telegram: updatedUser.telegram,

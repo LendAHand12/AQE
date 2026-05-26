@@ -10,7 +10,8 @@ import {
   Loader2,
   Camera,
   Trash,
-  Wallet
+  Wallet,
+  ChevronDown
 } from "lucide-react"
 import Cropper from 'react-easy-crop'
 import { Input } from "@/components/ui/input"
@@ -42,6 +43,26 @@ import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import KYCSection from "@/components/profile/KYCSection"
 import { getImageUrl } from "@/lib/utils"
+
+const COUNTRIES = [
+  { code: "+84", iso: "vn" },
+  { code: "+1", iso: "us" },
+  { code: "+44", iso: "gb" },
+  { code: "+49", iso: "de" },
+  { code: "+33", iso: "fr" },
+  { code: "+81", iso: "jp" },
+  { code: "+82", iso: "kr" },
+  { code: "+420", iso: "cz" },
+  { code: "+86", iso: "cn" },
+  { code: "+886", iso: "tw" },
+  { code: "+91", iso: "in" },
+  { code: "+61", iso: "au" },
+  { code: "+60", iso: "my" },
+  { code: "+1", iso: "ca" },
+  { code: "+971", iso: "ae" },
+  { code: "+66", iso: "th" },
+  { code: "+65", iso: "sg" },
+];
 
 // Helper function to create the cropped image
 const getCroppedImg = async (imageSrc: string, pixelCrop: any) => {
@@ -112,6 +133,7 @@ export default function SettingsPage() {
     username: "",
     email: "",
     phone: "",
+    countryCode: "",
     birthday: "",
     gender: "Nam",
     telegram: "",
@@ -123,6 +145,8 @@ export default function SettingsPage() {
     bankAccounts: [] as any[],
     isTwoFactorEnabled: false
   })
+
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
 
   // Crop State
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
@@ -143,6 +167,7 @@ export default function SettingsPage() {
         const data = response.data
         setFormData({
           ...data,
+          countryCode: data.countryCode || "+84",
           birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
           bankAccounts: data.bankAccounts || [],
           isTwoFactorEnabled: data.isTwoFactorEnabled || false
@@ -372,13 +397,63 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[13px] font-medium text-gray-500">{t("settings.contact.phone")}</Label>
-                    <Input 
-                      name="phone" 
-                      value={formData.phone} 
-                      onChange={handleChange} 
-                      placeholder="0912345678"
-                      className="h-11 border-gray-200 focus:ring-1 focus:ring-[#276152]" 
-                    />
+                    <div className="relative group">
+                      <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-0 z-20 text-[#111827]">
+                        <div className="relative">
+                          <button 
+                            type="button"
+                            onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                            className="flex items-center gap-1 px-2 py-1 bg-transparent hover:bg-gray-100 rounded-[4px] transition-colors"
+                          >
+                            <img 
+                              src={`https://flagcdn.com/w20/${COUNTRIES.find(c => c.code === formData.countryCode)?.iso || 'us'}.png`} 
+                              alt="flag" 
+                              className="w-5 h-auto rounded-[2px]" 
+                            />
+                            <ChevronDown size={14} className="text-[#9ca3af]" />
+                          </button>
+
+                          {showCountryDropdown && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)} />
+                              <div className="absolute top-full left-0 mt-1 w-[120px] bg-white border border-[#efefef] shadow-lg rounded-[8px] overflow-hidden z-50">
+                                <div className="max-h-[200px] overflow-y-auto font-sans">
+                                  {COUNTRIES.map((c) => (
+                                    <button
+                                      key={c.iso}
+                                      type="button"
+                                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#f8faf9] transition-colors text-left"
+                                      onClick={() => {
+                                        setFormData({...formData, countryCode: c.code});
+                                        setShowCountryDropdown(false);
+                                      }}
+                                    >
+                                      <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-auto rounded-[2px]" />
+                                      <span className="font-medium text-[14px] text-gray-700">{c.code}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="w-[1px] h-5 bg-[#d5d7db] mx-1"></div>
+                      </div>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (val.startsWith('0')) {
+                            val = val.substring(1);
+                          }
+                          setFormData({ ...formData, phone: val });
+                        }}
+                        placeholder={t("auth.phone_placeholder")}
+                        className="w-full h-11 pl-[70px] pr-4 bg-white border border-gray-200 rounded-[8px] outline-none focus:border-[#276152] focus:ring-1 focus:ring-[#276152] transition-all text-sm text-[#111827] placeholder:text-[#9ca3af]"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[13px] font-medium text-gray-500">{t("settings.contact.telegram")}</Label>
@@ -397,16 +472,6 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label className="text-[13px] font-medium text-gray-500">{t("settings.address.street")}</Label>
                     <Input name="address" value={formData.address} onChange={handleChange} className="h-11 border-gray-200" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[13px] font-medium text-gray-500">{t("settings.address.country")}</Label>
-                    <Select value={formData.nation} onValueChange={(v) => setFormData({...formData, nation: v})}>
-                      <SelectTrigger className="!h-11 w-full border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Việt Nam">{t("settings.address.countries.vietnam")}</SelectItem>
-                        <SelectItem value="USA">{t("settings.address.countries.usa")}</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
-import { useAccount } from 'wagmi'
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -28,8 +27,6 @@ export default function BuyPage() {
   const [loading, setLoading] = useState(true)
   const [isBlockchainModalOpen, setIsBlockchainModalOpen] = useState(false)
   const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
-
-  const { isConnected } = useAccount()
 
   useEffect(() => {
     fetchInitialData()
@@ -104,7 +101,7 @@ export default function BuyPage() {
   )
 
   const isKycVerified = userProfile?.kycStatus === 'verified' || userProfile?.kycStatus === 'pending'
-  
+
   // June Promotion check (Client side)
   const now = new Date()
   const isJune = now.getMonth() === 5 && now.getFullYear() === 2026 // 5 = June in JS Date
@@ -116,7 +113,7 @@ export default function BuyPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20 flex flex-col items-center">
       <div className="w-full max-w-[520px] px-4 py-8 sm:py-12 space-y-6 animate-in fade-in duration-500">
-        
+
         {/* Header Section */}
         <div className="space-y-1 text-center">
           <h1 className="text-[28px] font-black text-[#0d1f1d] leading-tight">
@@ -134,11 +131,11 @@ export default function BuyPage() {
               <CheckCircle2 size={16} />
             </div>
             <div className="space-y-0.5">
-              <p className="text-[13px] font-bold text-emerald-800">
+              <p className="text-[15px] font-bold text-emerald-800">
                 {t("buy.june_promo_banner")}
               </p>
-              <p className="text-[11px] text-emerald-600">
-                Earn an extra 5% official bonus on every digital unit purchase in June 2026. Added directly as official holdings.
+              <p className="text-[13px] text-emerald-600">
+                {t("buy.june_promo_desc")}
               </p>
             </div>
           </div>
@@ -148,11 +145,11 @@ export default function BuyPage() {
               <Calendar size={16} />
             </div>
             <div className="space-y-0.5">
-              <p className="text-[13px] font-bold text-amber-800">
-                Upcoming June Promotion!
+              <p className="text-[15px] font-bold text-amber-800">
+                {t("buy.upcoming_promo_title")}
               </p>
-              <p className="text-[11px] text-amber-600">
-                Starting June 1st, 2026, receive a 5% direct bonus on all purchases. Plan your purchase to maximize your bonus!
+              <p className="text-[13px] text-amber-600">
+                {t("buy.upcoming_promo_desc")}
               </p>
             </div>
           </div>
@@ -160,7 +157,7 @@ export default function BuyPage() {
 
         {/* Main Action Form Card */}
         <div className="bg-white p-6 sm:p-8 rounded-[20px] shadow-[0px_15px_40px_rgba(0,0,0,0.02)] border border-gray-100 space-y-5">
-          
+
           <div className="flex gap-2.5 items-center border-b border-gray-50 pb-3">
             <div className="size-8 bg-[#d9ede8] rounded-full flex items-center justify-center text-[#276152]">
               <Coins size={18} />
