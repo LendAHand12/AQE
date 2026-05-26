@@ -215,6 +215,75 @@ export const getUserById = async (req, res) => {
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
 
+        // --- AQE Interest Stats ---
+        const claimHistories = await BalanceHistory.find({
+            userId: user._id,
+            symbol: 'USDT',
+            type: 'CLAIM_INTEREST',
+            status: 'SUCCESS'
+        }).select('amount');
+        const totalClaimed = claimHistories.reduce((sum, h) => sum + h.amount, 0);
+
+        const acquisitions = await BalanceHistory.find({
+            userId: user._id,
+            symbol: 'AQE',
+            status: 'SUCCESS',
+            type: { $in: ['RECEIVE', 'REWARD'] }
+        }).select('amount createdAt');
+        const totalExpected = acquisitions.reduce((sum, acq) => sum + (acq.amount * 0.06), 0);
+
+        // Helper calculations for Vietnam timezone
+        const getVietnamTime = (date = new Date()) => {
+            return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+        };
+        const startOfDay = (date) => {
+            const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+            d.setHours(0, 0, 0, 0);
+            return d;
+        };
+
+        const nowVN = getVietnamTime();
+        const todayMidnight = startOfDay(nowVN);
+        const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
+        const cutOffDate = new Date(cutOffDateStr);
+
+        let maxInterestEndDate = null;
+        const processedAcqs = acquisitions.map(acq => {
+            const purchaseDateVN = getVietnamTime(acq.createdAt);
+            let interestStartDate;
+            if (purchaseDateVN < cutOffDate) {
+                interestStartDate = startOfDay(cutOffDate);
+            } else {
+                interestStartDate = startOfDay(purchaseDateVN);
+            }
+            const interestEndDate = new Date(interestStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+            if (!maxInterestEndDate || interestEndDate > maxInterestEndDate) {
+                maxInterestEndDate = interestEndDate;
+            }
+
+            return {
+                amount: acq.amount,
+                startDate: interestStartDate,
+                endDate: interestEndDate
+            };
+        });
+
+        let totalRemaining = 0;
+        if (maxInterestEndDate && maxInterestEndDate > todayMidnight) {
+            let currentDay = new Date(todayMidnight.getTime());
+            while (currentDay < maxInterestEndDate) {
+                let dailySum = 0;
+                processedAcqs.forEach(acq => {
+                    if (currentDay >= acq.startDate && currentDay < acq.endDate) {
+                        dailySum += acq.amount * 0.06 / 365;
+                    }
+                });
+                totalRemaining += dailySum;
+                currentDay.setDate(currentDay.getDate() + 1);
+            }
+        }
+
         res.json({
             user,
             transactions,
@@ -223,7 +292,14 @@ export const getUserById = async (req, res) => {
             tokenHistory,
             referrals,
             totalSales,
-            totalNetwork
+            totalNetwork,
+            interestStats: {
+                totalExpected,
+                totalClaimed,
+                totalRemaining,
+                claimableAqeInterest: user.claimableAqeInterest || 0,
+                provisionalAqeInterest: user.provisionalAqeInterest || 0
+            }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
