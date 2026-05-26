@@ -14,3 +14,17 @@ export function getImageUrl(path: string | null | undefined) {
   const baseUrl = apiUrl.replace(/\/api$/, "")
   return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`
 }
+
+export function formatTruncated(num: number | null | undefined, decimals: number = 5): string {
+  if (num === undefined || num === null || isNaN(num)) return "0." + "0".repeat(decimals);
+  const factor = Math.pow(10, decimals);
+  // Add small epsilon to handle float precision issues
+  const truncated = Math.floor((num + 1e-12) * factor) / factor;
+  const parts = truncated.toString().split(".");
+  const integerPart = Number(parts[0]).toLocaleString("en-US");
+  const decimalPart = parts[1] || "";
+  if (decimals > 0) {
+    return integerPart + "." + decimalPart.padEnd(decimals, "0");
+  }
+  return integerPart;
+}

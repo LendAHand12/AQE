@@ -5,7 +5,7 @@ import Notification from '../models/Notification.js';
 import { emitNotification } from '../utils/socket.js';
 
 import { updateLeaderboard } from './leaderboardService.js';
-import { calculateDailyInterest } from './interestService.js';
+import { calculateDailyBonus } from './bonusService.js';
 
 /**
  * Initialize all cron jobs
@@ -72,9 +72,9 @@ export const initCronJobs = () => {
         await updateLeaderboard();
     });
 
-    // Interest Calculation - Every day at 00:00
+    // Bonus Calculation - Every day at 00:00
     cron.schedule('0 0 * * *', async () => {
-        await calculateDailyInterest();
+        await calculateDailyBonus();
     });
 
     console.log('[CRON] Automatic Release, Leaderboard, & Interest Jobs Scheduled.');

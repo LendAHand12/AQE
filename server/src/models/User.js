@@ -168,11 +168,11 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: null
     },
-    provisionalAqeInterest: {
+    provisionalAqeBonus: {
         type: Number,
         default: 0
     },
-    claimableAqeInterest: {
+    claimableAqeBonus: {
         type: Number,
         default: 0
     },

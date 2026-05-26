@@ -198,8 +198,8 @@ export default function BalanceHistoryPage() {
                           item.type === 'WITHDRAW' ? "bg-orange-100 text-orange-700" :
                           item.type === 'COMMISSION' ? "bg-amber-100 text-amber-700" :
                           item.type === 'BUY' ? "bg-emerald-100 text-emerald-800" :
-                          item.type === 'INTEREST' ? "bg-purple-100 text-purple-700" :
-                          item.type === 'CLAIM_INTEREST' ? "bg-[#276152]/10 text-[#276152]" :
+                          item.type === 'BONUS' ? "bg-purple-100 text-purple-700" :
+                          item.type === 'CLAIM_BONUS' ? "bg-[#276152]/10 text-[#276152]" :
                           "bg-gray-100 text-gray-700"
                         )}>
                           {t(`balance_history.types.${item.type.toLowerCase()}`) || item.type}
@@ -229,9 +229,9 @@ export default function BalanceHistoryPage() {
                           ) : (
                              <span className={cn(
                                "text-[14px] font-bold",
-                               ['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_INTEREST', 'REFUND'].includes(item.type) ? "text-[#16A34A]" : "text-[#EF4444]"
+                               ['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_BONUS', 'REFUND'].includes(item.type) ? "text-[#16A34A]" : "text-[#EF4444]"
                              )}>
-                               {['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_INTEREST', 'REFUND'].includes(item.type) ? "+" : "-"}{formatAmount(item.amount)} USDT
+                               {['RECEIVE', 'REWARD', 'COMMISSION', 'CLAIM_BONUS', 'REFUND'].includes(item.type) ? "+" : "-"}{formatAmount(item.amount)} USDT
                              </span>
                           )}
                        </td>

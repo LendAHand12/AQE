@@ -233,6 +233,12 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                         description: `Bonus ${bonusPercent * 100}% for completing pledge`
                     });
                 }
+
+                // Convert all previous AQE balance history records to official
+                await BalanceHistory.updateMany(
+                    { userId: user._id, symbol: 'AQE', status: 'SUCCESS', isOfficial: false },
+                    { isOfficial: true }
+                );
             }
 
             if (isLivePhase) {
@@ -372,6 +378,12 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
                 description: `Bonus ${bonusPercent * 100}% for completing pledge (Manual Deposit)`
             });
         }
+
+        // Convert all previous AQE balance history records to official
+        await BalanceHistory.updateMany(
+            { userId: user._id, symbol: 'AQE', status: 'SUCCESS', isOfficial: false },
+            { isOfficial: true }
+        );
     }
 
     if (isLivePhase) {

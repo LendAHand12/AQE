@@ -25,7 +25,7 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/providers/AuthProvider"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
-import { cn } from "@/lib/utils"
+import { cn, formatTruncated } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
 
 export default function AssetsPage() {
@@ -43,20 +43,22 @@ export default function AssetsPage() {
     officialAQE: 0,
     temporaryAQE: 0,
   })
-  const [interestInfo, setInterestInfo] = useState<any>({
-    totalInterestReceived: 0,
-    provisionalAqeInterest: 0,
-    claimableAqeInterest: 0,
+  const [bonusInfo, setBonusInfo] = useState<any>({
+    totalBonusReceived: 0,
+    provisionalAqeBonus: 0,
+    claimableAqeBonus: 0,
     firstPaymentDate: null,
-    totalRemainingInterest: 0,
+    totalRemainingBonus: 0,
+    totalExpectedBonus: 0,
     hasClaimedThisMonth: false,
     schedule: []
   })
-  const [claimingInterest, setClaimingInterest] = useState(false)
-  const [interestPage, setInterestPage] = useState(1)
-  const interestLimit = 10
+  const [claimingBonus, setClaimingBonus] = useState(false)
+  const [bonusPage, setBonusPage] = useState(1)
+  const bonusLimit = 10
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
   const [isClaimConfirmOpen, setIsClaimConfirmOpen] = useState(false)
+  const [claimType, setClaimType] = useState<'USDT' | 'AQE'>('USDT')
 
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
@@ -82,8 +84,8 @@ export default function AssetsPage() {
       const summaryRes = await apiClient.get(`/payments/my-balance-history?limit=0`)
       setSummary(summaryRes.data.summary)
 
-      const interestRes = await apiClient.get(`/interest/info`)
-      setInterestInfo(interestRes.data)
+      const bonusRes = await apiClient.get(`/bonus/info`)
+      setBonusInfo(bonusRes.data)
     } catch (err) {
       console.error("Fetch Error:", err)
     } finally {
@@ -142,16 +144,16 @@ export default function AssetsPage() {
     }
   };
 
-  const handleClaimInterest = async () => {
-    if (interestInfo.claimableAqeInterest <= 0) {
-      toast.error(t("assets.interest.no_claimable"));
+  const handleClaimBonus = async (type: 'USDT' | 'AQE' = 'USDT') => {
+    if (bonusInfo.claimableAqeBonus <= 0) {
+      toast.error(t("assets.bonus.no_claimable"));
       return;
     }
 
-    setClaimingInterest(true);
+    setClaimingBonus(true);
     try {
-      const res = await apiClient.post("/interest/claim");
-      toast.success(t(res.data.message || "assets.interest.claim_success"));
+      const res = await apiClient.post("/bonus/claim", { claimType: type });
+      toast.success(t(res.data.message || "assets.bonus.claim_success"));
       fetchData();
       syncProfile();
     } catch (err: any) {
@@ -162,7 +164,7 @@ export default function AssetsPage() {
         toast.error(t("auth.errors.unknown"));
       }
     } finally {
-      setClaimingInterest(false);
+      setClaimingBonus(false);
     }
   };
 
@@ -236,21 +238,21 @@ export default function AssetsPage() {
             </div>
             <div className="space-y-1">
               <p className="text-[40px] font-black tracking-tight text-[#111827]">
-                {summary.officialAQE.toLocaleString()} <span className="text-[20px] font-bold text-gray-400 ml-1">AQE</span>
+                {formatTruncated(summary.officialAQE || 0, 5)} <span className="text-[20px] font-bold text-gray-400 ml-1">AQE</span>
               </p>
               <div className="flex items-center gap-3">
                 <Badge variant="outline" className="rounded-full bg-[#276152]/5 text-[#276152] border-none px-3 py-1 font-bold">
-                  {summary.officialAQE.toLocaleString()} Official
+                  {formatTruncated(summary.officialAQE || 0, 5)} Official
                 </Badge>
                 <Badge variant="outline" className="rounded-full bg-amber-50 text-amber-600 border-none px-3 py-1 font-bold">
-                  +{summary.temporaryAQE.toLocaleString()} Estimated
+                  +{formatTruncated(summary.temporaryAQE || 0, 5)} Estimated
                 </Badge>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* AQE Interest Card */}
+        {/* AQE Bonus Card */}
         <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white p-6 relative border border-gray-100 flex flex-col justify-between">
           <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500">
             <ShieldCheck size={120} />
@@ -261,24 +263,32 @@ export default function AssetsPage() {
                 <div className="size-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
                   <ArrowUpRight size={20} />
                 </div>
-                <span className="text-[14px] font-bold uppercase tracking-wider text-gray-500">{t("assets.interest.title", "AQE Interest")}</span>
+                <span className="text-[14px] font-bold uppercase tracking-wider text-gray-500">{t("assets.bonus.title", "AQE Bonus")}</span>
               </div>
             </div>
             <div className="space-y-1">
               <p className="text-[32px] font-black tracking-tight text-[#111827]">
-                {interestInfo.claimableAqeInterest.toFixed(5)} <span className="text-[16px] font-bold text-gray-400 ml-1">AQE</span>
+                {formatTruncated(bonusInfo.claimableAqeBonus, 5)} <span className="text-[16px] font-bold text-gray-400 ml-1">AQE</span>
               </p>
               <div className="text-[12px] text-gray-400 font-bold uppercase tracking-wider">
-                {t("assets.interest.claimable", "Claimable Interest")}
+                {t("assets.bonus.claimable", "Claimable Bonus")}
               </div>
-              <div className="flex flex-col gap-2 pt-3">
+              <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-gray-500">{t("assets.interest.provisional")}</span>
-                  <span className="font-bold text-[#276152]">+{interestInfo.provisionalAqeInterest.toFixed(5)} AQE</span>
+                  <span className="text-gray-500 font-medium">{t("assets.bonus.total_expected", "Total Expected")}</span>
+                  <span className="font-bold text-gray-900">{formatTruncated(bonusInfo.totalExpectedBonus || 0, 5)} AQE</span>
                 </div>
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-gray-500">{t("assets.interest.remaining")}</span>
-                  <span className="font-bold text-amber-600">{(interestInfo.totalRemainingInterest || 0).toFixed(2)} AQE</span>
+                  <span className="text-gray-500 font-medium">{t("assets.bonus.total_received", "Total Received")}</span>
+                  <span className="font-bold text-[#276152]">+{formatTruncated(bonusInfo.totalBonusReceived || 0, 5)} AQE</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.bonus.remaining", "Remaining")}</span>
+                  <span className="font-bold text-amber-600">{formatTruncated(bonusInfo.totalRemainingBonus || 0, 5)} AQE</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.bonus.provisional", "Provisional")}</span>
+                  <span className="font-bold text-blue-600">+{formatTruncated(bonusInfo.provisionalAqeBonus || 0, 5)} AQE</span>
                 </div>
               </div>
             </div>
@@ -290,17 +300,20 @@ export default function AssetsPage() {
               onClick={() => setIsScheduleOpen(true)}
               className="w-full h-[36px] border border-amber-300 text-amber-600 hover:text-amber-700 hover:bg-amber-50/50 rounded-[10px] font-bold text-[13px]"
             >
-              {t("assets.interest.view_schedule_btn", "View Payout Schedule")}
+              {t("assets.bonus.view_schedule_btn", "View Payout Schedule")}
             </Button>
             <Button
-              onClick={() => setIsClaimConfirmOpen(true)}
-              disabled={claimingInterest || interestInfo.claimableAqeInterest <= 0 || interestInfo.hasClaimedThisMonth}
+              onClick={() => {
+                setClaimType('USDT'); // reset default to USDT when opening
+                setIsClaimConfirmOpen(true);
+              }}
+              disabled={claimingBonus || bonusInfo.claimableAqeBonus <= 0 || bonusInfo.hasClaimedThisMonth}
               className="w-full h-[44px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold shadow-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none"
             >
-              {claimingInterest ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {interestInfo.hasClaimedThisMonth 
-                ? t("assets.interest.already_claimed", "Already Claimed This Month") 
-                : t("assets.interest.claim_btn", "Claim to USDT")}
+              {claimingBonus ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {bonusInfo.hasClaimedThisMonth
+                ? t("assets.bonus.already_claimed", "Already Claimed This Month")
+                : t("assets.bonus.claim_btn", "Claim")}
             </Button>
           </div>
         </Card>
@@ -531,15 +544,15 @@ export default function AssetsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Interest Payout Schedule Dialog */}
+      {/* Bonus Payout Schedule Dialog */}
       <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
         <DialogContent className="max-w-2xl rounded-[24px] p-8 border-none shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-[24px] font-bold text-gray-900">
-              {t("assets.interest.schedule_title")}
+              {t("assets.bonus.schedule_title")}
             </DialogTitle>
             <DialogDescription className="text-[14px] text-gray-500">
-              {t("assets.interest.schedule_desc")}
+              {t("assets.bonus.schedule_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -548,21 +561,21 @@ export default function AssetsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#EFEFEF]/50">
-                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.interest.table_date")}</th>
-                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("assets.interest.table_amount")}</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.bonus.table_date")}</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("assets.bonus.table_amount")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EFEFEF]">
                   {(() => {
-                    const paginatedSchedule = (interestInfo.schedule || []).slice(
-                      (interestPage - 1) * interestLimit,
-                      interestPage * interestLimit
+                    const paginatedSchedule = (bonusInfo.schedule || []).slice(
+                      (bonusPage - 1) * bonusLimit,
+                      bonusPage * bonusLimit
                     );
                     if (paginatedSchedule.length === 0) {
                       return (
                         <tr>
                           <td colSpan={2} className="px-6 py-10 text-center text-[#868F9E] opacity-50">
-                            {t("assets.interest.no_schedule")}
+                            {t("assets.bonus.no_schedule")}
                           </td>
                         </tr>
                       );
@@ -576,7 +589,7 @@ export default function AssetsPage() {
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
                           <span className="text-[14px] font-bold text-[#276152]">
-                            +{item.amount.toFixed(5)} AQE
+                            +{formatTruncated(item.amount, 5)} AQE
                           </span>
                         </td>
                       </tr>
@@ -587,13 +600,13 @@ export default function AssetsPage() {
             </div>
           </div>
 
-          {interestInfo.schedule && interestInfo.schedule.length > interestLimit && (
+          {bonusInfo.schedule && bonusInfo.schedule.length > bonusLimit && (
             <div className="pt-2">
               <Pagination
-                currentPage={interestPage}
-                totalPages={Math.ceil(interestInfo.schedule.length / interestLimit)}
-                totalItems={interestInfo.schedule.length}
-                onPageChange={setInterestPage}
+                currentPage={bonusPage}
+                totalPages={Math.ceil(bonusInfo.schedule.length / bonusLimit)}
+                totalItems={bonusInfo.schedule.length}
+                onPageChange={setBonusPage}
                 disabled={fetching}
               />
             </div>
@@ -607,12 +620,68 @@ export default function AssetsPage() {
           <div className="space-y-6">
             <DialogHeader className="space-y-1">
               <DialogTitle className="text-[24px] font-bold text-gray-900">
-                {t("assets.interest.confirm_title")}
+                {t("assets.bonus.confirm_title")}
               </DialogTitle>
               <DialogDescription className="text-[14px] text-gray-500 leading-relaxed">
-                {t("assets.interest.confirm_desc", { amount: interestInfo.claimableAqeInterest.toFixed(5) })}
+                {t("assets.bonus.confirm_desc_generic", { amount: formatTruncated(bonusInfo.claimableAqeBonus, 5) })}
               </DialogDescription>
             </DialogHeader>
+
+            <div className="space-y-3">
+              <label className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">
+                {t("assets.bonus.claim_type_label", "Choose claim option:")}
+              </label>
+
+              <div
+                onClick={() => setClaimType('USDT')}
+                className={cn(
+                  "p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3",
+                  claimType === 'USDT'
+                    ? "border-[#276152] bg-emerald-50/20"
+                    : "border-gray-100 hover:border-gray-200 bg-white"
+                )}
+              >
+                <div className={cn(
+                  "size-5 rounded-full border-2 flex items-center justify-center mt-0.5",
+                  claimType === 'USDT' ? "border-[#276152]" : "border-gray-300"
+                )}>
+                  {claimType === 'USDT' && <div className="size-2.5 rounded-full bg-[#276152]" />}
+                </div>
+                <div>
+                  <h4 className="font-bold text-[14px] text-gray-900">
+                    {t("assets.bonus.claim_option_usdt", "Claim to USDT")}
+                  </h4>
+                  <p className="text-[12px] text-gray-500 mt-0.5">
+                    Convert 1 AQE = 1 USDT directly to your USDT balance
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setClaimType('AQE')}
+                className={cn(
+                  "p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3",
+                  claimType === 'AQE'
+                    ? "border-[#276152] bg-emerald-50/20"
+                    : "border-gray-100 hover:border-gray-200 bg-white"
+                )}
+              >
+                <div className={cn(
+                  "size-5 rounded-full border-2 flex items-center justify-center mt-0.5",
+                  claimType === 'AQE' ? "border-[#276152]" : "border-gray-300"
+                )}>
+                  {claimType === 'AQE' && <div className="size-2.5 rounded-full bg-[#276152]" />}
+                </div>
+                <div>
+                  <h4 className="font-bold text-[14px] text-gray-900">
+                    {t("assets.bonus.claim_option_aqe", "Reinvest to AQE")}
+                  </h4>
+                  <p className="text-[12px] text-gray-500 mt-0.5">
+                    Add to AQE balance (this amount continues to earn 6% APR yield)
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="flex gap-3">
               <Button
@@ -620,18 +689,18 @@ export default function AssetsPage() {
                 onClick={() => setIsClaimConfirmOpen(false)}
                 className="flex-1 h-[52px] rounded-[16px] font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
               >
-                {t("assets.interest.confirm_cancel")}
+                {t("assets.bonus.confirm_cancel")}
               </Button>
               <Button
                 onClick={() => {
                   setIsClaimConfirmOpen(false);
-                  handleClaimInterest();
+                  handleClaimBonus(claimType);
                 }}
-                disabled={claimingInterest}
+                disabled={claimingBonus}
                 className="flex-1 h-[52px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold gap-2"
               >
-                {claimingInterest ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {t("assets.interest.claim_btn")}
+                {claimingBonus ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {t("assets.bonus.claim_btn")}
               </Button>
             </div>
           </div>

@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
-import { getImageUrl, cn } from "@/lib/utils"
+import { getImageUrl, cn, formatTruncated } from "@/lib/utils"
 import { 
   Dialog, 
   DialogContent, 
@@ -176,6 +176,8 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
   );
 };
 
+
+
 export default function AdminUserProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -259,7 +261,7 @@ export default function AdminUserProfilePage() {
 
   if (!data) return null
 
-  const { user, transactions, commissions, interestStats } = data
+  const { user, transactions, commissions, bonusStats } = data
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-20 font-['SVN-Gilroy',sans-serif]">
@@ -893,35 +895,35 @@ export default function AdminUserProfilePage() {
             </TabsContent>
             {/* Tab: AQE Distribution */}
             <TabsContent value="aqe" className="space-y-6 outline-none">
-               {/* AQE Interest Cards */}
+               {/* AQE Bonus Cards */}
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Interest Expected</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Bonus Expected</p>
                      <h3 className="text-2xl font-black text-[#276152]">
-                       {interestStats?.totalExpected?.toFixed(5) || "0.00000"} <span className="text-sm font-bold">AQE</span>
+                       {formatTruncated(bonusStats?.totalExpected, 5)} <span className="text-sm font-bold">AQE</span>
                      </h3>
-                     <p className="text-xs text-gray-400">Lifetime interest expected from all packages (6% APR)</p>
+                     <p className="text-xs text-gray-400">Lifetime bonus expected from all packages (6% APR)</p>
                    </CardContent>
                  </Card>
 
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Claimed Interest</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Claimed Bonus</p>
                      <h3 className="text-2xl font-black text-blue-700">
-                       {interestStats?.totalClaimed?.toFixed(5) || "0.00000"} <span className="text-sm font-bold">USDT</span>
+                       {formatTruncated(bonusStats?.totalClaimed, 5)} <span className="text-sm font-bold">USDT</span>
                      </h3>
-                     <p className="text-xs text-gray-400">Total interest successfully claimed to USDT</p>
+                     <p className="text-xs text-gray-400">Total bonus successfully claimed to USDT</p>
                    </CardContent>
                  </Card>
 
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining Interest</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining Bonus</p>
                      <h3 className="text-2xl font-black text-amber-600">
-                       {interestStats?.totalRemaining?.toFixed(5) || "0.00000"} <span className="text-sm font-bold">AQE</span>
+                       {formatTruncated(bonusStats?.totalRemaining, 5)} <span className="text-sm font-bold">AQE</span>
                      </h3>
-                     <p className="text-xs text-gray-400">Expected future interest from today onwards</p>
+                     <p className="text-xs text-gray-400">Expected future bonus from today onwards</p>
                    </CardContent>
                  </Card>
                </div>
@@ -930,18 +932,18 @@ export default function AdminUserProfilePage() {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <Card className="rounded-[24px] border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
                    <div>
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimable Interest</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimable Bonus</p>
                      <h3 className="text-xl font-bold text-gray-900">
-                       {interestStats?.claimableAqeInterest?.toFixed(5) || "0.00000"} <span className="text-xs">AQE</span>
+                       {formatTruncated(bonusStats?.claimableAqeBonus, 5)} <span className="text-xs">AQE</span>
                      </h3>
                    </div>
                    <Badge className="bg-[#276152]/10 text-[#276152] border-none font-bold">Available to claim</Badge>
                  </Card>
                  <Card className="rounded-[24px] border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
                    <div>
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Provisional Interest</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Provisional Bonus</p>
                      <h3 className="text-xl font-bold text-gray-900">
-                       {interestStats?.provisionalAqeInterest?.toFixed(5) || "0.00000"} <span className="text-xs">AQE</span>
+                       {formatTruncated(bonusStats?.provisionalAqeBonus, 5)} <span className="text-xs">AQE</span>
                      </h3>
                    </div>
                    <Badge className="bg-amber-100 text-amber-700 border-none font-bold">Accumulated this month</Badge>

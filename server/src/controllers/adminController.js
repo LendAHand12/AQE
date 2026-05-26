@@ -215,22 +215,36 @@ export const getUserById = async (req, res) => {
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
 
-        // --- AQE Interest Stats ---
+        // --- AQE Bonus Stats ---
         const claimHistories = await BalanceHistory.find({
             userId: user._id,
             symbol: 'USDT',
-            type: 'CLAIM_INTEREST',
+            type: 'CLAIM_BONUS',
             status: 'SUCCESS'
         }).select('amount');
         const totalClaimed = claimHistories.reduce((sum, h) => sum + h.amount, 0);
 
+        // 1. Sum up all successful REWARD transactions (pledge rewards) for this user
+        const rewardTransactions = await BalanceHistory.find({
+            userId: user._id,
+            symbol: 'AQE',
+            status: 'SUCCESS',
+            type: 'REWARD'
+        });
+        const totalRewardAqe = rewardTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+        // 2. Eligible balance is current total holdings (aqeBalance + preRegisterTokens) minus the reward tokens
+        const eligibleBalance = Math.max(0, (user.aqeBalance + user.preRegisterTokens) - totalRewardAqe);
+
+        // 3. Find all successful AQE acquisitions (RECEIVE only, representing principal)
         const acquisitions = await BalanceHistory.find({
             userId: user._id,
             symbol: 'AQE',
             status: 'SUCCESS',
-            type: { $in: ['RECEIVE', 'REWARD'] }
-        }).select('amount createdAt');
-        const totalExpected = acquisitions.reduce((sum, acq) => sum + (acq.amount * 0.06), 0);
+            type: 'RECEIVE'
+        }).select('amount createdAt').sort({ createdAt: 1 }); // Oldest first for FIFO
+
+        const totalExpected = eligibleBalance * 0.06;
 
         // Helper calculations for Vietnam timezone
         const getVietnamTime = (date = new Date()) => {
@@ -244,35 +258,78 @@ export const getUserById = async (req, res) => {
 
         const nowVN = getVietnamTime();
         const todayMidnight = startOfDay(nowVN);
-        const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
+        const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
         const cutOffDate = new Date(cutOffDateStr);
 
-        let maxInterestEndDate = null;
-        const processedAcqs = acquisitions.map(acq => {
+        let maxBonusEndDate = null;
+        let remainingEligible = eligibleBalance;
+        const processedAcqs = [];
+
+        // FIFO: Match eligible balance to acquisitions
+        for (const acq of acquisitions) {
+            if (remainingEligible <= 0) break;
+            const heldAmount = Math.min(acq.amount, remainingEligible);
+            remainingEligible -= heldAmount;
+
             const purchaseDateVN = getVietnamTime(acq.createdAt);
-            let interestStartDate;
+            let bonusStartDate;
             if (purchaseDateVN < cutOffDate) {
-                interestStartDate = startOfDay(cutOffDate);
+                bonusStartDate = startOfDay(cutOffDate);
             } else {
-                interestStartDate = startOfDay(purchaseDateVN);
+                bonusStartDate = startOfDay(purchaseDateVN);
             }
-            const interestEndDate = new Date(interestStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+            const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-            if (!maxInterestEndDate || interestEndDate > maxInterestEndDate) {
-                maxInterestEndDate = interestEndDate;
+            if (!maxBonusEndDate || bonusEndDate > maxBonusEndDate) {
+                maxBonusEndDate = bonusEndDate;
             }
 
-            return {
-                amount: acq.amount,
-                startDate: interestStartDate,
-                endDate: interestEndDate
-            };
+            processedAcqs.push({
+                amount: heldAmount,
+                startDate: bonusStartDate,
+                endDate: bonusEndDate
+            });
+        }
+
+        // If there is still remaining eligible balance (unrecorded in BalanceHistory, i.e. temporary AQE not yet in history)
+        if (remainingEligible > 0) {
+            const userCreateDateVN = getVietnamTime(user.createdAt);
+            let bonusStartDate;
+            if (userCreateDateVN < cutOffDate) {
+                bonusStartDate = startOfDay(cutOffDate);
+            } else {
+                bonusStartDate = startOfDay(userCreateDateVN);
+            }
+            const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+            if (!maxBonusEndDate || bonusEndDate > maxBonusEndDate) {
+                maxBonusEndDate = bonusEndDate;
+            }
+
+            processedAcqs.push({
+                amount: remainingEligible,
+                startDate: bonusStartDate,
+                endDate: bonusEndDate
+            });
+        }
+
+        // Check if today's daily bonus has already been credited
+        const todayBonusExists = await BalanceHistory.findOne({
+            userId: user._id,
+            symbol: 'AQE',
+            type: 'BONUS',
+            status: 'SUCCESS',
+            createdAt: { $gte: todayMidnight }
         });
 
+        const scheduleStartDate = todayBonusExists 
+            ? new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000) 
+            : new Date(todayMidnight.getTime());
+
         let totalRemaining = 0;
-        if (maxInterestEndDate && maxInterestEndDate > todayMidnight) {
-            let currentDay = new Date(todayMidnight.getTime());
-            while (currentDay < maxInterestEndDate) {
+        if (maxBonusEndDate && maxBonusEndDate > scheduleStartDate) {
+            let currentDay = new Date(scheduleStartDate.getTime());
+            while (currentDay < maxBonusEndDate) {
                 let dailySum = 0;
                 processedAcqs.forEach(acq => {
                     if (currentDay >= acq.startDate && currentDay < acq.endDate) {
@@ -293,12 +350,12 @@ export const getUserById = async (req, res) => {
             referrals,
             totalSales,
             totalNetwork,
-            interestStats: {
+            bonusStats: {
                 totalExpected,
                 totalClaimed,
                 totalRemaining,
-                claimableAqeInterest: user.claimableAqeInterest || 0,
-                provisionalAqeInterest: user.provisionalAqeInterest || 0
+                claimableAqeBonus: user.claimableAqeBonus || 0,
+                provisionalAqeBonus: user.provisionalAqeBonus || 0
             }
         });
     } catch (error) {
