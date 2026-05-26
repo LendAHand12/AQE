@@ -899,7 +899,7 @@ export default function AdminUserProfilePage() {
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Bonus Expected</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Expected</p>
                      <h3 className="text-2xl font-black text-[#276152]">
                        {formatTruncated(bonusStats?.totalExpected, 5)} <span className="text-sm font-bold">AQE</span>
                      </h3>
@@ -909,17 +909,17 @@ export default function AdminUserProfilePage() {
 
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Claimed Bonus</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Received</p>
                      <h3 className="text-2xl font-black text-blue-700">
-                       {formatTruncated(bonusStats?.totalClaimed, 5)} <span className="text-sm font-bold">USDT</span>
+                       {formatTruncated(bonusStats?.totalBonusReceived, 5)} <span className="text-sm font-bold">AQE</span>
                      </h3>
-                     <p className="text-xs text-gray-400">Total bonus successfully claimed to USDT</p>
+                     <p className="text-xs text-gray-400">Total daily bonus received so far (yield)</p>
                    </CardContent>
                  </Card>
 
                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
                    <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining Bonus</p>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining</p>
                      <h3 className="text-2xl font-black text-amber-600">
                        {formatTruncated(bonusStats?.totalRemaining, 5)} <span className="text-sm font-bold">AQE</span>
                      </h3>
@@ -929,24 +929,33 @@ export default function AdminUserProfilePage() {
                </div>
 
                {/* AQE Balances Summary */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <Card className="rounded-[24px] border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
                    <div>
                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimable Bonus</p>
                      <h3 className="text-xl font-bold text-gray-900">
                        {formatTruncated(bonusStats?.claimableAqeBonus, 5)} <span className="text-xs">AQE</span>
                      </h3>
                    </div>
-                   <Badge className="bg-[#276152]/10 text-[#276152] border-none font-bold">Available to claim</Badge>
+                   <Badge className="bg-[#276152]/10 text-[#276152] border-none font-bold">Available</Badge>
                  </Card>
-                 <Card className="rounded-[24px] border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
                    <div>
                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Provisional Bonus</p>
                      <h3 className="text-xl font-bold text-gray-900">
                        {formatTruncated(bonusStats?.provisionalAqeBonus, 5)} <span className="text-xs">AQE</span>
                      </h3>
                    </div>
-                   <Badge className="bg-amber-100 text-amber-700 border-none font-bold">Accumulated this month</Badge>
+                   <Badge className="bg-amber-100 text-amber-700 border-none font-bold">Accumulated</Badge>
+                 </Card>
+                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+                   <div>
+                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimed to USDT</p>
+                     <h3 className="text-xl font-bold text-blue-700">
+                       {formatTruncated(bonusStats?.totalClaimed, 5)} <span className="text-xs">USDT</span>
+                     </h3>
+                   </div>
+                   <Badge className="bg-blue-100 text-blue-700 border-none font-bold">Claimed</Badge>
                  </Card>
                </div>
 

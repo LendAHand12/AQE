@@ -224,6 +224,15 @@ export const getUserById = async (req, res) => {
         }).select('amount');
         const totalClaimed = claimHistories.reduce((sum, h) => sum + h.amount, 0);
 
+        // Sum up all successful BONUS transactions (daily interest) for this user
+        const bonusHistories = await BalanceHistory.find({
+            userId: user._id,
+            symbol: 'AQE',
+            status: 'SUCCESS',
+            type: 'BONUS'
+        }).select('amount');
+        const totalBonusReceived = bonusHistories.reduce((sum, h) => sum + h.amount, 0);
+
         // 1. Sum up all successful REWARD transactions (pledge rewards) for this user
         const rewardTransactions = await BalanceHistory.find({
             userId: user._id,
@@ -353,6 +362,7 @@ export const getUserById = async (req, res) => {
             bonusStats: {
                 totalExpected,
                 totalClaimed,
+                totalBonusReceived,
                 totalRemaining,
                 claimableAqeBonus: user.claimableAqeBonus || 0,
                 provisionalAqeBonus: user.provisionalAqeBonus || 0

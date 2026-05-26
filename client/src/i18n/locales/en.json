@@ -259,7 +259,7 @@
     "buy_aqe": "Buy AQE",
     "referrals": "Referral System",
     "payment_history": "Payment History",
-    "balance_history": "Balance History",
+    "balance_history": "Transactions History",
     "assets": "My Assets",
     "settings": "Settings",
     "tickets": "Support Tickets",
@@ -660,5 +660,8 @@
     "verifying": "Processing...",
     "verification_title": "Verification Checklist",
     "select_amount": "Select Amount Preset"
+  },
+  "commissions": {
+    "empty": "No records found."
   }
 }

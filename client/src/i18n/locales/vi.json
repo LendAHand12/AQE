@@ -259,7 +259,7 @@
     "buy_aqe": "Mua AQE",
     "referrals": "Hệ thống giới thiệu",
     "payment_history": "Lịch sử thanh toán",
-    "balance_history": "Lịch sử số dư",
+    "balance_history": "Lịch sử giao dịch",
     "assets": "Tài sản của tôi",
     "settings": "Cài đặt",
     "tickets": "Hỗ trợ (Tickets)",
@@ -659,5 +659,8 @@
     "verifying": "Đang xử lý...",
     "verification_title": "Danh sách xác thực điều kiện",
     "select_amount": "Chọn nhanh số tiền"
+  },
+  "commissions": {
+    "empty": "Không có dữ liệu."
   }
 }
