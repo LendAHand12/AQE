@@ -149,6 +149,85 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         const processingAmount = actualAmount > 0 ? actualAmount : transaction.amount;
         const tokensCalculated = processingAmount / price;
 
+        const isDirect = transaction.metadata?.isDirectPurchase === true;
+
+        if (isDirect) {
+            // Update Transaction (Lock)
+            transaction.status = 'SUCCESS';
+            transaction.hash = hash;
+            transaction.amount = processingAmount;
+
+            try {
+                await transaction.save();
+            } catch (saveError) {
+                if (saveError.code === 11000) {
+                    console.log(`[Finalize] Transaction ${paymentId} already processed (duplicate hash).`);
+                    return;
+                }
+                throw saveError;
+            }
+
+            const juneStart = new Date('2026-06-01T00:00:00+07:00');
+            const juneEnd = new Date('2026-06-30T23:59:59+07:00');
+            const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+
+            let bonusPercent = 0;
+            if (isJune) {
+                bonusPercent = 0.05;
+            }
+            const bonusTokens = tokensCalculated * bonusPercent;
+
+            const balanceBefore = user.aqeBalance;
+            // Direct purchase credits directly to aqeBalance (always official)
+            user.aqeBalance += tokensCalculated;
+
+            // Log purchase receipt
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: tokensCalculated,
+                symbol: 'AQE',
+                type: 'RECEIVE',
+                status: 'SUCCESS',
+                isOfficial: true,
+                balanceBefore,
+                balanceAfter: user.aqeBalance,
+                description: `Purchased AQE digital units via Blockchain`
+            });
+
+            // Log bonus reward if in June
+            if (isJune && bonusTokens > 0) {
+                const balanceBeforeBonus = user.aqeBalance;
+                user.aqeBalance += bonusTokens;
+                await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: balanceBeforeBonus,
+                    balanceAfter: user.aqeBalance,
+                    description: `June Promotion: 5% Bonus for purchasing AQE digital units`
+                });
+            }
+
+            await user.save();
+            console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
+
+            // Process commissions
+            await processCommissions(user, processingAmount);
+
+            // Notify user
+            await Notification.create({
+                userId: user._id,
+                title: 'Token Purchase Successful',
+                message: `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens${isJune ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+                type: 'PAYMENT'
+            });
+
+            return;
+        }
+
         // Update User Pledge if it was a new pledge
         if (transaction.metadata?.pledgeAmount && (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted)) {
             // If the user previously completed a pledge, this is a new round

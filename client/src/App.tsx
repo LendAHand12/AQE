@@ -41,6 +41,8 @@ import PublicRoute from "./components/auth/PublicRoute"
 import TicketsPage from "@/pages/TicketsPage"
 import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
+import TermsPage from "@/pages/TermsPage"
+import BuyPage from "@/pages/BuyPage"
 
 export function App() {
   return (
@@ -66,6 +68,7 @@ export function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/pre-register" element={<PreRegisterPage />} />
+                <Route path="/buy" element={<BuyPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
@@ -104,6 +107,7 @@ export function App() {
 
             <Route path="/pay" element={<PaymentPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             
             {/* Not Found page */}
             <Route path="*" element={<NotFoundPage />} />

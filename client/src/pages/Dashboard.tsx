@@ -116,7 +116,7 @@ export default function Dashboard() {
   // 2. Quick Actions (Removed notification configuration)
   const quickActions = [
     {
-      label: t("dashboard.buy_token", "Mua Token"),
+      label: t("dashboard.buy_token", "Mua AQE"),
       icon: Plus,
       path: "/pre-register",
     },

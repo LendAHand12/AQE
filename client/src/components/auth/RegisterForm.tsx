@@ -336,7 +336,18 @@ export default function RegisterForm() {
       <div className="flex items-center gap-2 pt-1 font-sans">
         <Checkbox id="terms" required className="border-[#d5d7db] data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]" />
         <label htmlFor="terms" className="text-[14px] font-normal text-[#6b7280] cursor-pointer select-none">
-          {t("auth.agree_terms")} <span className="text-[#276152] font-semibold">{t("auth.terms")}</span> {t("auth.and")} <span className="text-[#276152] font-semibold">{t("auth.policy")}</span>
+          {t("auth.agree_terms")}{" "}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#276152] font-semibold hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t("auth.terms")}
+          </a>{" "}
+          {t("auth.and")}{" "}
+          <span className="text-[#276152] font-semibold">{t("auth.policy")}</span>
         </label>
       </div>
 

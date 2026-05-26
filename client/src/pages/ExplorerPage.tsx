@@ -64,7 +64,7 @@ export default function ExplorerPage() {
                 <Globe className="w-8 h-8 text-blue-300" />
                 AQ Estate Explorer
               </h1>
-              <p className="text-blue-100 text-sm font-medium">Virtual Blockchain Network for AQE Token Ecosystem</p>
+              <p className="text-blue-100 text-sm font-medium">Virtual Ledger Network for AQE Digital Asset Ecosystem</p>
             </div>
           </div>
           
@@ -74,7 +74,7 @@ export default function ExplorerPage() {
             </div>
             <Input 
               className="h-14 pl-12 pr-6 rounded-[12px] bg-white border-none shadow-2xl shadow-blue-900/40 text-lg"
-              placeholder="Search by Block / Txn Hash / Address / _id"
+              placeholder="Search by Update / Txn Hash / Address / _id"
             />
           </div>
         </div>
@@ -85,9 +85,9 @@ export default function ExplorerPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard 
             icon={<DollarSign className="w-5 h-5 text-green-600" />} 
-            label="AQE PRICE" 
+            label="AQE VALUE" 
             value={`$${stats?.currentPrice?.toFixed(4)}`} 
-            subValue={`Pool: ${stats?.usdtPool?.toLocaleString()} USDT`}
+            subValue={`Liquidity: ${stats?.usdtPool?.toLocaleString()} USDT`}
           />
           <StatCard 
             icon={<TrendingUp className="w-5 h-5 text-blue-600" />} 
@@ -97,7 +97,7 @@ export default function ExplorerPage() {
           />
           <StatCard 
             icon={<Box className="w-5 h-5 text-purple-600" />} 
-            label="LAST BLOCK" 
+            label="LAST UPDATE" 
             value={`#${stats?.latestBlock}`} 
             subValue={`Transfers: ${stats?.totalTransactions}`}
           />
@@ -105,7 +105,7 @@ export default function ExplorerPage() {
             icon={<Activity className="w-5 h-5 text-orange-600" />} 
             label="NETWORK STATUS" 
             value="Active" 
-            subValue="TPS: 0.12 (Virtual)"
+            subValue="Updates/sec: 0.12 (Virtual)"
           />
         </div>
       </div>
@@ -184,7 +184,7 @@ export default function ExplorerPage() {
       {/* Footer info */}
       <div className="max-w-[1240px] mx-auto px-6 mt-12 text-center">
         <p className="text-[12px] text-gray-400 font-medium">
-          © 2026 AQ Estate Virtual Ledger. This is a simulated environment. None of the transactions shown are on a public mainnet.
+          © 2026 AQ Estate Virtual Ledger. This is a simulated environment. None of the transactions shown are on a public network. This is a private ledger database.
         </p>
       </div>
     </div>

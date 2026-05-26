@@ -254,7 +254,7 @@ export const getUserPayments = async (req, res) => {
 
 // @desc    Create a new payment for QR flow
 export const createPayment = async (req, res) => {
-    const { amount, pledgeAmount, method } = req.body;
+    const { amount, pledgeAmount, method, isDirectPurchase } = req.body;
     try {
         if (!amount || amount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });
@@ -272,7 +272,13 @@ export const createPayment = async (req, res) => {
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
 
         const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
-        const description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
+        
+        let description = "";
+        if (isDirectPurchase) {
+            description = `Direct purchase of AQE digital units (${methodText})`;
+        } else {
+            description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
+        }
 
         const transaction = await Transaction.create({
             paymentId,
@@ -283,7 +289,7 @@ export const createPayment = async (req, res) => {
             type: 'PAYMENT',
             status: 'PENDING',
             description,
-            metadata: { pledgeAmount: pledgeAmount || user.pledgeUsdt, method }
+            metadata: { pledgeAmount, method, isDirectPurchase: !!isDirectPurchase }
         });
 
         const qrUrl = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}`;
@@ -421,6 +427,78 @@ export const approveManualPayment = async (req, res) => {
         const user = await User.findById(transaction.from);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isDirect = transaction.metadata?.isDirectPurchase === true;
+
+        if (isDirect) {
+            const nowVN = getVietnamTime();
+            const juneStart = new Date('2026-06-01T00:00:00+07:00');
+            const juneEnd = new Date('2026-06-30T23:59:59+07:00');
+            const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+
+            let price = 1.0;
+            const tokensCalculated = transaction.amount / price;
+            let bonusPercent = 0;
+            if (isJune) {
+                bonusPercent = 0.05;
+            }
+            const bonusTokens = tokensCalculated * bonusPercent;
+
+            // Update Transaction
+            transaction.status = 'SUCCESS';
+            transaction.description = transaction.description + ` (Approved by ${req.admin.username})`;
+            transaction.hash = `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
+            await transaction.save();
+
+            const balanceBefore = user.aqeBalance;
+            // Direct purchase credits directly to aqeBalance (always official)
+            user.aqeBalance += tokensCalculated;
+
+            // Log purchase receipt
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: tokensCalculated,
+                symbol: 'AQE',
+                type: 'RECEIVE',
+                status: 'SUCCESS',
+                isOfficial: true,
+                balanceBefore,
+                balanceAfter: user.aqeBalance,
+                description: `Manual Payment Approved (Zelle)`
+            });
+
+            // Log bonus reward if in June
+            if (isJune && bonusTokens > 0) {
+                const balanceBeforeBonus = user.aqeBalance;
+                user.aqeBalance += bonusTokens;
+                await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: balanceBeforeBonus,
+                    balanceAfter: user.aqeBalance,
+                    description: `June Promotion: 5% Bonus for purchasing AQE digital units`
+                });
+            }
+
+            await user.save();
+
+            // Process commissions
+            await processCommissions(user, transaction.amount);
+
+            // Notify user
+            await Notification.create({
+                userId: user._id,
+                title: 'Token Purchase Approved',
+                message: `Your manual payment of ${transaction.amount} USDT has been approved. You received ${tokensCalculated.toFixed(2)} AQE tokens${isJune ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+                type: 'PAYMENT'
+            });
+
+            return res.json({ message: 'payments.payment_approved', status: 'SUCCESS' });
         }
 
         // Handle New Pledge Round if previous was completed
