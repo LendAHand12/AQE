@@ -681,11 +681,14 @@ export default function AdminUserProfilePage() {
             {/* Tab: Transactions */}
             <TabsContent value="transactions" className="outline-none">
                <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-[18px] font-bold flex items-center gap-2">
                       <CreditCard size={20} className="text-[#276152]" />
                       Transaction History (Recent)
                     </CardTitle>
+                    <Badge variant="outline" className="rounded-full bg-emerald-50 text-emerald-700 border-none font-bold px-4 py-1.5 text-[12px]">
+                      Total Payments: {data.totalPayments?.toLocaleString() || 0} USDT
+                    </Badge>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>

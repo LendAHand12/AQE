@@ -158,6 +158,14 @@ export const getUserById = async (req, res) => {
             status: 'SUCCESS'
         }).sort({ createdAt: -1 }).limit(50);
 
+        // Calculate total payments made by user
+        const allPayments = await Transaction.find({
+            from: user._id,
+            type: 'PAYMENT',
+            status: 'SUCCESS'
+        }).select('amount');
+        const totalPaymentAmount = allPayments.reduce((sum, tx) => sum + tx.amount, 0);
+
         // Fetch withdrawals separately from new model
         const withdrawals = await Withdrawal.find({
             userId: user._id
@@ -359,6 +367,7 @@ export const getUserById = async (req, res) => {
             referrals,
             totalSales,
             totalNetwork,
+            totalPayments: totalPaymentAmount,
             bonusStats: {
                 totalExpected,
                 totalClaimed,
