@@ -471,7 +471,7 @@
       "insufficient_balance": "Số dư không đủ để rút (Tối thiểu 10 USDT sau khi trừ phí)",
       "not_found": "Không tìm thấy yêu cầu rút tiền",
       "kyc_required": "Bạn cần xác thực khuôn mặt (FaceID) trước khi rút tiền",
-      "min_payment_required": "Bạn cần có tổng nạp tối thiểu 100 USDT để thực hiện rút tiền",
+      "min_payment_required": "Bạn cần có tổng giao dịch tối thiểu 100 USDT để thực hiện rút tiền",
       "invalid_token": "Mã xác thực không hợp lệ hoặc đã hết hạn",
       "invalid_token_or_expired": "Phiên xác thực đã hết hạn. Vui lòng thử lại"
     },

@@ -40,9 +40,15 @@ export const requestWithdrawal = async (req, res) => {
             return res.status(400).json({ message: 'withdrawals.errors.kyc_required' });
         }
 
-        // - Total Paid >= 100 USDT
-        const totalPaid = user.paidUsdtPreRegister || 0;
-        if (totalPaid < 10) {
+        // - Total Paid check (Min 100 USDT required always)
+        const successfulPayments = await Transaction.find({
+            from: user._id,
+            type: 'PAYMENT',
+            status: 'SUCCESS'
+        });
+        const totalPaid = successfulPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+        if (totalPaid < 100) {
             return res.status(400).json({ message: 'withdrawals.errors.min_payment_required' });
         }
 
