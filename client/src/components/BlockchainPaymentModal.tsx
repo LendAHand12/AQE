@@ -8,7 +8,8 @@ import {
   // QrCode, 
   ChevronRight, 
   AlertCircle,
-  Smartphone
+  Smartphone,
+  CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
@@ -30,6 +31,7 @@ interface PaymentModalProps {
   status: 'idle' | 'success';
   countryCode?: string;
   isDirectPurchase?: boolean;
+  userEmail?: string;
 }
 
 interface PaymentData {
@@ -37,6 +39,7 @@ interface PaymentData {
   address: string;
   amount: number;
   paymentId: number;
+  transakUrl?: string;
 }
 
 export function BlockchainPaymentModal({ 
@@ -46,7 +49,8 @@ export function BlockchainPaymentModal({
   pledgeAmount,
   status: externalStatus, // 'idle' | 'success'
   countryCode,
-  isDirectPurchase = false
+  isDirectPurchase = false,
+  userEmail
 }: PaymentModalProps) {
   const { t } = useTranslation();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
@@ -67,7 +71,8 @@ export function BlockchainPaymentModal({
         amount,
         pledgeAmount,
         method,
-        isDirectPurchase
+        isDirectPurchase,
+        email: userEmail
       });
       setPaymentData(res.data);
       return res.data;
@@ -79,12 +84,53 @@ export function BlockchainPaymentModal({
     }
   };
 
-  const handleSelectMethod = async (method: 'wallet' | 'zelle' | 'qr') => {
-    const backendMethod = method === 'zelle' ? 'ZELLE' : 'WALLET';
+  const openTransakPopup = (paymentId: number, transakUrl?: string) => {
+    let url = transakUrl;
+    if (!url) {
+      const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
+      const env = import.meta.env.VITE_TRANSAK_ENV || 'STAGING';
+      const walletAddress = import.meta.env.VITE_ADMIN_WALLET_ADDRESS || '';
+      const baseUrl = env === 'PRODUCTION' ? 'https://global.transak.com' : 'https://global-stg.transak.com';
+      
+      const params = new URLSearchParams({
+        apiKey,
+        cryptoCurrencyCode: 'USDT',
+        network: 'bsc',
+        walletAddress,
+        disableWalletAddressForm: 'true',
+        defaultCryptoAmount: amount.toString(),
+        partnerOrderId: paymentId.toString(),
+      });
+      
+      if (userEmail) {
+        params.append('email', userEmail);
+      }
+      
+      url = `${baseUrl}?${params.toString()}`;
+    }
+    
+    const width = 500;
+    const height = 700;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    window.open(
+      url,
+      'TransakPayment',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+    
+    window.location.href = `/pay?pid=${paymentId}&method=transak`;
+  };
+
+  const handleSelectMethod = async (method: 'wallet' | 'zelle' | 'qr' | 'transak') => {
+    const backendMethod = method === 'zelle' ? 'ZELLE' : (method === 'transak' ? 'TRANSAK' : 'WALLET');
     const data = await initPayment(backendMethod);
     if (data) {
       if (method === 'qr') {
         window.location.href = `/pay?pid=${data.paymentId}&method=wallet&connect=qr`;
+      } else if (method === 'transak') {
+        openTransakPopup(data.paymentId, data.transakUrl);
       } else {
         window.location.href = `/pay?pid=${data.paymentId}&method=${method}`;
       }
@@ -150,6 +196,23 @@ export function BlockchainPaymentModal({
                   <div>
                     <p className="font-bold text-[#0d1f1d]">{t("payments.modal.scan_qr") || "Quét mã QR (Mobile)"}</p>
                     <p className="text-xs text-gray-500">{t("payments.modal.scan_qr_desc") || "Quét bằng Camera hoặc Ví Web3 (Trust, SafePal...)"}</p>
+                  </div>
+                </div>
+                {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}
+              </button>
+
+              <button 
+                onClick={() => handleSelectMethod('transak')}
+                disabled={loading}
+                className="group flex items-center justify-between p-5 rounded-2xl bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="size-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <CreditCard size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#0d1f1d]">{t("payments.page.method_transak") || "Visa / Mastercard / Bank Transfer"}</p>
+                    <p className="text-xs text-gray-500">{t("payments.modal.pay_transak_desc") || "Thanh toán bằng thẻ ngân hàng hoặc tài khoản qua Transak"}</p>
                   </div>
                 </div>
                 {loading ? <Loader2 className="animate-spin text-gray-400" /> : <ChevronRight className="text-gray-300" />}

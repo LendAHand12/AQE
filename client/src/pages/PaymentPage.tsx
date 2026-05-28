@@ -30,6 +30,8 @@ interface Payment {
   paymentId: number;
   from: {
     username: string;
+    fullName?: string;
+    email?: string;
   };
   status: string;
   hash: string;
@@ -72,7 +74,8 @@ export default function PaymentPage() {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error, awaiting
   const [txHash, setTxHash] = useState('');
-  const method = searchParams.get('method') === 'zelle' ? 'zelle' : 'wallet';
+  const rawMethod = searchParams.get('method');
+  const method = rawMethod === 'zelle' ? 'zelle' : (rawMethod === 'transak' ? 'transak' : 'wallet');
 
   useEffect(() => {
     if (!paymentId) {
@@ -110,10 +113,10 @@ export default function PaymentPage() {
     }
   }, [isConnected, loading, searchParams]);
 
-  // Start polling status when successful
+  // Start polling status when successful or for Transak payments
   useEffect(() => {
     let interval: any;
-    if (status === 'paying' || (status === 'success' && !txHash)) {
+    if (status === 'paying' || (status === 'success' && !txHash) || (method === 'transak' && status !== 'success')) {
       interval = setInterval(async () => {
         try {
           const res = await apiClient.get(`/payments/${paymentId}`);
@@ -126,7 +129,82 @@ export default function PaymentPage() {
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [status, paymentId, txHash]);
+  }, [status, paymentId, txHash, method]);
+
+  // Listen to Transak postMessage events for instant completion
+  useEffect(() => {
+    if (method !== 'transak' || status === 'success') return;
+
+    const handleTransakMessage = async (event: MessageEvent) => {
+      const data = event.data;
+      if (data && data.source === 'transak') {
+        console.log("Transak event received:", data.event_id, data);
+        
+        if (data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
+          const transakOrder = data.data;
+          const hash = transakOrder?.transactionHash;
+          
+          if (hash) {
+            console.log(`[Transak] Order successful, got hash: ${hash}`);
+            try {
+              setStatus('verifying');
+              const res = await apiClient.post('/payments/confirm-hash', {
+                paymentId: Number(paymentId),
+                hash: hash
+              });
+              if (res.data.status === 'SUCCESS') {
+                setTxHash(hash);
+                setStatus('success');
+                toast.success(t("payments.page.success_msg"));
+              }
+            } catch (err) {
+              console.error("Failed to confirm Transak hash:", err);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleTransakMessage);
+    return () => {
+      window.removeEventListener('message', handleTransakMessage);
+    };
+  }, [method, status, paymentId, t]);
+
+  const reopenTransak = () => {
+    if (!payment) return;
+    const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
+    const env = import.meta.env.VITE_TRANSAK_ENV || 'STAGING';
+    const walletAddress = import.meta.env.VITE_ADMIN_WALLET_ADDRESS || '';
+    const baseUrl = env === 'PRODUCTION' ? 'https://global.transak.com' : 'https://global-stg.transak.com';
+    
+    const params = new URLSearchParams({
+      apiKey,
+      cryptoCurrencyCode: 'USDT',
+      network: 'bsc',
+      walletAddress,
+      disableWalletAddressForm: 'true',
+      defaultCryptoAmount: payment.amount.toString(),
+      partnerOrderId: payment.paymentId.toString(),
+    });
+    
+    if (payment.from?.email) {
+      params.append('email', payment.from.email);
+    }
+    
+    const url = `${baseUrl}?${params.toString()}`;
+    
+    const width = 500;
+    const height = 700;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    window.open(
+      url,
+      'TransakPayment',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+  };
 
   const connectWallet = async () => {
     try {
@@ -371,7 +449,7 @@ export default function PaymentPage() {
                     </p>
                   </div>
                 </div>
-              ) : (
+              ) : method === 'zelle' ? (
                 <div className="space-y-6">
                   <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 flex flex-col items-center space-y-4">
                     <div className="size-48 bg-white rounded-2xl border-2 border-emerald-500/20 flex items-center justify-center overflow-hidden">
@@ -412,6 +490,39 @@ export default function PaymentPage() {
                     {status === 'verifying' ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={20} />}
                     {t("payments.page.confirm_manual_btn")}
                   </Button>
+                </div>
+              ) : (
+                <div className="space-y-6 text-center">
+                  <div className="flex justify-center py-6">
+                    <div className="relative">
+                      <div className="size-20 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 animate-pulse">
+                        <Clock size={40} />
+                      </div>
+                      <div className="absolute inset-0 size-20 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-[#0d1f1d]">
+                      {t("payments.page.transak_waiting_title") || "Waiting for Transak Payment"}
+                    </h3>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed font-medium">
+                      {t("payments.page.transak_waiting_desc") || "Please complete your payment in the opened Transak window."}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 space-y-3">
+                    <Button 
+                      onClick={reopenTransak}
+                      className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
+                    >
+                      <ExternalLink size={20} />
+                      {t("payments.page.reopen_transak") || "Reopen Transak Window"}
+                    </Button>
+                    <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
+                      {t("payments.page.transak_auto_confirm_note") || "Your balance will update automatically once payment is successful."}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

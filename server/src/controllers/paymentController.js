@@ -10,10 +10,114 @@ import BalanceHistory from '../models/BalanceHistory.js';
 import { finalizeBlockchainPayment, processCommissions } from '../services/paymentService.js';
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
+import axios from 'axios';
 
 // Helper to get current time in Vietnam (GMT+7)
 const getVietnamTime = () => {
     return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+};
+
+const getTransakWidgetUrl = async (paymentId, amount, email) => {
+    const isProd = process.env.TRANSAK_ENV === 'PRODUCTION';
+    const apiKey = process.env.TRANSAK_API_KEY || '';
+    const apiSecret = process.env.TRANSAK_API_SECRET || '';
+    const walletAddress = process.env.ADMIN_WALLET_ADDRESS || '';
+    const redirectURL = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}&method=transak`;
+
+    let referrerDomain = 'localhost';
+    if (process.env.FRONTEND_URL) {
+        try {
+            referrerDomain = new URL(process.env.FRONTEND_URL).hostname;
+        } catch (e) {
+            referrerDomain = 'localhost';
+        }
+    }
+
+    // Construct fallback url first
+    const fallbackBase = isProd ? 'https://global.transak.com' : 'https://global-stg.transak.com';
+    const queryParams = new URLSearchParams({
+        apiKey,
+        referrerDomain,
+        cryptoCurrencyCode: 'USDT',
+        network: 'bsc',
+        walletAddress,
+        disableWalletAddressForm: 'true',
+        defaultCryptoAmount: amount.toString(),
+        partnerOrderId: paymentId.toString(),
+        redirectURL
+    });
+
+    if (email) {
+        queryParams.append('email', email);
+    }
+    const fallbackUrl = `${fallbackBase}?${queryParams.toString()}`;
+
+    // If API keys are defaults or empty, use fallback directly to prevent runtime errors
+    if (!apiSecret || apiSecret.includes('YOUR_TRANSAK_API_SECRET') || !apiKey || apiKey.includes('YOUR_TRANSAK_API_KEY')) {
+        console.log('[Transak Session] Credentials not set, using query param fallback url.');
+        return fallbackUrl;
+    }
+
+    const refreshUrl = isProd 
+        ? 'https://api.transak.com/partners/api/v2/refresh-token'
+        : 'https://api-stg.transak.com/partners/api/v2/refresh-token';
+        
+    const sessionUrl = isProd
+        ? 'https://api-gateway.transak.com/api/v2/auth/session'
+        : 'https://api-gateway-stg.transak.com/api/v2/auth/session';
+        
+    try {
+        console.log(`[Transak Session] Requesting token for apiKey: ${apiKey}`);
+        // 1. Get Refresh Token
+        const refreshResponse = await axios.post(refreshUrl, {
+            apiKey
+        }, {
+            headers: {
+                'api-secret': apiSecret,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const accessToken = refreshResponse.data?.data?.accessToken;
+        if (!accessToken) {
+            throw new Error('No access token returned from Transak');
+        }
+        
+        console.log('[Transak Session] Creating secure session...');
+        // 2. Create Session
+        const sessionResponse = await axios.post(sessionUrl, {
+            widgetParams: {
+                apiKey,
+                referrerDomain,
+                cryptoCurrencyCode: 'USDT',
+                network: 'bsc',
+                walletAddress,
+                disableWalletAddressForm: true,
+                defaultCryptoAmount: Number(amount),
+                partnerOrderId: paymentId.toString(),
+                email: email || undefined,
+                redirectURL
+            }
+        }, {
+            headers: {
+                'access-token': accessToken,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log({ sessionResponse })
+
+        const widgetUrl = sessionResponse.data?.data?.widgetUrl;
+        if (!widgetUrl) {
+            throw new Error('No widgetUrl returned from Transak session API');
+        }
+
+        console.log('[Transak Session] Secure widgetUrl successfully generated');
+        return widgetUrl;
+    } catch (error) {
+        console.error('[Transak Session API Error, falling back to query param URL]:', error.response?.data || error.message);
+        return fallbackUrl;
+    }
 };
 
 // @desc    Submit a pledge for Pre-registration
@@ -271,8 +375,8 @@ export const createPayment = async (req, res) => {
 
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
 
-        const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
-        
+        const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : (method === 'TRANSAK' ? 'Transak' : 'Direct Extension'));
+
         let description = "";
         if (isDirectPurchase) {
             description = `Direct purchase of AQE digital units (${methodText})`;
@@ -292,12 +396,19 @@ export const createPayment = async (req, res) => {
             metadata: { pledgeAmount, method, isDirectPurchase: !!isDirectPurchase }
         });
 
+        let transakUrl = "";
+        if (method === 'TRANSAK') {
+            const userEmail = req.body.email || user.email;
+            transakUrl = await getTransakWidgetUrl(paymentId, amount, userEmail);
+        }
+
         const qrUrl = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}`;
 
         res.json({
             paymentId,
             amount,
             qrUrl,
+            transakUrl: transakUrl || undefined,
             transactionId: transaction._id
         });
     } catch (error) {

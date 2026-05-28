@@ -558,6 +558,7 @@
       "pay_this_device": "Thanh toán trên thiết bị này",
       "pay_this_device_desc": "Dùng ví đã kết nối trên trình duyệt",
       "pay_zelle_desc": "Thanh toán thủ công qua Zelle QR",
+      "pay_transak_desc": "Thanh toán bằng thẻ ngân hàng hoặc tài khoản qua Transak",
       "scan_qr": "Quét mã QR (Mobile)",
       "scan_qr_desc": "Quét bằng Camera hoặc Ví điện tử (Trust, SafePal...)",
       "qr_instruction": "Quét mã này bằng Camera điện thoại hoặc trình duyệt của Ví điện tử. Bạn sẽ được dẫn đến trang thanh toán an toàn.",
@@ -600,7 +601,12 @@
       "status_awaiting": "Chờ duyệt",
       "manual_confirm_success": "Thông báo đã được gửi tới quản trị viên. Giao dịch sẽ được xử lý sớm nhất.",
       "manual_success_hint": "Quản trị viên sẽ kiểm tra và phê duyệt giao dịch của bạn trong vòng 30-60 phút.",
-      "pending_manual_exists": "Bạn có giao dịch đang chờ duyệt. Vui lòng đợi quản trị viên phê duyệt hoặc từ chối trước khi thực hiện giao dịch mới."
+      "pending_manual_exists": "Bạn có giao dịch đang chờ duyệt. Vui lòng đợi quản trị viên phê duyệt hoặc từ chối trước khi thực hiện giao dịch mới.",
+      "method_transak": "Thẻ Visa / Mastercard / Tài khoản ngân hàng",
+      "transak_waiting_title": "Đang chờ thanh toán qua Transak",
+      "transak_waiting_desc": "Vui lòng hoàn tất thanh toán trong cửa sổ Transak vừa mở.",
+      "reopen_transak": "Mở lại cửa sổ Transak",
+      "transak_auto_confirm_note": "Số dư của bạn sẽ được tự động cập nhật sau khi thanh toán thành công."
     },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",

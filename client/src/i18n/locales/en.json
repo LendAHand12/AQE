@@ -559,6 +559,7 @@
       "pay_this_device": "Pay on this device",
       "pay_this_device_desc": "Use the wallet connected to your browser",
       "pay_zelle_desc": "Manual payment via Zelle QR",
+      "pay_transak_desc": "Pay with credit card or bank transfer via Transak",
       "scan_qr": "Scan QR Code (Mobile)",
       "scan_qr_desc": "Scan with Camera or Digital Wallet (Trust, SafePal...)",
       "qr_instruction": "Scan this code with your phone Camera or Digital Wallet browser. You will be redirected to a secure payment page.",
@@ -601,7 +602,12 @@
       "status_awaiting": "Awaiting Approval",
       "manual_confirm_success": "Notification sent to admin. Your transaction will be processed shortly.",
       "manual_success_hint": "Administrator will verify and approve your transaction within 30-60 minutes.",
-      "pending_manual_exists": "You have a transaction awaiting approval. Please wait for administrator approval or rejection before making a new transaction."
+      "pending_manual_exists": "You have a transaction awaiting approval. Please wait for administrator approval or rejection before making a new transaction.",
+      "method_transak": "Visa / Mastercard / Bank Transfer",
+      "transak_waiting_title": "Waiting for Transak Payment",
+      "transak_waiting_desc": "Please complete your payment in the opened Transak window.",
+      "reopen_transak": "Reopen Transak Window",
+      "transak_auto_confirm_note": "Your balance will update automatically once payment is successful."
     },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",

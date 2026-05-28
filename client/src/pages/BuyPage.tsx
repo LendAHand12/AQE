@@ -300,6 +300,7 @@ export default function BuyPage() {
         status={modalStatus}
         countryCode={userProfile?.countryCode}
         isDirectPurchase={true}
+        userEmail={userProfile?.email}
       />
 
     </div>
