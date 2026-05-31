@@ -285,12 +285,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
                 user.isPledgeCompleted = true;
                 
-                let bonusPercent = 0;
-                if (nowVN <= may31VN) {
-                    bonusPercent = 0.10;
-                } else if (nowVN < julyFirstVN) {
-                    bonusPercent = 0.05;
-                }
+                let bonusPercent = 0.10;
 
                 const bonusTokens = user.preRegisterTokens * bonusPercent;
                 const totalTokens = user.preRegisterTokens + bonusTokens;
@@ -433,9 +428,7 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
         user.isPledgeCompleted = true;
         
-        let bonusPercent = 0;
-        if (nowVN <= may31VN) bonusPercent = 0.10;
-        else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+        let bonusPercent = 0.10;
 
         const bonusTokens = user.preRegisterTokens * bonusPercent;
         const totalTokens = user.preRegisterTokens + bonusTokens;

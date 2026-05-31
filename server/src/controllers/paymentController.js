@@ -38,7 +38,7 @@ export const submitPreRegisterPledge = async (req, res) => {
                     pledgeUsdt: user.pledgeUsdt,
                     paidUsdt: user.paidUsdtPreRegister,
                     tokensReceived: user.preRegisterTokens,
-                    bonusPercent: user.hasReceivedPromotion ? (new Date() <= new Date('2026-05-31') ? 0.10 : 0.05) : 0,
+                    bonusPercent: user.hasReceivedPromotion ? 0.10 : 0,
                     completedAt: new Date()
                 });
 
@@ -82,7 +82,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                     pledgeUsdt: user.pledgeUsdt,
                     paidUsdt: user.paidUsdtPreRegister,
                     tokensReceived: user.preRegisterTokens,
-                    bonusPercent: user.hasReceivedPromotion ? (nowVN <= may31VN ? 0.10 : 0.05) : 0,
+                    bonusPercent: user.hasReceivedPromotion ? 0.10 : 0,
                     completedAt: new Date()
                 });
                 user.paidUsdtPreRegister = 0;
@@ -122,12 +122,7 @@ export const submitPreRegisterPayment = async (req, res) => {
             if (user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
                 user.isPledgeCompleted = true;
 
-                let bonusPercent = 0;
-                if (nowVN <= may31VN) {
-                    bonusPercent = 0.10;
-                } else if (nowVN < julyFirstVN) {
-                    bonusPercent = 0.05;
-                }
+                let bonusPercent = 0.10;
 
                 const bonusTokens = user.preRegisterTokens * bonusPercent;
                 const totalTokens = user.preRegisterTokens + bonusTokens;
@@ -554,9 +549,7 @@ export const approveManualPayment = async (req, res) => {
         if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
             user.isPledgeCompleted = true;
 
-            let bonusPercent = 0;
-            if (nowVN <= may31VN) bonusPercent = 0.10;
-            else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+            let bonusPercent = 0.10;
 
             const bonusTokens = user.preRegisterTokens * bonusPercent;
             user.aqeBalance += (user.preRegisterTokens + bonusTokens);

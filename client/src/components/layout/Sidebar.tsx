@@ -1,8 +1,8 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { 
-  LayoutDashboard, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Settings,
   LogOut,
   Rocket,
   CreditCard,
@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
     { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
-    { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
+    // { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
@@ -72,7 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex items-center gap-3">
           <img src={logo} alt="AQ Estate" className="h-10 w-auto" />
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="lg:hidden p-2 text-[#6b7280] hover:bg-gray-100 rounded-lg transition-colors"
         >
@@ -89,8 +89,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => handleNavigate(item.path)}
               className={cn(
                 "w-full flex items-center gap-3.5 px-4 py-3.5 transition-all duration-300 group relative",
-                isActive(item.path) 
-                  ? "bg-[#276152]/10 text-[#276152] rounded-r-full" 
+                isActive(item.path)
+                  ? "bg-[#276152]/10 text-[#276152] rounded-r-full"
                   : "text-[#717c8d] hover:bg-[#276152]/5 hover:text-[#276152] rounded-xl mx-2"
               )}
             >
