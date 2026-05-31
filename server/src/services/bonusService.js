@@ -1,21 +1,10 @@
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-
-// Helper: Get current time in Vietnam (GMT+7)
-const getVietnamTime = (date = new Date()) => {
-    return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-};
-
-// Helper: Get start of day (midnight) in Vietnam time
-const startOfDay = (date) => {
-    const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    d.setHours(0, 0, 0, 0);
-    return d;
-};
+import { getSystemTime, getStartOfDay } from '../utils/time.js';
 
 export const calculateDailyBonus = async () => {
-    const nowVN = getVietnamTime();
-    const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
+    const nowVN = getSystemTime();
+    const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
     const startDate = new Date(cutOffDateStr);
 
     // Only start calculating on or after start date
@@ -34,7 +23,7 @@ export const calculateDailyBonus = async () => {
             ]
         });
 
-        const todayMidnight = startOfDay(nowVN);
+        const todayMidnight = getStartOfDay(nowVN);
         const cutOffDate = new Date(cutOffDateStr);
 
         for (const user of users) {
@@ -73,13 +62,13 @@ export const calculateDailyBonus = async () => {
                     const heldAmount = Math.min(acq.amount, remainingEligible);
                     remainingEligible -= heldAmount;
 
-                    const purchaseDateVN = getVietnamTime(acq.createdAt);
+                    const purchaseDateVN = getSystemTime(acq.createdAt);
 
                     let bonusStartDate;
                     if (purchaseDateVN < cutOffDate) {
-                        bonusStartDate = startOfDay(cutOffDate);
+                        bonusStartDate = getStartOfDay(cutOffDate);
                     } else {
-                        bonusStartDate = startOfDay(purchaseDateVN);
+                        bonusStartDate = getStartOfDay(purchaseDateVN);
                     }
 
                     // Bonus duration is 365 days
@@ -95,12 +84,12 @@ export const calculateDailyBonus = async () => {
 
             // If there is still remaining eligible balance (unrecorded in BalanceHistory)
             if (remainingEligible > 0) {
-                const userCreateDateVN = getVietnamTime(user.createdAt);
+                const userCreateDateVN = getSystemTime(user.createdAt);
                 let bonusStartDate;
                 if (userCreateDateVN < cutOffDate) {
-                    bonusStartDate = startOfDay(cutOffDate);
+                    bonusStartDate = getStartOfDay(cutOffDate);
                 } else {
-                    bonusStartDate = startOfDay(userCreateDateVN);
+                    bonusStartDate = getStartOfDay(userCreateDateVN);
                 }
                 const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 

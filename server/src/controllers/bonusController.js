@@ -1,17 +1,6 @@
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-
-// Helper: Get current time in Vietnam (GMT+7)
-const getVietnamTime = (date = new Date()) => {
-    return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-};
-
-// Helper: Get start of day (midnight) in Vietnam time
-const startOfDay = (date) => {
-    const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    d.setHours(0, 0, 0, 0);
-    return d;
-};
+import { getSystemTime, getStartOfDay } from '../utils/time.js';
 
 export const getBonusInfo = async (req, res) => {
     try {
@@ -41,9 +30,9 @@ export const getBonusInfo = async (req, res) => {
             type: 'RECEIVE'
         }).sort({ createdAt: 1 }); // Oldest first for FIFO
 
-        const nowVN = getVietnamTime();
-        const todayMidnight = startOfDay(nowVN);
-        const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
+        const nowVN = getSystemTime();
+        const todayMidnight = getStartOfDay(nowVN);
+        const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
         const cutOffDate = new Date(cutOffDateStr);
 
         let schedule = [];
@@ -57,12 +46,12 @@ export const getBonusInfo = async (req, res) => {
             const heldAmount = Math.min(acq.amount, remainingEligible);
             remainingEligible -= heldAmount;
 
-            const purchaseDateVN = getVietnamTime(acq.createdAt);
+            const purchaseDateVN = getSystemTime(acq.createdAt);
             let bonusStartDate;
             if (purchaseDateVN < cutOffDate) {
-                bonusStartDate = startOfDay(cutOffDate);
+                bonusStartDate = getStartOfDay(cutOffDate);
             } else {
-                bonusStartDate = startOfDay(purchaseDateVN);
+                bonusStartDate = getStartOfDay(purchaseDateVN);
             }
             const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
@@ -79,12 +68,12 @@ export const getBonusInfo = async (req, res) => {
 
         // If there is still remaining eligible balance (unrecorded in BalanceHistory, i.e. temporary AQE not yet in history)
         if (remainingEligible > 0) {
-            const userCreateDateVN = getVietnamTime(user.createdAt);
+            const userCreateDateVN = getSystemTime(user.createdAt);
             let bonusStartDate;
             if (userCreateDateVN < cutOffDate) {
-                bonusStartDate = startOfDay(cutOffDate);
+                bonusStartDate = getStartOfDay(cutOffDate);
             } else {
-                bonusStartDate = startOfDay(userCreateDateVN);
+                bonusStartDate = getStartOfDay(userCreateDateVN);
             }
             const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
@@ -149,7 +138,7 @@ export const getBonusInfo = async (req, res) => {
         const totalBonusReceived = bonusHistories.reduce((sum, h) => sum + h.amount, 0);
 
         // Check if user has claimed bonus in the current calendar month
-        const startOfMonthStr = `${nowVN.getFullYear()}-${String(nowVN.getMonth() + 1).padStart(2, '0')}-01T00:00:00+07:00`;
+        const startOfMonthStr = `${nowVN.getFullYear()}-${String(nowVN.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
         const startOfMonthDate = new Date(startOfMonthStr);
         const claimedThisMonth = await BalanceHistory.findOne({
             userId: user._id,
@@ -188,8 +177,8 @@ export const claimBonus = async (req, res) => {
         }
 
         // Enforce once-per-month claim limit
-        const nowVN = getVietnamTime();
-        const startOfMonthStr = `${nowVN.getFullYear()}-${String(nowVN.getMonth() + 1).padStart(2, '0')}-01T00:00:00+07:00`;
+        const nowVN = getSystemTime();
+        const startOfMonthStr = `${nowVN.getFullYear()}-${String(nowVN.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
         const startOfMonthDate = new Date(startOfMonthStr);
 
         const claimedThisMonth = await BalanceHistory.findOne({

@@ -1,4 +1,5 @@
 import Admin from '../models/Admin.js';
+import { getSystemTime, getStartOfDay } from '../utils/time.js';
 import User from '../models/User.js';
 import AdminLog from '../models/AdminLog.js';
 import Notification from '../models/Notification.js';
@@ -263,19 +264,9 @@ export const getUserById = async (req, res) => {
 
         const totalExpected = eligibleBalance * 0.06;
 
-        // Helper calculations for Vietnam timezone
-        const getVietnamTime = (date = new Date()) => {
-            return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-        };
-        const startOfDay = (date) => {
-            const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-            d.setHours(0, 0, 0, 0);
-            return d;
-        };
-
-        const nowVN = getVietnamTime();
-        const todayMidnight = startOfDay(nowVN);
-        const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00+07:00';
+        const nowVN = getSystemTime();
+        const todayMidnight = getStartOfDay(nowVN);
+        const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
         const cutOffDate = new Date(cutOffDateStr);
 
         let maxBonusEndDate = null;
@@ -288,12 +279,12 @@ export const getUserById = async (req, res) => {
             const heldAmount = Math.min(acq.amount, remainingEligible);
             remainingEligible -= heldAmount;
 
-            const purchaseDateVN = getVietnamTime(acq.createdAt);
+            const purchaseDateVN = getSystemTime(acq.createdAt);
             let bonusStartDate;
             if (purchaseDateVN < cutOffDate) {
-                bonusStartDate = startOfDay(cutOffDate);
+                bonusStartDate = getStartOfDay(cutOffDate);
             } else {
-                bonusStartDate = startOfDay(purchaseDateVN);
+                bonusStartDate = getStartOfDay(purchaseDateVN);
             }
             const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
@@ -310,12 +301,12 @@ export const getUserById = async (req, res) => {
 
         // If there is still remaining eligible balance (unrecorded in BalanceHistory, i.e. temporary AQE not yet in history)
         if (remainingEligible > 0) {
-            const userCreateDateVN = getVietnamTime(user.createdAt);
+            const userCreateDateVN = getSystemTime(user.createdAt);
             let bonusStartDate;
             if (userCreateDateVN < cutOffDate) {
-                bonusStartDate = startOfDay(cutOffDate);
+                bonusStartDate = getStartOfDay(cutOffDate);
             } else {
-                bonusStartDate = startOfDay(userCreateDateVN);
+                bonusStartDate = getStartOfDay(userCreateDateVN);
             }
             const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
