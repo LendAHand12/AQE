@@ -42,7 +42,7 @@ import TicketsPage from "@/pages/TicketsPage"
 import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
-import BuyPage from "@/pages/BuyPage"
+// import BuyPage from "@/pages/BuyPage"
 
 export function App() {
   return (
