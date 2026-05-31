@@ -24,7 +24,7 @@ import AdminTicketDetailPage from "@/pages/admin/AdminTicketDetailPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
-import PreRegisterPage from "@/pages/PreRegisterPage"
+// import PreRegisterPage from "@/pages/PreRegisterPage"
 import PaymentHistoryPage from "@/pages/PaymentHistoryPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 import ReferralPage from "@/pages/ReferralPage"
@@ -42,7 +42,7 @@ import TicketsPage from "@/pages/TicketsPage"
 import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
-// import BuyPage from "@/pages/BuyPage"
+import BuyPage from "@/pages/BuyPage"
 
 export function App() {
   return (
@@ -67,8 +67,8 @@ export function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/pre-register" element={<PreRegisterPage />} />
-                {/* <Route path="/buy" element={<BuyPage />} /> */}
+                {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
+                <Route path="/buy" element={<BuyPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />

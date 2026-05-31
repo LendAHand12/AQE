@@ -551,7 +551,7 @@
       "awaiting": "Chờ duyệt"
     },
     "modal": {
-      "title": "Thanh toán USDT",
+      "title": "Thanh toán",
       "desc": "Nạp {{amount}} USDT vào hệ thống AQE",
       "pay_now": "Tiếp tục thanh toán",
       "pay_now_desc": "Thanh toán qua Ví USDT hoặc Zelle",

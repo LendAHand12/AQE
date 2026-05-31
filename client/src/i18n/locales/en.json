@@ -256,7 +256,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "preRegister": "Pre-Register",
-    "buy_aqe": "Buy AQE",
+    "buy_aqe": "Participate AQE",
     "referrals": "Referral System",
     "payment_history": "Payment History",
     "balance_history": "Transactions History",
@@ -496,7 +496,7 @@
       "deposit": "Deposit",
       "withdraw": "Withdrawal",
       "commission": "Commission",
-      "buy": "Buy AQE",
+      "buy": "Participate AQE",
       "reward": "Reward",
       "receive": "Receive",
       "refund": "Refund",
@@ -552,7 +552,7 @@
       "awaiting": "Awaiting Approval"
     },
     "modal": {
-      "title": "USDT Payment",
+      "title": "Payment",
       "desc": "Deposit {{amount}} USDT into AQE system",
       "pay_now": "Continue to Payment",
       "pay_now_desc": "Pay via USDT Wallet or Zelle",
@@ -642,8 +642,8 @@
     "back_home": "Back to Dashboard"
   },
   "buy": {
-    "title": "Buy AQE Digital Units",
-    "subtitle": "Purchase AQE digital units directly to earn daily yield bonuses.",
+    "title": "Participate in AQE Digital Units",
+    "subtitle": "AQE brings together legacy, humanity and future posibilities within a globally connectec ecosystem. Throungh advances technology unfrastructure and real-world intergration.",
     "current_balance": "Current AQE Balance",
     "amount_label": "Purchase Amount",
     "amount_placeholder": "Enter amount in USDT",
@@ -652,11 +652,11 @@
     "june_promo_banner": "June Special Promotion: Get a 5% bonus instantly on all purchases!",
     "june_promo_desc": "Earn an extra 5% official bonus on every digital unit purchase in June 2026. Added directly as official holdings.",
     "upcoming_promo_title": "Upcoming June Promotion!",
-    "upcoming_promo_desc": "Starting June 1st, 2026, receive a 5% direct bonus on all purchases. Plan your purchase to maximize your bonus!",
+    "upcoming_promo_desc": "Starting June 1st, 2026, eligible participants may receive up to a 5% direct participation bonus on qualifying purchases. Plan your participation accordingly.",
     "bonus_label": "June Promotion Bonus (5%)",
     "total_received": "Total Expected",
     "pending_warning": "You have a manual payment pending approval. Please wait for it to be processed before initiating another purchase.",
-    "buy_btn": "Purchase Now",
+    "buy_btn": "Participation Amount",
     "verifying": "Processing...",
     "verification_title": "Verification Checklist",
     "select_amount": "Select Amount Preset"
