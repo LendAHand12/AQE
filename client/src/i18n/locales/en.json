@@ -545,6 +545,7 @@
     "method": {
       "qr": "QR Code",
       "zelle": "Zelle",
+      "transak": "Transak",
       "wallet": "Wallet Transfer"
     },
     "status": {

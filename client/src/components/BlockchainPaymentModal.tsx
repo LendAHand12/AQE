@@ -84,7 +84,7 @@ export function BlockchainPaymentModal({
     }
   };
 
-  const openTransakPopup = (paymentId: number, transakUrl?: string) => {
+  const buildTransakUrl = (paymentId: number, transakUrl?: string) => {
     let url = transakUrl;
     if (!url) {
       const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
@@ -108,32 +108,40 @@ export function BlockchainPaymentModal({
       
       url = `${baseUrl}?${params.toString()}`;
     }
-    
-    const width = 500;
-    const height = 700;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
-    
-    window.open(
-      url,
-      'TransakPayment',
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-    );
-    
-    window.location.href = `/pay?pid=${paymentId}&method=transak`;
+    return url;
   };
 
   const handleSelectMethod = async (method: 'wallet' | 'zelle' | 'qr' | 'transak') => {
+    let newTab: Window | null = null;
+    if (method === 'transak') {
+      // Mở popup đồng bộ (synchronously) trước khi gọi API để tránh bị trình duyệt di động chặn
+      newTab = window.open('', '_blank');
+    }
+
     const backendMethod = method === 'zelle' ? 'ZELLE' : (method === 'transak' ? 'TRANSAK' : 'WALLET');
     const data = await initPayment(backendMethod);
+    
     if (data) {
       if (method === 'qr') {
         window.location.href = `/pay?pid=${data.paymentId}&method=wallet&connect=qr`;
       } else if (method === 'transak') {
-        openTransakPopup(data.paymentId, data.transakUrl);
+        const finalUrl = buildTransakUrl(data.paymentId, data.transakUrl);
+        if (newTab) {
+          newTab.location.href = finalUrl;
+        } else {
+          // Fallback nếu window.open bị chặn hoàn toàn
+          window.location.href = finalUrl;
+        }
+        
+        // Trình duyệt gốc vẫn chuyển hướng đến trang Pay
+        if (newTab) {
+          window.location.href = `/pay?pid=${data.paymentId}&method=transak`;
+        }
       } else {
         window.location.href = `/pay?pid=${data.paymentId}&method=${method}`;
       }
+    } else {
+      if (newTab) newTab.close();
     }
   };
 

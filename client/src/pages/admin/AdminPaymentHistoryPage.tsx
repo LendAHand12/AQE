@@ -248,6 +248,10 @@ export default function AdminPaymentHistoryPage() {
                       <span className="flex items-center gap-1 text-orange-500">
                         <span className="size-1.5 rounded-full bg-orange-500" /> Zelle
                       </span>
+                    ) : tx.metadata?.method === 'TRANSAK' ? (
+                      <span className="flex items-center gap-1 text-amber-500">
+                        <span className="size-1.5 rounded-full bg-amber-500" /> Transak
+                      </span>
                     ) : (
                       <span className="flex items-center gap-1 text-blue-600">
                         <span className="size-1.5 rounded-full bg-blue-600" /> Wallet Transfer

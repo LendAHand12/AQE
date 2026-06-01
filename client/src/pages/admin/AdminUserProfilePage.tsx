@@ -730,6 +730,10 @@ export default function AdminUserProfilePage() {
                                 <span className="text-[10px] font-bold">
                                   {tx.metadata?.method === 'QR' ? (
                                     <span className="text-purple-600">QR Code</span>
+                                  ) : tx.metadata?.method === 'ZELLE' ? (
+                                    <span className="text-orange-500">Zelle</span>
+                                  ) : tx.metadata?.method === 'TRANSAK' ? (
+                                    <span className="text-amber-500">Transak</span>
                                   ) : (
                                     <span className="text-blue-600">Wallet Transfer</span>
                                   )}

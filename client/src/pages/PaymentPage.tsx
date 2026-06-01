@@ -171,6 +171,33 @@ export default function PaymentPage() {
     };
   }, [method, status, paymentId, t]);
 
+  const handleTransakSuccess = async (hashStr: string) => {
+    try {
+      setStatus('verifying');
+      const res = await apiClient.post('/payments/confirm-hash', {
+        paymentId: Number(paymentId),
+        hash: hashStr
+      });
+      if (res.data.status === 'SUCCESS') {
+        setTxHash(hashStr);
+        setStatus('success');
+        toast.success(t("payments.page.success_msg"));
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus('idle');
+    }
+  };
+
+  // Auto-verify if returning from Transak redirect with orderId
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    const urlHash = searchParams.get('transactionHash') || searchParams.get('hash');
+    if (method === 'transak' && orderId && status === 'idle' && payment) {
+      handleTransakSuccess(urlHash || `transak_${orderId}`);
+    }
+  }, [searchParams, method, status, payment]);
+
   const reopenTransak = () => {
     if (!payment) return;
     const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
@@ -513,14 +540,22 @@ export default function PaymentPage() {
 
                   <div className="pt-4 space-y-3">
                     <Button 
+                      onClick={() => handleTransakSuccess(`transak_manual_${paymentId}`)}
+                      className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.2)] transition-all active:scale-95"
+                    >
+                      <CheckCircle2 size={20} />
+                      {t("payments.page.transak_confirm_btn") || "I have completed the payment"}
+                    </Button>
+                    <Button 
                       onClick={reopenTransak}
-                      className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
+                      variant="outline"
+                      className="w-full h-14 border-2 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                       <ExternalLink size={20} />
                       {t("payments.page.reopen_transak") || "Reopen Transak Window"}
                     </Button>
                     <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
-                      {t("payments.page.transak_auto_confirm_note") || "Your balance will update automatically once payment is successful."}
+                      {t("payments.page.transak_auto_confirm_note") || "If you have paid, please click the button above to confirm."}
                     </p>
                   </div>
                 </div>

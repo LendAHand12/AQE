@@ -171,6 +171,8 @@ export default function PaymentHistoryPage() {
                                <span className="text-purple-600">{t("payments.method.qr")}</span>
                             ) : p.metadata?.method === 'ZELLE' ? (
                                <span className="text-orange-500">{t("payments.method.zelle")}</span>
+                            ) : p.metadata?.method === 'TRANSAK' ? (
+                               <span className="text-amber-500">{t("payments.method.transak")}</span>
                             ) : (
                                <span className="text-blue-600">{t("payments.method.wallet")}</span>
                             )}
@@ -198,19 +200,25 @@ export default function PaymentHistoryPage() {
                       <td className="px-6 py-5 text-center">
                         <div className="flex items-center justify-center gap-3">
                           {p.hash ? (
-                            <>
-                              <code className="text-[11px] text-[#868F9E] font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                                {p.hash.slice(0, 6)}...{p.hash.slice(-4)}
+                            p.hash.startsWith('0x') ? (
+                              <>
+                                <code className="text-[11px] text-[#868F9E] font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                                  {p.hash.slice(0, 6)}...{p.hash.slice(-4)}
+                                </code>
+                                <a 
+                                  href={`https://bscscan.com/tx/${p.hash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[#276152] hover:bg-[#276152]/5 p-1.5 rounded-full transition-colors"
+                                >
+                                  <ArrowRight size={18} />
+                                </a>
+                              </>
+                            ) : (
+                              <code className="text-[11px] text-[#868F9E] font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100" title={p.hash}>
+                                {p.hash.length > 16 ? p.hash.slice(0, 10) + '...' : p.hash}
                               </code>
-                              <a 
-                                href={`https://bscscan.com/tx/${p.hash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#276152] hover:bg-[#276152]/5 p-1.5 rounded-full transition-colors"
-                              >
-                                <ArrowRight size={18} />
-                              </a>
-                            </>
+                            )
                           ) : (
                             <span className="text-[11px] text-gray-400 italic">Pending confirmation</span>
                           )}

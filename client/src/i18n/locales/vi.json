@@ -544,6 +544,7 @@
     "method": {
       "qr": "Mã QR",
       "zelle": "Zelle",
+      "transak": "Transak",
       "wallet": "Chuyển ví"
     },
     "status": {
