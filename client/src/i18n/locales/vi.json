@@ -322,6 +322,7 @@
     "copy_btn": "Sao chép",
     "total_referrals": "Tổng giới thiệu",
     "total_commission": "Tổng hoa hồng",
+    "referral_lock_msg": "Cần nạp tối thiểu 10 USDT để mở khóa link",
     "reg_info_title": "Thông tin đăng ký mua",
     "reg_amount_label": "Số lượng AQE muốn mua (USDT)",
     "reg_amount_min": "Tối thiểu 100 USDT",

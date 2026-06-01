@@ -331,15 +331,15 @@ export default function PreRegisterPage() {
                 <div className="flex gap-3 h-[44px]">
                   <div className="flex-1 bg-[#efefef]/50 rounded-[12px] px-4 flex items-center relative group/link">
                     <span className="text-[14px] text-[#6b7280] truncate">{`${FRONTEND_URL.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}`}</span>
-                    {(!pledge || pledge.pledgeUsdt === 0 || (pledge.paidUsdtPreRegister / pledge.pledgeUsdt) < 0.3) && (
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-[12px] flex items-center justify-center opacity-0 group-hover/link:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Need ≥30% Payment to unlock</span>
+                    {(!userProfile || (userProfile.totalPaid || 0) < 10) && (
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-[12px] flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">{t("pre_register.referral_lock_msg")}</span>
                       </div>
                     )}
                   </div>
                   <Button
                     className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] px-6 h-full font-medium disabled:opacity-50 disabled:grayscale transition-all"
-                    disabled={!pledge || pledge.pledgeUsdt === 0 || (pledge.paidUsdtPreRegister / pledge.pledgeUsdt) < 0.3}
+                    disabled={!userProfile || (userProfile.totalPaid || 0) < 10}
                     onClick={() => copyToClipboard(`${FRONTEND_URL}/register?ref=${userProfile?.username || 'TN2024AQE'}`)}
                   >
                     {t("pre_register.copy_btn")}

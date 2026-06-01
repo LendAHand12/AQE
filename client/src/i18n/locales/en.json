@@ -322,6 +322,7 @@
     "copy_btn": "Copy",
     "total_referrals": "Total Referrals",
     "total_commission": "Total Commission",
+    "referral_lock_msg": "Need >= 10 USDT payment to unlock link",
     "reg_info_title": "Registration Details",
     "reg_amount_label": "Amount of AQE to buy (USDT)",
     "reg_amount_min": "Min 100 USDT",

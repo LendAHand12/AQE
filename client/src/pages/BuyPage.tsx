@@ -6,7 +6,8 @@ import {
   ShieldAlert,
   Calendar,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Link2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,9 +25,17 @@ export default function BuyPage() {
   const [purchaseAmount, setPurchaseAmount] = useState<number>(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
+  const [referralStats, setReferralStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [isBlockchainModalOpen, setIsBlockchainModalOpen] = useState(false)
   const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
+
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success(t("pre_register.copied"))
+  }
 
   useEffect(() => {
     fetchInitialData()
@@ -54,13 +63,15 @@ export default function BuyPage() {
   const fetchInitialData = async () => {
     setLoading(true)
     try {
-      const [profileRes, pledgeRes] = await Promise.all([
+      const [profileRes, pledgeRes, referralRes] = await Promise.all([
         apiClient.get("/auth/profile"),
-        apiClient.get("/payments/pledge") // Contains user's legacy pledge & awaiting approval amounts
+        apiClient.get("/payments/pledge"), // Contains user's legacy pledge & awaiting approval amounts
+        apiClient.get("/auth/referrals")
       ])
 
       setUserProfile(profileRes.data)
       setAwaitingPayment(pledgeRes.data)
+      setReferralStats(referralRes.data.summary)
     } catch (err) {
       console.error("Fetch Buy Page Initial Data Error:", err)
     } finally {
@@ -284,6 +295,55 @@ export default function BuyPage() {
             )}
           </div>
 
+        </div>
+
+        {/* Referral Card */}
+        <div className="bg-white p-6 sm:p-8 rounded-[20px] shadow-[0px_15px_40px_rgba(0,0,0,0.02)] border border-gray-100 space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150">
+          <div className="flex gap-2.5 items-center border-b border-gray-50 pb-3">
+            <div className="size-8 bg-[#d9ede8] rounded-full flex items-center justify-center text-[#276152]">
+              <Link2 size={18} />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-[16px] font-bold text-[#111827]">{t("pre_register.ref_card_title")}</h3>
+              <p className="text-[12px] font-medium text-[#868f9e]">{t("pre_register.ref_card_desc")}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 h-[44px]">
+            <div className="flex-1 bg-[#efefef]/50 rounded-[12px] px-4 flex items-center relative group/link overflow-hidden border border-transparent">
+              <span className="text-[13px] font-medium text-[#6b7280] truncate">
+                {`${FRONTEND_URL?.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}`}
+              </span>
+              {(!userProfile || (userProfile.totalPaid || 0) < 10) && (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] rounded-[12px] flex items-center justify-center">
+                  <span className="text-[11px] font-bold text-amber-600 uppercase tracking-tight">
+                    {t("pre_register.referral_lock_msg")}
+                  </span>
+                </div>
+              )}
+            </div>
+            <Button
+              className="bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] px-5 h-full font-bold text-xs disabled:opacity-50 disabled:grayscale transition-all active:scale-[0.97]"
+              disabled={!userProfile || (userProfile.totalPaid || 0) < 10}
+              onClick={() => copyToClipboard(`${FRONTEND_URL}/register?ref=${userProfile?.username || 'TN2024AQE'}`)}
+            >
+              {t("pre_register.copy_btn")}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="bg-[#efefef]/30 p-3.5 rounded-[12px] space-y-0.5 border border-gray-50/50">
+              <p className="text-[12px] text-[#868f9e] font-medium">{t("pre_register.total_referrals")}</p>
+              <p className="text-[18px] font-black text-[#276152]">{referralStats?.totalReferrals || 0}</p>
+            </div>
+            <div className="bg-[#efefef]/30 p-3.5 rounded-[12px] space-y-0.5 border border-gray-50/50">
+              <p className="text-[12px] text-[#868f9e] font-medium">{t("pre_register.total_commission")}</p>
+              <div className="flex items-baseline gap-0.5 text-[#276152]">
+                <span className="text-[18px] font-black">{referralStats?.totalCommission || 0}</span>
+                <span className="text-[11px] font-bold">USDT</span>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

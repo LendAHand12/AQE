@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import WalletConnection from '../models/WalletConnection.js';
 import Commission from '../models/Commission.js';
+import Transaction from '../models/Transaction.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendConfirmationEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
@@ -163,7 +164,17 @@ export const verify2FALogin = async (req, res) => {
 // @access  Private
 export const getUserProfile = async (req, res) => {
     if (req.user) {
-        res.json(req.user);
+        const successfulPayments = await Transaction.find({
+            from: req.user._id,
+            type: 'PAYMENT',
+            status: 'SUCCESS'
+        });
+        const totalPaid = successfulPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+        const userObj = req.user.toObject();
+        userObj.totalPaid = totalPaid;
+
+        res.json(userObj);
     } else {
         res.status(404).json({ message: 'auth.errors.user_not_found' });
     }
