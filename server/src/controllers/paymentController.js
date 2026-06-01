@@ -11,11 +11,7 @@ import { finalizeBlockchainPayment, processCommissions } from '../services/payme
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import axios from 'axios';
-
-// Helper to get current time in Vietnam (GMT+7)
-const getVietnamTime = () => {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-};
+import { getSystemTime } from '../utils/time.js';
 
 const getTransakWidgetUrl = async (paymentId, amount, email) => {
     const isProd = process.env.TRANSAK_ENV === 'PRODUCTION';
@@ -58,14 +54,14 @@ const getTransakWidgetUrl = async (paymentId, amount, email) => {
         return fallbackUrl;
     }
 
-    const refreshUrl = isProd 
+    const refreshUrl = isProd
         ? 'https://api.transak.com/partners/api/v2/refresh-token'
         : 'https://api-stg.transak.com/partners/api/v2/refresh-token';
-        
+
     const sessionUrl = isProd
         ? 'https://api-gateway.transak.com/api/v2/auth/session'
         : 'https://api-gateway-stg.transak.com/api/v2/auth/session';
-        
+
     try {
         console.log(`[Transak Session] Requesting token for apiKey: ${apiKey}`);
         // 1. Get Refresh Token
@@ -77,12 +73,12 @@ const getTransakWidgetUrl = async (paymentId, amount, email) => {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         const accessToken = refreshResponse.data?.data?.accessToken;
         if (!accessToken) {
             throw new Error('No access token returned from Transak');
         }
-        
+
         console.log('[Transak Session] Creating secure session...');
         // 2. Create Session
         const sessionResponse = await axios.post(sessionUrl, {
@@ -142,7 +138,7 @@ export const submitPreRegisterPledge = async (req, res) => {
                     pledgeUsdt: user.pledgeUsdt,
                     paidUsdt: user.paidUsdtPreRegister,
                     tokensReceived: user.preRegisterTokens,
-                    bonusPercent: user.hasReceivedPromotion ? (new Date() <= new Date('2026-05-31') ? 0.10 : 0.05) : 0,
+                    bonusPercent: user.hasReceivedPromotion ? 0.10 : 0,
                     completedAt: new Date()
                 });
 
@@ -171,9 +167,9 @@ export const submitPreRegisterPayment = async (req, res) => {
 
     try {
         const user = await User.findById(req.user._id);
-        const nowVN = getVietnamTime();
-        const may31VN = new Date('2026-05-31T23:59:59+07:00');
-        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+        const nowVN = getSystemTime();
+        const may31VN = new Date('2026-05-31T23:59:59');
+        const julyFirstVN = new Date('2026-07-01T00:00:00');
 
         if (user.kycStatus !== 'verified' && user.kycStatus !== 'pending') {
             return res.status(403).json({ message: 'payments.errors.kyc_required' });
@@ -186,7 +182,7 @@ export const submitPreRegisterPayment = async (req, res) => {
                     pledgeUsdt: user.pledgeUsdt,
                     paidUsdt: user.paidUsdtPreRegister,
                     tokensReceived: user.preRegisterTokens,
-                    bonusPercent: user.hasReceivedPromotion ? (nowVN <= may31VN ? 0.10 : 0.05) : 0,
+                    bonusPercent: user.hasReceivedPromotion ? 0.10 : 0,
                     completedAt: new Date()
                 });
                 user.paidUsdtPreRegister = 0;
@@ -226,12 +222,7 @@ export const submitPreRegisterPayment = async (req, res) => {
             if (user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
                 user.isPledgeCompleted = true;
 
-                let bonusPercent = 0;
-                if (nowVN <= may31VN) {
-                    bonusPercent = 0.10;
-                } else if (nowVN < julyFirstVN) {
-                    bonusPercent = 0.05;
-                }
+                let bonusPercent = 0.10;
 
                 const bonusTokens = user.preRegisterTokens * bonusPercent;
                 const totalTokens = user.preRegisterTokens + bonusTokens;
@@ -510,7 +501,7 @@ export const confirmManualPayment = async (req, res) => {
 💰 <b>Amount:</b> ${transaction.amount} ${transaction.symbol}
 🆔 <b>Payment ID:</b> <code>${paymentId}</code>
 📝 <b>Method:</b> Zelle
-⏰ <b>Time:</b> ${getVietnamTime().toLocaleString()}
+⏰ <b>Time:</b> ${getSystemTime().toLocaleString()}
 ━━━━━━━━━━━━━━━━━━━━━━━━
 <i>Please check the admin dashboard to verify and approve this transaction.</i>`;
 
@@ -543,9 +534,9 @@ export const approveManualPayment = async (req, res) => {
         const isDirect = transaction.metadata?.isDirectPurchase === true;
 
         if (isDirect) {
-            const nowVN = getVietnamTime();
-            const juneStart = new Date('2026-06-01T00:00:00+07:00');
-            const juneEnd = new Date('2026-06-30T23:59:59+07:00');
+            const nowVN = getSystemTime();
+            const juneStart = new Date('2026-06-01T00:00:00');
+            const juneEnd = new Date('2026-06-30T23:59:59');
             const isJune = nowVN >= juneStart && nowVN <= juneEnd;
 
             let price = 1.0;
@@ -631,9 +622,9 @@ export const approveManualPayment = async (req, res) => {
         }
 
         // --- SHARED FINALIZE LOGIC ---
-        const nowVN = getVietnamTime();
-        const may31VN = new Date('2026-05-31T23:59:59+07:00');
-        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+        const nowVN = getSystemTime();
+        const may31VN = new Date('2026-05-31T23:59:59');
+        const julyFirstVN = new Date('2026-07-01T00:00:00');
 
         let price = 1.0;
         const tokensCalculated = transaction.amount / price;
@@ -665,9 +656,7 @@ export const approveManualPayment = async (req, res) => {
         if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
             user.isPledgeCompleted = true;
 
-            let bonusPercent = 0;
-            if (nowVN <= may31VN) bonusPercent = 0.10;
-            else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+            let bonusPercent = 0.10;
 
             const bonusTokens = user.preRegisterTokens * bonusPercent;
             user.aqeBalance += (user.preRegisterTokens + bonusTokens);

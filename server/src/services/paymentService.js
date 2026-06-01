@@ -5,12 +5,7 @@ import BalanceHistory from '../models/BalanceHistory.js';
 import Notification from '../models/Notification.js';
 import { TokenState } from '../models/Blockchain.js';
 import { emitNotification } from '../utils/socket.js';
-
-// Helper: Get current time in Vietnam (GMT+7)
-const getVietnamTime = () => {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-};
-
+import { getSystemTime } from '../utils/time.js';
 /**
  * Shared logic to process commissions
  */
@@ -130,9 +125,9 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             return;
         }
 
-        const nowVN = getVietnamTime();
-        const may31VN = new Date('2026-05-31T23:59:59+07:00');
-        const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+        const nowVN = getSystemTime();
+        const may31VN = new Date('2026-05-31T23:59:59');
+        const julyFirstVN = new Date('2026-07-01T00:00:00');
 
         let phase = 'PRE_REGISTER';
         if (nowVN >= julyFirstVN) {
@@ -167,8 +162,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 throw saveError;
             }
 
-            const juneStart = new Date('2026-06-01T00:00:00+07:00');
-            const juneEnd = new Date('2026-06-30T23:59:59+07:00');
+            const juneStart = new Date('2026-06-01T00:00:00');
+            const juneEnd = new Date('2026-06-30T23:59:59');
             const isJune = nowVN >= juneStart && nowVN <= juneEnd;
 
             let bonusPercent = 0;
@@ -285,12 +280,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
                 user.isPledgeCompleted = true;
                 
-                let bonusPercent = 0;
-                if (nowVN <= may31VN) {
-                    bonusPercent = 0.10;
-                } else if (nowVN < julyFirstVN) {
-                    bonusPercent = 0.05;
-                }
+                let bonusPercent = 0.10;
 
                 const bonusTokens = user.preRegisterTokens * bonusPercent;
                 const totalTokens = user.preRegisterTokens + bonusTokens;
@@ -368,9 +358,9 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
 
-    const nowVN = getVietnamTime();
-    const may31VN = new Date('2026-05-31T23:59:59+07:00');
-    const julyFirstVN = new Date('2026-07-01T00:00:00+07:00');
+    const nowVN = getSystemTime();
+    const may31VN = new Date('2026-05-31T23:59:59');
+    const julyFirstVN = new Date('2026-07-01T00:00:00');
 
     // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
     const price = 1.0;
@@ -433,9 +423,7 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     if (user.pledgeUsdt > 0 && user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
         user.isPledgeCompleted = true;
         
-        let bonusPercent = 0;
-        if (nowVN <= may31VN) bonusPercent = 0.10;
-        else if (nowVN < julyFirstVN) bonusPercent = 0.05;
+        let bonusPercent = 0.10;
 
         const bonusTokens = user.preRegisterTokens * bonusPercent;
         const totalTokens = user.preRegisterTokens + bonusTokens;

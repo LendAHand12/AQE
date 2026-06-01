@@ -24,7 +24,7 @@ import AdminTicketDetailPage from "@/pages/admin/AdminTicketDetailPage"
 
 import ExplorerPage from "@/pages/ExplorerPage"
 
-import PreRegisterPage from "@/pages/PreRegisterPage"
+// import PreRegisterPage from "@/pages/PreRegisterPage"
 import PaymentHistoryPage from "@/pages/PaymentHistoryPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 import ReferralPage from "@/pages/ReferralPage"
@@ -53,7 +53,7 @@ export function App() {
           <Routes>
             {/* Redirect root based on auth status is handled by guards, but default to login */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
+
             {/* Auth routes (Public only) */}
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<AuthPage mode="login" />} />
@@ -61,13 +61,13 @@ export function App() {
               <Route path="/forgot-password" element={<AuthPage mode="forgot-password" />} />
               <Route path="/reset-password/:token" element={<AuthPage mode="reset-password" />} />
             </Route>
-            
+
             {/* Protected routes (Auth required) */}
             <Route element={<ProtectedRoute />}>
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/pre-register" element={<PreRegisterPage />} />
+                {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
                 <Route path="/buy" element={<BuyPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
@@ -108,7 +108,7 @@ export function App() {
             <Route path="/pay" element={<PaymentPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            
+
             {/* Not Found page */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

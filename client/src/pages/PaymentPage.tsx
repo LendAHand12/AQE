@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  Wallet, 
-  CheckCircle2, 
-  Loader2, 
+import {
+  Wallet,
+  CheckCircle2,
+  Loader2,
   ExternalLink,
   ShieldCheck,
   Copy,
@@ -46,7 +46,7 @@ export default function PaymentPage() {
   const { open: openAppKit } = useAppKit();
   const { address: account, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
-  
+
   const lastSyncedAccount = useRef<string | null>(null);
 
   // Sync wallet address with backend profile
@@ -54,14 +54,14 @@ export default function PaymentPage() {
     if (isConnected && account) {
       if (account !== lastSyncedAccount.current) {
         lastSyncedAccount.current = account;
-        
+
         apiClient.put('/auth/profile', { walletAddress: account })
           .catch(err => console.error("Failed to sync wallet address:", err));
-          
+
         // Record wallet connection history
-        apiClient.post('/auth/wallet-connections', { 
-            walletAddress: account,
-            walletName: connector?.name
+        apiClient.post('/auth/wallet-connections', {
+          walletAddress: account,
+          walletName: connector?.name
         })
           .catch(err => console.error("Failed to record wallet connection:", err));
       }
@@ -125,7 +125,7 @@ export default function PaymentPage() {
             setTxHash(res.data.hash);
             clearInterval(interval);
           }
-        } catch (e) {}
+        } catch (e) { }
       }, 3000);
     }
     return () => clearInterval(interval);
@@ -231,8 +231,8 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (!isConnected || !account || !payment) {
-        await connectWallet();
-        return;
+      await connectWallet();
+      return;
     }
 
     try {
@@ -256,14 +256,14 @@ export default function PaymentPage() {
       // 2. Direct Transfer
       setStatus('paying');
       toast.info(t("payments.page.paying"));
-      
+
       const hash = await writeContract(config, {
         address: USDT_ADDRESS as `0x${string}`,
         abi: BEP20USDT_ABI as any,
         functionName: 'transfer',
         args: [ADMIN_ADDRESS as `0x${string}`, amountWei],
       });
-      
+
       // CHỦ ĐỘNG GỬI HASH VỀ BACKEND NGAY LẬP TỨC
       setStatus('verifying');
       await waitForTransactionReceipt(config, { hash });
@@ -346,63 +346,63 @@ export default function PaymentPage() {
               <span className="text-gray-400 font-medium">{t("payments.page.status")}</span>
               <span className={cn(
                 "px-3 py-1 rounded-full text-xs font-bold uppercase",
-                status === 'success' ? "bg-emerald-50 text-emerald-600" : 
-                status === 'awaiting' ? "bg-amber-50 text-amber-600" :
-                "bg-gray-50 text-gray-500"
+                status === 'success' ? "bg-emerald-50 text-emerald-600" :
+                  status === 'awaiting' ? "bg-amber-50 text-amber-600" :
+                    "bg-gray-50 text-gray-500"
               )}>
-                {status === 'success' ? t("payments.page.status_success") : 
-                 status === 'awaiting' ? t("payments.page.status_awaiting") :
-                 t("payments.page.status_pending")}
+                {status === 'success' ? t("payments.page.status_success") :
+                  status === 'awaiting' ? t("payments.page.status_awaiting") :
+                    t("payments.page.status_pending")}
               </span>
             </div>
           </div>
 
           {status === 'success' ? (
             <div className="text-center space-y-6 pt-4">
-               <div className="flex justify-center">
-                  <div className="size-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
-                    <CheckCircle2 size={40} />
-                  </div>
-               </div>
-               <div className="space-y-2">
-                 <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.success_msg")}</h3>
-                 <p className="text-sm text-gray-400">{t("payments.page.success_hint")}</p>
-               </div>
-               {txHash && (
-                 <a 
-                   href={`https://bscscan.com/tx/${txHash}`} 
-                   target="_blank" 
-                   className="inline-flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline"
-                 >
-                   {t("payments.page.view_bscscan")} <ExternalLink size={14} />
-                 </a>
-               )}
-               <Button onClick={() => navigate('/pre-register')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
-                 {t("payments.page.back_home")}
-               </Button>
+              <div className="flex justify-center">
+                <div className="size-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
+                  <CheckCircle2 size={40} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.success_msg")}</h3>
+                <p className="text-sm text-gray-400">{t("payments.page.success_hint")}</p>
+              </div>
+              {txHash && (
+                <a
+                  href={`https://bscscan.com/tx/${txHash}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline"
+                >
+                  {t("payments.page.view_bscscan")} <ExternalLink size={14} />
+                </a>
+              )}
+              <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
+                {t("payments.page.back_home")}
+              </Button>
             </div>
           ) : status === 'awaiting' ? (
             <div className="text-center space-y-6 pt-4">
-               <div className="flex justify-center">
-                  <div className="size-20 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(245,158,11,0.3)]">
-                    <Clock size={40} />
-                  </div>
-               </div>
-               <div className="space-y-2">
-                 <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.status_awaiting")}</h3>
-                 <p className="text-sm text-gray-400">{t("payments.page.manual_success_hint")}</p>
-               </div>
-               <Button onClick={() => navigate('/pre-register')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
-                 {t("payments.page.back_home")}
-               </Button>
+              <div className="flex justify-center">
+                <div className="size-20 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(245,158,11,0.3)]">
+                  <Clock size={40} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.status_awaiting")}</h3>
+                <p className="text-sm text-gray-400">{t("payments.page.manual_success_hint")}</p>
+              </div>
+              <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
+                {t("payments.page.back_home")}
+              </Button>
             </div>
           ) : (
             <div className="space-y-6 pt-4">
               {method === 'wallet' ? (
                 <div className="space-y-4">
                   {!account ? (
-                    <Button 
-                      onClick={searchParams.get('connect') === 'qr' ? connectWalletConnectOnly : connectWallet} 
+                    <Button
+                      onClick={searchParams.get('connect') === 'qr' ? connectWalletConnectOnly : connectWallet}
                       disabled={status === 'connecting'}
                       className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
                     >
@@ -423,7 +423,7 @@ export default function PaymentPage() {
                             </p>
                           </div>
                         </div>
-                        <button 
+                        <button
                           onClick={disconnectWallet}
                           className="text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors px-3 py-1.5 hover:bg-rose-50 rounded-lg"
                         >
@@ -431,17 +431,17 @@ export default function PaymentPage() {
                         </button>
                       </div>
 
-                      <Button 
-                        onClick={handlePayment} 
+                      <Button
+                        onClick={handlePayment}
                         disabled={status === 'checking_balance' || status === 'paying' || status === 'verifying'}
                         className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
                       >
-                        { (status === 'checking_balance' || status === 'paying' || status === 'verifying') ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} /> }
+                        {(status === 'checking_balance' || status === 'paying' || status === 'verifying') ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} />}
                         {status === 'checking_balance' ? t("auth.processing") : status === 'paying' ? t("payments.page.paying") : status === 'verifying' ? t("payments.page.verifying") : t("payments.page.pay_now")}
                       </Button>
                     </div>
                   )}
-                  
+
                   <div className="p-4 bg-gray-50 rounded-2xl flex gap-3 border border-gray-100">
                     <ShieldCheck className="text-emerald-500 shrink-0" size={20} />
                     <p className="text-[11px] text-gray-500 leading-relaxed">
@@ -453,36 +453,36 @@ export default function PaymentPage() {
                 <div className="space-y-6">
                   <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 flex flex-col items-center space-y-4">
                     <div className="size-48 bg-white rounded-2xl border-2 border-emerald-500/20 flex items-center justify-center overflow-hidden">
-                       {/* Placeholder for Zelle QR */}
-                       <img 
-                          src={ZelleQR} 
-                          alt="Zelle QR"
-                          className="size-40"
-                       />
+                      {/* Placeholder for Zelle QR */}
+                      <img
+                        src={ZelleQR}
+                        alt="Zelle QR"
+                        className="size-40"
+                      />
                     </div>
                     <div className="text-center space-y-1">
-                       <p className="text-xs font-medium text-gray-400">{t("payments.page.zelle_info")}</p>
-                       <p className="text-lg font-black text-[#0d1f1d]">aqeholding@gmail.com</p>
+                      <p className="text-xs font-medium text-gray-400">{t("payments.page.zelle_info")}</p>
+                      <p className="text-lg font-black text-[#0d1f1d]">aqeholding@gmail.com</p>
                     </div>
                   </div>
 
                   <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-2">
                     <div className="flex items-center justify-between">
-                       <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{t("payments.page.zelle_memo")}</span>
-                       <button 
-                         onClick={() => {
-                           navigator.clipboard.writeText(paymentId?.toString() || '');
-                           toast.success(t("common.copied"));
-                         }}
-                         className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:underline"
-                       >
-                         <Copy size={10} /> Copy
-                       </button>
+                      <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{t("payments.page.zelle_memo")}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(paymentId?.toString() || '');
+                          toast.success(t("common.copied"));
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:underline"
+                      >
+                        <Copy size={10} /> Copy
+                      </button>
                     </div>
                     <p className="text-xl font-black text-emerald-700 font-mono tracking-tighter">#{paymentId}</p>
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={handleManualConfirm}
                     disabled={status === 'verifying'}
                     className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(39,97,82,0.2)] transition-all active:scale-95"
@@ -539,5 +539,5 @@ export default function PaymentPage() {
 }
 
 function cn(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(' ');
 }

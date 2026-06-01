@@ -1,10 +1,10 @@
 import { useNavigate, useLocation } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { 
-  LayoutDashboard, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Settings,
   LogOut,
-  Rocket,
   CreditCard,
   History,
   Users,
@@ -30,14 +30,45 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
+  const [systemTime, setSystemTime] = useState("")
+  const [systemDate, setSystemDate] = useState("")
+
+  useEffect(() => {
+    const updateSystemTime = () => {
+      const now = new Date()
+
+      const timeString = now.toLocaleTimeString("en-US", {
+        timeZone: "America/Chicago",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      })
+      setSystemTime(timeString)
+
+      const dateString = now.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
+        timeZone: "America/Chicago",
+        weekday: 'long',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      })
+      setSystemDate(dateString)
+    }
+
+    updateSystemTime()
+    const clockTimer = setInterval(updateSystemTime, 1000)
+    return () => clearInterval(clockTimer)
+  }, [i18n.language])
+
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
-    { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
+    // { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
     { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
@@ -68,16 +99,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       {/* Brand Header */}
-      <div className="p-7 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="AQ Estate" className="h-10 w-auto" />
+      <div className="p-7 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="AQ Estate" className="h-10 w-auto" />
+          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 text-[#6b7280] hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
-        <button 
-          onClick={onClose}
-          className="lg:hidden p-2 text-[#6b7280] hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <X size={24} />
-        </button>
+        {systemTime && (
+          <div className="flex flex-col gap-1 px-1">
+            <div className="flex items-center gap-1.5 text-[#276152]">
+              <div className="size-1.5 rounded-full bg-[#276152] animate-pulse" />
+              <span className="text-[13px] font-bold font-mono tracking-wider">{systemTime} CST</span>
+            </div>
+            <span className="text-[12px] text-[#717c8d] font-medium capitalize">{systemDate}</span>
+          </div>
+        )}
       </div>
 
       {/* Navigation Links */}
@@ -89,8 +131,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => handleNavigate(item.path)}
               className={cn(
                 "w-full flex items-center gap-3.5 px-4 py-3.5 transition-all duration-300 group relative",
-                isActive(item.path) 
-                  ? "bg-[#276152]/10 text-[#276152] rounded-r-full" 
+                isActive(item.path)
+                  ? "bg-[#276152]/10 text-[#276152] rounded-r-full"
                   : "text-[#717c8d] hover:bg-[#276152]/5 hover:text-[#276152] rounded-xl mx-2"
               )}
             >

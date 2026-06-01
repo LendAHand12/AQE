@@ -61,9 +61,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
     }
 
     updateHeaderInfo()
-    const timer = setInterval(updateHeaderInfo, 60000)
+    const headerTimer = setInterval(updateHeaderInfo, 60000)
     return () => {
-      clearInterval(timer)
+      clearInterval(headerTimer)
     }
   }, [i18n.language])
 

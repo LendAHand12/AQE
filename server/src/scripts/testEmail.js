@@ -34,7 +34,7 @@ const testEmail = async () => {
                 <p>This is a test email to verify that the SMTP configuration is working correctly on your server.</p>
                 <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <p><strong>Status:</strong> 🟢 Connected</p>
-                    <p><strong>Time:</strong> ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
+                    <p><strong>Time:</strong> ${new Date().toLocaleString('vi-VN', { timeZone: 'America/Chicago' })}</p>
                     <p><strong>Server:</strong> AWS EC2 Production</p>
                 </div>
                 <p>If you received this email, it means your SMTP settings are correct.</p>

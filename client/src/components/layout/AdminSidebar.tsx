@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { 
   Users, 
   LayoutDashboard, 
@@ -98,6 +99,37 @@ export default function AdminSidebar() {
   const location = useLocation()
   const { hasPermission, isSuperAdmin } = useAdminPermissions()
 
+  const [systemTime, setSystemTime] = useState("")
+  const [systemDate, setSystemDate] = useState("")
+
+  useEffect(() => {
+    const updateSystemTime = () => {
+      const now = new Date()
+      
+      const timeString = now.toLocaleTimeString("en-US", {
+        timeZone: "America/Chicago",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      })
+      setSystemTime(timeString)
+
+      const dateString = now.toLocaleDateString('en-US', {
+        timeZone: "America/Chicago",
+        weekday: 'long',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      })
+      setSystemDate(dateString)
+    }
+
+    updateSystemTime()
+    const clockTimer = setInterval(updateSystemTime, 1000)
+    return () => clearInterval(clockTimer)
+  }, [])
+
   const handleLogout = () => {
     localStorage.removeItem("admin_token")
     localStorage.removeItem("admin_info")
@@ -108,10 +140,19 @@ export default function AdminSidebar() {
   return (
     <div className="w-[260px] h-screen bg-[#efefef]/50 border-r border-[#d5d7db] flex flex-col fixed left-0 top-0 z-50">
       {/* Logo Section */}
-      <div className="pt-8 px-6 pb-6">
+      <div className="pt-8 px-6 pb-6 flex flex-col gap-4">
         <div className="flex items-center">
           <img src={logoGreen} alt="AQ Estate Logo" className="h-[40px] w-auto object-contain" />
         </div>
+        {systemTime && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-[#276152]">
+              <div className="size-1.5 rounded-full bg-[#276152] animate-pulse" />
+              <span className="text-[13px] font-bold font-mono tracking-wider">{systemTime} CST</span>
+            </div>
+            <span className="text-[12px] text-[#717c8d] font-medium capitalize">{systemDate}</span>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
