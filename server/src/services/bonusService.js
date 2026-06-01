@@ -4,7 +4,7 @@ import { getSystemTime, getStartOfDay } from '../utils/time.js';
 
 export const calculateDailyBonus = async () => {
     const nowVN = getSystemTime();
-    const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
+    const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
     const startDate = new Date(cutOffDateStr);
 
     // Only start calculating on or after start date

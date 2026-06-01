@@ -65,16 +65,22 @@ export const initCronJobs = () => {
         } catch (error) {
             console.error('[CRON] Error during Monthly Token Release:', error);
         }
+    }, {
+        timezone: "America/Chicago"
     });
 
     // Leaderboard Update - Every 1 hour
     cron.schedule('0 * * * *', async () => {
         await updateLeaderboard();
+    }, {
+        timezone: "America/Chicago"
     });
 
     // Bonus Calculation - Every day at 00:00
     cron.schedule('0 0 * * *', async () => {
         await calculateDailyBonus();
+    }, {
+        timezone: "America/Chicago"
     });
 
     console.log('[CRON] Automatic Release, Leaderboard, & Interest Jobs Scheduled.');
