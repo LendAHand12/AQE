@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, CheckCircle2, XCircle, ArrowRight, ShieldCheck } from "lucide-react"
+import { Loader2, CheckCircle2, XCircle, ArrowRight, ShieldCheck, Globe, Check } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import loginBg from "@/assets/login_bg.svg"
 
 export default function ConfirmEmailPage() {
@@ -13,6 +14,7 @@ export default function ConfirmEmailPage() {
   const navigate = useNavigate()
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const hasCalled = React.useRef(false)
+  const [isLangOpen, setIsLangOpen] = useState(false)
 
   useEffect(() => {
     if (hasCalled.current) return
@@ -32,8 +34,9 @@ export default function ConfirmEmailPage() {
     }
   }, [token, t])
 
-  const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")
+  const handleLanguageChange = (lang: string) => {
+    i18n.changeLanguage(lang)
+    setIsLangOpen(false)
   }
 
   return (
@@ -46,13 +49,122 @@ export default function ConfirmEmailPage() {
 
       {/* Language Switcher */}
       <div className="absolute top-8 right-8 z-50">
-        <Button
-          variant="outline"
-          onClick={toggleLanguage}
-          className="bg-white/80 backdrop-blur-md rounded-full px-4 h-9 font-bold text-[#276152] border-[#efefef] shadow-sm"
-        >
-          {i18n.language === "vi" ? "EN" : "VI"}
-        </Button>
+        <Dialog open={isLangOpen} onOpenChange={setIsLangOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="bg-white/80 backdrop-blur-md rounded-full px-4 h-9 font-bold text-[#276152] border-[#efefef] shadow-sm flex items-center gap-1.5 outline-none uppercase"
+            >
+              <Globe className="h-4 w-4" />
+              <span>{i18n.language}</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
+            <div className="bg-[#276152] p-8 text-white relative">
+              <DialogHeader className="gap-1">
+                <DialogTitle className="text-2xl font-bold text-white leading-tight text-left">
+                  {t("header.select_language")}
+                </DialogTitle>
+                <DialogDescription className="text-white/70 text-sm text-left">
+                  {t("header.select_language_desc")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="absolute -bottom-6 -right-6 opacity-10 pointer-events-none">
+                <Globe size={120} />
+              </div>
+            </div>
+            
+            <div className="p-8 space-y-4 bg-white">
+              <button 
+                onClick={() => handleLanguageChange('en')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'en' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'en' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    EN
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">English</p>
+                    <p className="text-xs text-gray-400">System default language</p>
+                  </div>
+                </div>
+                {i18n.language === 'en' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
+
+              <button 
+                onClick={() => handleLanguageChange('vi')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'vi' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'vi' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    VI
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">Tiếng Việt</p>
+                    <p className="text-xs text-gray-400">Ngôn ngữ mặc định hệ thống</p>
+                  </div>
+                </div>
+                {i18n.language === 'vi' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
+
+              <button 
+                onClick={() => handleLanguageChange('es')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'es' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'es' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    ES
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">Español</p>
+                    <p className="text-xs text-gray-400">Idioma del sistema</p>
+                  </div>
+                </div>
+                {i18n.language === 'es' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
+
+              <button 
+                onClick={() => handleLanguageChange('hi')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'hi' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'hi' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    HI
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">हिन्दी</p>
+                    <p className="text-xs text-gray-400">सिस्टम डिफ़ॉल्ट भाषा</p>
+                  </div>
+                </div>
+                {i18n.language === 'hi' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <motion.div 

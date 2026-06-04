@@ -177,6 +177,50 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 </div>
                 {i18n.language === 'vi' && <Check className="text-[#276152] h-5 w-5" />}
               </button>
+
+              <button 
+                onClick={() => handleLanguageChange('es')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'es' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'es' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    ES
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">Español</p>
+                    <p className="text-xs text-gray-400">Idioma del sistema</p>
+                  </div>
+                </div>
+                {i18n.language === 'es' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
+
+              <button 
+                onClick={() => handleLanguageChange('hi')}
+                className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  i18n.language === 'hi' 
+                    ? 'border-[#276152] bg-[#276152]/5' 
+                    : 'border-[#efefef] hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-bold ${
+                    i18n.language === 'hi' ? 'bg-[#276152] text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    HI
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#0d1f1d]">हिन्दी</p>
+                    <p className="text-xs text-gray-400">सिस्टम डिफ़ॉल्ट भाषा</p>
+                  </div>
+                </div>
+                {i18n.language === 'hi' && <Check className="text-[#276152] h-5 w-5" />}
+              </button>
             </div>
           </DialogContent>
         </Dialog>
