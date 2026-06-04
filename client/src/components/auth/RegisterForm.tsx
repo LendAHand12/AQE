@@ -347,7 +347,15 @@ export default function RegisterForm() {
             {t("auth.terms")}
           </a>{" "}
           {t("auth.and")}{" "}
-          <span className="text-[#276152] font-semibold">{t("auth.policy")}</span>
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#276152] font-semibold hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t("auth.policy")}
+          </a>
         </label>
       </div>
 

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import { 
-  User, 
-  Mail, 
+import {
+  User,
+  Mail,
   Phone,
-  ShieldCheck, 
-  Wallet, 
+  ShieldCheck,
+  Wallet,
   ArrowLeft,
   Loader2,
   XCircle,
@@ -17,7 +17,7 @@ import {
   CreditCard,
   Building2,
   ExternalLink,
-  MapPin, 
+  MapPin,
   Flag,
   Image as ImageIcon,
   Eye,
@@ -28,32 +28,32 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { getImageUrl, cn, formatTruncated } from "@/lib/utils"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 
 const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) => {
@@ -80,7 +80,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
 
   return (
     <div className="select-none w-max min-w-full">
-      <div 
+      <div
         className={cn(
           "flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent min-w-[1100px]",
           isOpen && "bg-gray-50 border-gray-100 shadow-sm"
@@ -95,14 +95,14 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
             ) : (
               (user.totalSales > 0 || children.length > 0) ? (
                 <div className={cn("transition-transform duration-200", isOpen && "rotate-90")}>
-                   <ChevronRight size={20} className="text-gray-400 group-hover:text-[#276152]" />
+                  <ChevronRight size={20} className="text-gray-400 group-hover:text-[#276152]" />
                 </div>
               ) : (
                 <div className="size-2 rounded-full bg-gray-200" />
               )
             )}
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="size-11 rounded-xl bg-[#276152]/10 flex items-center justify-center text-[#276152] font-bold text-xs uppercase">
               {user.username?.substring(0, 2)}
@@ -136,9 +136,9 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">System Sales</p>
             <p className="text-[16px] font-bold text-emerald-700">{user.totalSales?.toLocaleString()} <span className="text-[11px]">USDT</span></p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-9 w-9 rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all text-gray-400 hover:text-[#276152]"
             onClick={(e) => {
               e.stopPropagation();
@@ -166,7 +166,7 @@ const ReferralTreeNode = ({ user, level = 0 }: { user: any; level?: number }) =>
               </div>
             ) : !loading && (
               <div className="py-3 text-[12px] text-gray-400 italic ml-20">
-                 No referrals
+                No referrals
               </div>
             )}
           </motion.div>
@@ -183,7 +183,7 @@ export default function AdminUserProfilePage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
-  
+
   // Edit state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -192,12 +192,11 @@ export default function AdminUserProfilePage() {
   // Manual Deposit state
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false)
   const [depositData, setDepositData] = useState<any>({
-    pledgeAmount: "",
     paidAmount: "",
     hash: ""
   })
   const [depositing, setDepositing] = useState(false)
-  
+
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
 
@@ -243,7 +242,7 @@ export default function AdminUserProfilePage() {
       toast.success("Manual deposit processed successfully")
       setIsDepositDialogOpen(false)
       fetchUserDetails()
-      setDepositData({ pledgeAmount: "", paidAmount: "", hash: "" })
+      setDepositData({ paidAmount: "", hash: "" })
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Could not process manual deposit")
     } finally {
@@ -268,9 +267,9 @@ export default function AdminUserProfilePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="rounded-full border-gray-200"
             onClick={() => navigate("/admin/users")}
           >
@@ -282,42 +281,41 @@ export default function AdminUserProfilePage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-           <Badge className={cn(
-             "h-11 px-6 rounded-full text-[13px] font-bold border-none capitalize flex items-center justify-center min-w-[120px]",
-             user.kycStatus === 'verified' ? "bg-emerald-100 text-emerald-700" :
-             user.kycStatus === 'pending' ? "bg-amber-100 text-amber-700" :
-             user.kycStatus === 'rejected' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
-           )}>
-             KYC: {user.kycStatus}
-           </Badge>
-           <Badge className={cn(
-             "h-11 px-6 rounded-full text-[13px] font-bold border-none flex items-center justify-center min-w-[120px]",
-             user.isActive ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
-           )}>
-             {user.isActive ? "Active" : "Locked"}
-           </Badge>
-           <Button 
-             className="h-11 bg-amber-600 hover:bg-amber-700 rounded-full px-6 font-bold shadow-lg shadow-amber-600/10"
-             onClick={() => {
-               setDepositData({
-                 pledgeAmount: (user.pledgeUsdt || 0).toString(),
-                 paidAmount: "",
-                 hash: ""
-               })
-               setIsDepositDialogOpen(true)
-             }}
-           >
-             Manual Deposit
-           </Button>
-           <Button 
-             className="h-11 bg-[#276152] hover:bg-[#1e4d41] rounded-full px-8 font-bold shadow-lg shadow-[#276152]/10"
-             onClick={() => {
-               setEditingUser({...user})
-               setIsEditDialogOpen(true)
-             }}
-           >
-             Edit
-           </Button>
+          <Badge className={cn(
+            "h-11 px-6 rounded-full text-[13px] font-bold border-none capitalize flex items-center justify-center min-w-[120px]",
+            user.kycStatus === 'verified' ? "bg-emerald-100 text-emerald-700" :
+              user.kycStatus === 'pending' ? "bg-amber-100 text-amber-700" :
+                user.kycStatus === 'rejected' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
+          )}>
+            KYC: {user.kycStatus}
+          </Badge>
+          <Badge className={cn(
+            "h-11 px-6 rounded-full text-[13px] font-bold border-none flex items-center justify-center min-w-[120px]",
+            user.isActive ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+          )}>
+            {user.isActive ? "Active" : "Locked"}
+          </Badge>
+          <Button
+            className="h-11 bg-amber-600 hover:bg-amber-700 rounded-full px-6 font-bold shadow-lg shadow-amber-600/10"
+            onClick={() => {
+              setDepositData({
+                paidAmount: "",
+                hash: ""
+              })
+              setIsDepositDialogOpen(true)
+            }}
+          >
+            Manual Deposit
+          </Button>
+          <Button
+            className="h-11 bg-[#276152] hover:bg-[#1e4d41] rounded-full px-8 font-bold shadow-lg shadow-[#276152]/10"
+            onClick={() => {
+              setEditingUser({ ...user })
+              setIsEditDialogOpen(true)
+            }}
+          >
+            Edit
+          </Button>
         </div>
       </div>
 
@@ -343,7 +341,7 @@ export default function AdminUserProfilePage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="mt-4 space-y-1">
                 <h2 className="text-[22px] font-bold text-[#111827]">{user.fullName}</h2>
                 <p className="text-[#6b7280] font-medium">@{user.username}</p>
@@ -410,32 +408,32 @@ export default function AdminUserProfilePage() {
         <div className="lg:col-span-8">
           <Tabs defaultValue="info" className="w-full space-y-6">
             <TabsList className="bg-white p-1 rounded-full border border-gray-100 h-14 shadow-sm">
-              <TabsTrigger 
-                value="info" 
+              <TabsTrigger
+                value="info"
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
                 Information
               </TabsTrigger>
-              <TabsTrigger 
-                value="transactions" 
+              <TabsTrigger
+                value="transactions"
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
                 Transactions
               </TabsTrigger>
-              <TabsTrigger 
-                value="commissions" 
+              <TabsTrigger
+                value="commissions"
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
                 Commissions
               </TabsTrigger>
-              <TabsTrigger 
-                value="referrals" 
+              <TabsTrigger
+                value="referrals"
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
                 Referral
               </TabsTrigger>
-              <TabsTrigger 
-                value="aqe" 
+              <TabsTrigger
+                value="aqe"
                 className="rounded-full px-8 py-2 data-[state=active]:bg-[#276152] data-[state=active]:text-white transition-all font-bold"
               >
                 AQE
@@ -445,98 +443,98 @@ export default function AdminUserProfilePage() {
             {/* Tab: Information & Pledge History */}
             <TabsContent value="info" className="space-y-6 outline-none">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <Card className="rounded-[24px] border-gray-100 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                        <TrendingUp size={20} className="text-[#276152]" />
-                        Current Funding Round
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                       <div className="flex justify-between items-end border-b border-gray-50 pb-4">
-                          <div>
-                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Registration Goal</p>
-                             <p className="text-[22px] font-extrabold text-[#111827]">{user.pledgeUsdt?.toLocaleString()} USDT</p>
-                          </div>
-                          <div className="text-right">
-                             <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Paid</p>
-                             <p className="text-[22px] font-extrabold text-[#276152]">{user.paidUsdtPreRegister?.toLocaleString()} USDT</p>
-                          </div>
-                       </div>
+                <Card className="rounded-[24px] border-gray-100 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                      <TrendingUp size={20} className="text-[#276152]" />
+                      Current Funding Round
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-gray-50 pb-4">
+                      <div>
+                        <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Registration Goal</p>
+                        <p className="text-[22px] font-extrabold text-[#111827]">{user.pledgeUsdt?.toLocaleString()} USDT</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] text-gray-400 font-bold uppercase mb-1">Paid</p>
+                        <p className="text-[22px] font-extrabold text-[#276152]">{user.paidUsdtPreRegister?.toLocaleString()} USDT</p>
+                      </div>
+                    </div>
 
-                       <div className="space-y-2">
-                          <div className="flex justify-between text-[13px] font-bold">
-                             <span className="text-gray-500">Current Round Progress</span>
-                             <span className="text-[#276152]">
-                               {user.pledgeUsdt > 0 ? Math.round((user.paidUsdtPreRegister / user.pledgeUsdt) * 100) : 0}%
-                             </span>
-                          </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                             <div 
-                               className="h-full bg-[#276152] transition-all duration-500" 
-                               style={{ width: `${user.pledgeUsdt > 0 ? Math.min(100, (user.paidUsdtPreRegister / user.pledgeUsdt) * 100) : 0}%` }}
-                             />
-                          </div>
-                       </div>
-                       
-                       <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 bg-gray-50 p-3 rounded-[12px]">
-                         <Clock size={16} />
-                         <span>Status: <strong>{user.isPledgeCompleted ? "Completed" : "In Progress"}</strong></span>
-                       </div>
-                    </CardContent>
-                 </Card>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[13px] font-bold">
+                        <span className="text-gray-500">Current Round Progress</span>
+                        <span className="text-[#276152]">
+                          {user.pledgeUsdt > 0 ? Math.round((user.paidUsdtPreRegister / user.pledgeUsdt) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#276152] transition-all duration-500"
+                          style={{ width: `${user.pledgeUsdt > 0 ? Math.min(100, (user.paidUsdtPreRegister / user.pledgeUsdt) * 100) : 0}%` }}
+                        />
+                      </div>
+                    </div>
 
-                 <Card className="rounded-[24px] border-gray-100 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                        <User size={20} className="text-[#276152]" />
-                        Personal Details
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 gap-y-4">
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Gender</p>
-                          <p className="text-[14px] font-medium text-gray-700">{user.gender || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Date of Birth</p>
-                          <p className="text-[14px] font-medium text-gray-700">{user.birthday ? dayjs(user.birthday).format("DD/MM/YYYY") : "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Nationality</p>
-                          <div className="flex items-center gap-1.5">
-                            <Flag size={14} className="text-gray-400" />
-                            <p className="text-[14px] font-medium text-gray-700">
-                              {user.countryCode === "+1" ? "United States (+1)" : user.countryCode === "+84" ? "Vietnam (+84)" : `${user.nation || "Other"} (${user.countryCode || ""})`}
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Address</p>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin size={14} className="text-gray-400" />
-                            <p className="text-[14px] font-medium text-gray-700 truncate max-w-[150px]">{user.address || "—"}</p>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Registration Date</p>
-                          <p className="text-[14px] font-medium text-gray-700">{dayjs(user.createdAt).format("DD/MM/YYYY")}</p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase">Referred By</p>
-                          {user.referredBy ? (
-                            <Link 
-                              to={`/admin/users/${user.referredBy._id}`}
-                              className="text-[14px] font-bold text-[#276152] hover:underline"
-                            >
-                              @{user.referredBy.username}
-                            </Link>
-                          ) : (
-                            <p className="text-[14px] font-medium text-gray-400">None (Root)</p>
-                          )}
-                        </div>
-                    </CardContent>
-                 </Card>
+                    <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 bg-gray-50 p-3 rounded-[12px]">
+                      <Clock size={16} />
+                      <span>Status: <strong>{user.isPledgeCompleted ? "Completed" : "In Progress"}</strong></span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-[24px] border-gray-100 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                      <User size={20} className="text-[#276152]" />
+                      Personal Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-y-4">
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Gender</p>
+                      <p className="text-[14px] font-medium text-gray-700">{user.gender || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Date of Birth</p>
+                      <p className="text-[14px] font-medium text-gray-700">{user.birthday ? dayjs(user.birthday).format("DD/MM/YYYY") : "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Nationality</p>
+                      <div className="flex items-center gap-1.5">
+                        <Flag size={14} className="text-gray-400" />
+                        <p className="text-[14px] font-medium text-gray-700">
+                          {user.countryCode === "+1" ? "United States (+1)" : user.countryCode === "+84" ? "Vietnam (+84)" : `${user.nation || "Other"} (${user.countryCode || ""})`}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Address</p>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin size={14} className="text-gray-400" />
+                        <p className="text-[14px] font-medium text-gray-700 truncate max-w-[150px]">{user.address || "—"}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Registration Date</p>
+                      <p className="text-[14px] font-medium text-gray-700">{dayjs(user.createdAt).format("DD/MM/YYYY")}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-bold uppercase">Referred By</p>
+                      {user.referredBy ? (
+                        <Link
+                          to={`/admin/users/${user.referredBy._id}`}
+                          className="text-[14px] font-bold text-[#276152] hover:underline"
+                        >
+                          @{user.referredBy.username}
+                        </Link>
+                      ) : (
+                        <p className="text-[14px] font-medium text-gray-400">None (Root)</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* KYC Profile */}
@@ -555,7 +553,7 @@ export default function AdminUserProfilePage() {
                         {user.idCardFront ? (
                           <>
                             <img src={getImageUrl(user.idCardFront)} alt="Front ID" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                            <div 
+                            <div
                               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                               onClick={() => setPreviewImage(getImageUrl(user.idCardFront))}
                             >
@@ -579,7 +577,7 @@ export default function AdminUserProfilePage() {
                         {user.idCardBack ? (
                           <>
                             <img src={getImageUrl(user.idCardBack)} alt="Back ID" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                            <div 
+                            <div
                               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                               onClick={() => setPreviewImage(getImageUrl(user.idCardBack))}
                             >
@@ -603,7 +601,7 @@ export default function AdminUserProfilePage() {
                         {user.portraitPhoto ? (
                           <>
                             <img src={getImageUrl(user.portraitPhoto)} alt="Portrait" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                            <div 
+                            <div
                               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                               onClick={() => setPreviewImage(getImageUrl(user.portraitPhoto))}
                             >
@@ -668,7 +666,7 @@ export default function AdminUserProfilePage() {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="py-12 text-center text-gray-400">
-                             No completed rounds history
+                            No completed rounds history
                           </TableCell>
                         </TableRow>
                       )}
@@ -680,312 +678,312 @@ export default function AdminUserProfilePage() {
 
             {/* Tab: Transactions */}
             <TabsContent value="transactions" className="outline-none">
-               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                      <CreditCard size={20} className="text-[#276152]" />
-                      Transaction History (Recent)
-                    </CardTitle>
-                    <Badge variant="outline" className="rounded-full bg-emerald-50 text-emerald-700 border-none font-bold px-4 py-1.5 text-[12px]">
-                      Total Payments: {data.totalPayments?.toLocaleString() || 0} USDT
-                    </Badge>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader className="bg-gray-50/50">
-                        <TableRow>
-                          <TableHead className="pl-6 font-bold">Time</TableHead>
-                          <TableHead className="font-bold">Type</TableHead>
-                          <TableHead className="font-bold">Method</TableHead>
-                          <TableHead className="font-bold text-right">Amount</TableHead>
-                          <TableHead className="font-bold">Description</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Hash</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {transactions?.length > 0 ? (
-                          transactions.map((tx: any) => (
-                            <TableRow key={tx._id}>
-                              <TableCell className="pl-6 text-xs text-gray-500">
-                                {dayjs(tx.createdAt).format("DD/MM/YYYY HH:mm")}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-col gap-1">
-                                  <Badge className={cn(
-                                    "w-fit rounded-full text-[10px] font-bold border-none",
-                                    tx.type === 'PAYMENT' ? "bg-emerald-100 text-emerald-700" :
+              <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                    <CreditCard size={20} className="text-[#276152]" />
+                    Transaction History (Recent)
+                  </CardTitle>
+                  <Badge variant="outline" className="rounded-full bg-emerald-50 text-emerald-700 border-none font-bold px-4 py-1.5 text-[12px]">
+                    Total Payments: {data.totalPayments?.toLocaleString() || 0} USDT
+                  </Badge>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="pl-6 font-bold">Time</TableHead>
+                        <TableHead className="font-bold">Type</TableHead>
+                        <TableHead className="font-bold">Method</TableHead>
+                        <TableHead className="font-bold text-right">Amount</TableHead>
+                        <TableHead className="font-bold">Description</TableHead>
+                        <TableHead className="pr-6 font-bold text-right">Hash</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions?.length > 0 ? (
+                        transactions.map((tx: any) => (
+                          <TableRow key={tx._id}>
+                            <TableCell className="pl-6 text-xs text-gray-500">
+                              {dayjs(tx.createdAt).format("DD/MM/YYYY HH:mm")}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                <Badge className={cn(
+                                  "w-fit rounded-full text-[10px] font-bold border-none",
+                                  tx.type === 'PAYMENT' ? "bg-emerald-100 text-emerald-700" :
                                     tx.type === 'DEPOSIT' ? "bg-blue-100 text-blue-700" :
-                                    tx.type === 'WITHDRAW' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
-                                  )}>
-                                    {tx.type}
+                                      tx.type === 'WITHDRAW' ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"
+                                )}>
+                                  {tx.type}
+                                </Badge>
+                                {tx.metadata?.isManual && (
+                                  <Badge className="w-fit bg-amber-100 text-amber-700 border-none text-[9px] font-black uppercase">
+                                    Manual
                                   </Badge>
-                                  {tx.metadata?.isManual && (
-                                    <Badge className="w-fit bg-amber-100 text-amber-700 border-none text-[9px] font-black uppercase">
-                                      Manual
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-[10px] font-bold">
-                                  {tx.metadata?.method === 'QR' ? (
-                                    <span className="text-purple-600">QR Code</span>
-                                  ) : (
-                                    <span className="text-blue-600">Wallet Transfer</span>
-                                  )}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right font-bold">
-                                {tx.amount?.toLocaleString()} {tx.symbol || 'USDT'}
-                              </TableCell>
-                              <TableCell className="text-sm text-gray-600 max-w-[200px] truncate">
-                                {tx.description}
-                              </TableCell>
-                              <TableCell className="pr-6 text-right">
-                                {tx.hash ? (
-                                  <a href={`https://bscscan.com/tx/${tx.hash}`} target="_blank" className="text-xs font-mono text-gray-400 hover:text-[#276152] inline-flex items-center gap-1">
-                                    {tx.hash.substring(0, 6)}... <ExternalLink size={12} />
-                                  </a>
-                                ) : "System"}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               No transaction data
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-[10px] font-bold">
+                                {tx.metadata?.method === 'QR' ? (
+                                  <span className="text-purple-600">QR Code</span>
+                                ) : (
+                                  <span className="text-blue-600">Wallet Transfer</span>
+                                )}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right font-bold">
+                              {tx.amount?.toLocaleString()} {tx.symbol || 'USDT'}
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-600 max-w-[200px] truncate">
+                              {tx.description}
+                            </TableCell>
+                            <TableCell className="pr-6 text-right">
+                              {tx.hash ? (
+                                <a href={`https://bscscan.com/tx/${tx.hash}`} target="_blank" className="text-xs font-mono text-gray-400 hover:text-[#276152] inline-flex items-center gap-1">
+                                  {tx.hash.substring(0, 6)}... <ExternalLink size={12} />
+                                </a>
+                              ) : "System"}
                             </TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-               </Card>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-12 text-center text-gray-400">
+                            No transaction data
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Tab: Commissions */}
             <TabsContent value="commissions" className="outline-none">
-               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
-                  <CardHeader>
-                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                      <TrendingUp size={20} className="text-[#276152]" />
-                      Commissions Received
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader className="bg-gray-50/50">
-                        <TableRow>
-                          <TableHead className="pl-6 font-bold">Time</TableHead>
-                          <TableHead className="font-bold">From Referree</TableHead>
-                          <TableHead className="font-bold text-right">Sales</TableHead>
-                          <TableHead className="font-bold text-right">Commission</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Description</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {commissions?.length > 0 ? (
-                          commissions.map((comm: any) => (
-                            <TableRow key={comm._id}>
-                              <TableCell className="pl-6 text-xs text-gray-500">
-                                {dayjs(comm.createdAt).format("DD/MM/YYYY HH:mm")}
-                              </TableCell>
-                              <TableCell className="font-bold">
-                                @{comm.fromUserId?.username}
-                              </TableCell>
-                              <TableCell className="text-right text-sm">
-                                {comm.salesAmount?.toLocaleString()} USDT
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-emerald-600">
-                                +{comm.amountUsdt?.toLocaleString()} USDT
-                              </TableCell>
-                              <TableCell className="pr-6 text-right text-xs text-gray-500 italic">
-                                Level {comm.level} Commission ({comm.percentage}%)
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               No commissions received yet
+              <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                    <TrendingUp size={20} className="text-[#276152]" />
+                    Commissions Received
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="pl-6 font-bold">Time</TableHead>
+                        <TableHead className="font-bold">From Referree</TableHead>
+                        <TableHead className="font-bold text-right">Sales</TableHead>
+                        <TableHead className="font-bold text-right">Commission</TableHead>
+                        <TableHead className="pr-6 font-bold text-right">Description</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {commissions?.length > 0 ? (
+                        commissions.map((comm: any) => (
+                          <TableRow key={comm._id}>
+                            <TableCell className="pl-6 text-xs text-gray-500">
+                              {dayjs(comm.createdAt).format("DD/MM/YYYY HH:mm")}
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              @{comm.fromUserId?.username}
+                            </TableCell>
+                            <TableCell className="text-right text-sm">
+                              {comm.salesAmount?.toLocaleString()} USDT
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-emerald-600">
+                              +{comm.amountUsdt?.toLocaleString()} USDT
+                            </TableCell>
+                            <TableCell className="pr-6 text-right text-xs text-gray-500 italic">
+                              Level {comm.level} Commission ({comm.percentage}%)
                             </TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-               </Card>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-12 text-center text-gray-400">
+                            No commissions received yet
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Tab: Referral */}
             <TabsContent value="referrals" className="outline-none">
-               <div className="space-y-6">
-                 {/* Referral Summary Cards */}
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
-                            <Users size={28} />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Direct (F1)</p>
-                            <h3 className="text-2xl font-black text-[#111827]">{data.referrals?.length || 0}</h3>
-                          </div>
+              <div className="space-y-6">
+                {/* Referral Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
+                          <Users size={28} />
                         </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600">
-                            <Network size={28} />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Entire Network</p>
-                            <h3 className="text-2xl font-black text-[#111827]">{data.totalNetwork || 0}</h3>
-                          </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Direct (F1)</p>
+                          <h3 className="text-2xl font-black text-[#111827]">{data.referrals?.length || 0}</h3>
                         </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                          <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-amber-600">
-                            <TrendingUp size={28} />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">System Sales</p>
-                            <h3 className="text-2xl font-black text-[#111827]">{user.totalSales?.toLocaleString()} <span className="text-sm font-bold">USDT</span></h3>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                 </div>
-
-                 <Card className="rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
-                    <CardHeader className="border-b bg-gray-50/30 p-6">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                          <Users size={20} className="text-[#276152]" />
-                          Referral Network Tree
-                        </CardTitle>
-                        <Badge className="bg-[#276152] text-white border-none font-bold px-4 py-1.5 rounded-full">
-                          {data.totalNetwork || 0} members
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-6 min-h-[400px] overflow-x-auto custom-scrollbar">
-                      <div className="space-y-1 w-max min-w-full">
-                        {data.referrals?.length > 0 ? (
-                          data.referrals.map((ref: any) => (
-                            <ReferralTreeNode key={ref._id} user={ref} />
-                          ))
-                        ) : (
-                          <div className="py-20 text-center space-y-4">
-                             <div className="size-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-300">
-                                <Users size={40} />
-                             </div>
-                             <p className="text-gray-400 font-medium italic">This user has not referred anyone yet</p>
-                          </div>
-                        )}
                       </div>
                     </CardContent>
-                 </Card>
-               </div>
+                  </Card>
+
+                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600">
+                          <Network size={28} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Entire Network</p>
+                          <h3 className="text-2xl font-black text-[#111827]">{data.totalNetwork || 0}</h3>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="size-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-amber-600">
+                          <TrendingUp size={28} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">System Sales</p>
+                          <h3 className="text-2xl font-black text-[#111827]">{user.totalSales?.toLocaleString()} <span className="text-sm font-bold">USDT</span></h3>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
+                  <CardHeader className="border-b bg-gray-50/30 p-6">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                        <Users size={20} className="text-[#276152]" />
+                        Referral Network Tree
+                      </CardTitle>
+                      <Badge className="bg-[#276152] text-white border-none font-bold px-4 py-1.5 rounded-full">
+                        {data.totalNetwork || 0} members
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6 min-h-[400px] overflow-x-auto custom-scrollbar">
+                    <div className="space-y-1 w-max min-w-full">
+                      {data.referrals?.length > 0 ? (
+                        data.referrals.map((ref: any) => (
+                          <ReferralTreeNode key={ref._id} user={ref} />
+                        ))
+                      ) : (
+                        <div className="py-20 text-center space-y-4">
+                          <div className="size-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-300">
+                            <Users size={40} />
+                          </div>
+                          <p className="text-gray-400 font-medium italic">This user has not referred anyone yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
             {/* Tab: AQE Distribution */}
             <TabsContent value="aqe" className="space-y-6 outline-none">
-               {/* AQE Bonus Cards */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
-                   <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Expected</p>
-                     <h3 className="text-2xl font-black text-[#276152]">
-                       {formatTruncated(bonusStats?.totalExpected, 5)} <span className="text-sm font-bold">AQE</span>
-                     </h3>
-                     <p className="text-xs text-gray-400">Lifetime bonus expected from all packages (6% APR)</p>
-                   </CardContent>
-                 </Card>
+              {/* AQE Bonus Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
+                  <CardContent className="p-6 space-y-2">
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Expected</p>
+                    <h3 className="text-2xl font-black text-[#276152]">
+                      {formatTruncated(bonusStats?.totalExpected, 5)} <span className="text-sm font-bold">AQE</span>
+                    </h3>
+                    <p className="text-xs text-gray-400">Lifetime bonus expected from all packages (6% APR)</p>
+                  </CardContent>
+                </Card>
 
-                 <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
-                   <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Received</p>
-                     <h3 className="text-2xl font-black text-blue-700">
-                       {formatTruncated(bonusStats?.totalBonusReceived, 5)} <span className="text-sm font-bold">AQE</span>
-                     </h3>
-                     <p className="text-xs text-gray-400">Total daily bonus received so far (yield)</p>
-                   </CardContent>
-                 </Card>
+                <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
+                  <CardContent className="p-6 space-y-2">
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Received</p>
+                    <h3 className="text-2xl font-black text-blue-700">
+                      {formatTruncated(bonusStats?.totalBonusReceived, 5)} <span className="text-sm font-bold">AQE</span>
+                    </h3>
+                    <p className="text-xs text-gray-400">Total daily bonus received so far (yield)</p>
+                  </CardContent>
+                </Card>
 
-                 <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
-                   <CardContent className="p-6 space-y-2">
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining</p>
-                     <h3 className="text-2xl font-black text-amber-600">
-                       {formatTruncated(bonusStats?.totalRemaining, 5)} <span className="text-sm font-bold">AQE</span>
-                     </h3>
-                     <p className="text-xs text-gray-400">Expected future bonus from today onwards</p>
-                   </CardContent>
-                 </Card>
-               </div>
+                <Card className="rounded-[24px] border-none shadow-sm bg-gradient-to-br from-amber-50/50 to-white">
+                  <CardContent className="p-6 space-y-2">
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Remaining</p>
+                    <h3 className="text-2xl font-black text-amber-600">
+                      {formatTruncated(bonusStats?.totalRemaining, 5)} <span className="text-sm font-bold">AQE</span>
+                    </h3>
+                    <p className="text-xs text-gray-400">Expected future bonus from today onwards</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-               {/* AQE Balances Summary */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
-                   <div>
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimable Bonus</p>
-                     <h3 className="text-xl font-bold text-gray-900">
-                       {formatTruncated(bonusStats?.claimableAqeBonus, 5)} <span className="text-xs">AQE</span>
-                     </h3>
-                   </div>
-                   <Badge className="bg-[#276152]/10 text-[#276152] border-none font-bold">Available</Badge>
-                 </Card>
-                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
-                   <div>
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Provisional Bonus</p>
-                     <h3 className="text-xl font-bold text-gray-900">
-                       {formatTruncated(bonusStats?.provisionalAqeBonus, 5)} <span className="text-xs">AQE</span>
-                     </h3>
-                   </div>
-                   <Badge className="bg-amber-100 text-amber-700 border-none font-bold">Accumulated</Badge>
-                 </Card>
-                 <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
-                   <div>
-                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimed to USDT</p>
-                     <h3 className="text-xl font-bold text-blue-700">
-                       {formatTruncated(bonusStats?.totalClaimed, 5)} <span className="text-xs">USDT</span>
-                     </h3>
-                   </div>
-                   <Badge className="bg-blue-100 text-blue-700 border-none font-bold">Claimed</Badge>
-                 </Card>
-               </div>
+              {/* AQE Balances Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimable Bonus</p>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {formatTruncated(bonusStats?.claimableAqeBonus, 5)} <span className="text-xs">AQE</span>
+                    </h3>
+                  </div>
+                  <Badge className="bg-[#276152]/10 text-[#276152] border-none font-bold">Available</Badge>
+                </Card>
+                <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Provisional Bonus</p>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {formatTruncated(bonusStats?.provisionalAqeBonus, 5)} <span className="text-xs">AQE</span>
+                    </h3>
+                  </div>
+                  <Badge className="bg-amber-100 text-amber-700 border-none font-bold">Accumulated</Badge>
+                </Card>
+                <Card className="rounded-[24px] border border-gray-100 shadow-sm bg-white p-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Claimed to USDT</p>
+                    <h3 className="text-xl font-bold text-blue-700">
+                      {formatTruncated(bonusStats?.totalClaimed, 5)} <span className="text-xs">USDT</span>
+                    </h3>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-700 border-none font-bold">Claimed</Badge>
+                </Card>
+              </div>
 
-               <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
-                  <CardHeader>
-                    <CardTitle className="text-[18px] font-bold flex items-center gap-2">
-                      <Building2 size={20} className="text-amber-600" />
-                      AQE Distribution History
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader className="bg-gray-50/50">
-                        <TableRow>
-                          <TableHead className="pl-6 font-bold">Time</TableHead>
-                          <TableHead className="font-bold">Type</TableHead>
-                          <TableHead className="font-bold text-right">Quantity</TableHead>
-                          <TableHead className="font-bold">Status</TableHead>
-                          <TableHead className="pr-6 font-bold text-right">Description</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {data.tokenHistory?.filter((bh: any) => bh.symbol === 'AQE').length > 0 ? (
-                          data.tokenHistory
-                            .filter((bh: any) => bh.symbol === 'AQE')
-                            .map((bh: any) => (
-                              <TableRow key={bh._id}>
+              <Card className="rounded-[24px] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-[18px] font-bold flex items-center gap-2">
+                    <Building2 size={20} className="text-amber-600" />
+                    AQE Distribution History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="pl-6 font-bold">Time</TableHead>
+                        <TableHead className="font-bold">Type</TableHead>
+                        <TableHead className="font-bold text-right">Quantity</TableHead>
+                        <TableHead className="font-bold">Status</TableHead>
+                        <TableHead className="pr-6 font-bold text-right">Description</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.tokenHistory?.filter((bh: any) => bh.symbol === 'AQE').length > 0 ? (
+                        data.tokenHistory
+                          .filter((bh: any) => bh.symbol === 'AQE')
+                          .map((bh: any) => (
+                            <TableRow key={bh._id}>
                               <TableCell className="pl-6 text-xs text-gray-500">
                                 {dayjs(bh.createdAt).format("DD/MM/YYYY HH:mm")}
                               </TableCell>
@@ -993,8 +991,8 @@ export default function AdminUserProfilePage() {
                                 <Badge className={cn(
                                   "rounded-full text-[10px] font-bold border-none",
                                   bh.type === 'RECEIVE' ? "bg-emerald-100 text-emerald-700" :
-                                  bh.type === 'REWARD' ? "bg-purple-100 text-purple-700" : 
-                                  bh.type === 'COMMISSION' ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                                    bh.type === 'REWARD' ? "bg-purple-100 text-purple-700" :
+                                      bh.type === 'COMMISSION' ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
                                 )}>
                                   {bh.type}
                                 </Badge>
@@ -1015,17 +1013,17 @@ export default function AdminUserProfilePage() {
                               </TableCell>
                             </TableRow>
                           ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} className="py-12 text-center text-gray-400">
-                               No AQE distribution history
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-               </Card>
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-12 text-center text-gray-400">
+                            No AQE distribution history
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
@@ -1037,7 +1035,7 @@ export default function AdminUserProfilePage() {
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-2xl font-bold text-[#111827]">Edit User</DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
             <div className="grid gap-6 py-4">
               {/* Basic Info */}
@@ -1046,17 +1044,17 @@ export default function AdminUserProfilePage() {
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Full Name</label>
-                    <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                    <Input value={editingUser?.fullName || ""} onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Date of Birth</label>
-                    <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({...editingUser, birthday: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                    <Input type="date" value={editingUser?.birthday ? new Date(editingUser.birthday).toISOString().split('T')[0] : ""} onChange={(e) => setEditingUser({ ...editingUser, birthday: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Gender</label>
-                    <Select value={editingUser?.gender} onValueChange={(v) => setEditingUser({...editingUser, gender: v})}>
+                    <Select value={editingUser?.gender} onValueChange={(v) => setEditingUser({ ...editingUser, gender: v })}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Nam">Male</SelectItem>
@@ -1074,29 +1072,29 @@ export default function AdminUserProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Email</label>
-                    <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                    <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Phone Number</label>
-                    <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                    <Input value={editingUser?.phone || ""} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Telegram</label>
-                  <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({...editingUser, telegram: e.target.value})} className="h-11 rounded-[8px] border-gray-200" placeholder="@username" />
+                  <Input value={editingUser?.telegram || ""} onChange={(e) => setEditingUser({ ...editingUser, telegram: e.target.value })} className="h-11 rounded-[8px] border-gray-200" placeholder="@username" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Specific Address</label>
-                  <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({...editingUser, address: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                  <Input value={editingUser?.address || ""} onChange={(e) => setEditingUser({ ...editingUser, address: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">Country</label>
-                    <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({...editingUser, nation: e.target.value})} className="h-11 rounded-[8px] border-gray-200" />
+                    <Input value={editingUser?.nation || ""} onChange={(e) => setEditingUser({ ...editingUser, nation: e.target.value })} className="h-11 rounded-[8px] border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">KYC Status</label>
-                    <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({...editingUser, kycStatus: v})}>
+                    <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({ ...editingUser, kycStatus: v })}>
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unverified">Unverified</SelectItem>
@@ -1114,11 +1112,11 @@ export default function AdminUserProfilePage() {
                 <h4 className="text-[13px] font-bold text-[#276152] uppercase tracking-wider">Finance & Account</h4>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Wallet Address (USDT BEP20)</label>
-                  <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
+                  <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({ ...editingUser, walletAddress: e.target.value })} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Account Status</label>
-                  <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isActive: v === "true"})}>
+                  <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({ ...editingUser, isActive: v === "true" })}>
                     <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="true">Activated (Active)</SelectItem>
@@ -1129,7 +1127,7 @@ export default function AdminUserProfilePage() {
               </div>
             </div>
           </div>
-          
+
           <DialogFooter className="p-6 pt-4 border-t border-gray-100">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-[8px]">Cancel</Button>
             <Button onClick={handleUpdate} disabled={updating} className="bg-[#276152] rounded-[8px] px-8">
@@ -1138,7 +1136,7 @@ export default function AdminUserProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
- 
+
       {/* Manual Deposit Dialog */}
       <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
         <DialogContent className="sm:max-w-[500px] rounded-[24px]">
@@ -1146,32 +1144,22 @@ export default function AdminUserProfilePage() {
             <DialogTitle className="text-xl font-bold text-[#111827]">Manual Deposit</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
+
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500">Pledge Amount (USDT)</label>
-              <Input 
-                type="number" 
-                value={depositData.pledgeAmount} 
-                onChange={(e) => setDepositData({...depositData, pledgeAmount: e.target.value})} 
-                placeholder="Target registration amount"
-                className="h-11 rounded-[8px] border-gray-200"
-              />
-              <p className="text-[11px] text-gray-400 italic">This will set or update the user's registration goal.</p>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500">Paid Amount (USDT) *</label>
-              <Input 
-                type="number" 
-                value={depositData.paidAmount} 
-                onChange={(e) => setDepositData({...depositData, paidAmount: e.target.value})} 
+              <label className="text-sm font-bold text-gray-500">Payment Amount (USDT) *</label>
+              <Input
+                type="number"
+                value={depositData.paidAmount}
+                onChange={(e) => setDepositData({ ...depositData, paidAmount: e.target.value })}
                 placeholder="Actual amount paid by user"
                 className="h-11 rounded-[8px] border-gray-200"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-500">Transaction Hash *</label>
-              <Input 
-                value={depositData.hash} 
-                onChange={(e) => setDepositData({...depositData, hash: e.target.value})} 
+              <Input
+                value={depositData.hash}
+                onChange={(e) => setDepositData({ ...depositData, hash: e.target.value })}
                 placeholder="Blockchain transaction hash"
                 className="h-11 rounded-[8px] border-gray-200 font-mono text-xs"
               />
@@ -1189,23 +1177,23 @@ export default function AdminUserProfilePage() {
 
       {/* Image Preview Overlay */}
       {previewImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[100000] bg-black/95 flex items-center justify-center p-4 cursor-pointer backdrop-blur-md transition-all duration-300"
           onClick={() => setPreviewImage(null)}
         >
-          <button 
-             className="absolute top-8 right-8 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[100001]"
-             onClick={(e) => {
-               e.stopPropagation();
-               setPreviewImage(null);
-             }}
+          <button
+            className="absolute top-8 right-8 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[100001]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewImage(null);
+            }}
           >
-             <XCircle size={32} />
+            <XCircle size={32} />
           </button>
-          <img 
-            src={previewImage} 
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-[16px] shadow-2xl relative z-[100001] animate-in zoom-in-95 duration-300" 
-            alt="Preview" 
+          <img
+            src={previewImage}
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-[16px] shadow-2xl relative z-[100001] animate-in zoom-in-95 duration-300"
+            alt="Preview"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

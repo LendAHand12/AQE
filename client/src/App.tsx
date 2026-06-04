@@ -43,6 +43,7 @@ import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
 import BuyPage from "@/pages/BuyPage"
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 
 export function App() {
   return (
@@ -108,6 +109,7 @@ export function App() {
             <Route path="/pay" element={<PaymentPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
             {/* Not Found page */}
             <Route path="*" element={<NotFoundPage />} />
