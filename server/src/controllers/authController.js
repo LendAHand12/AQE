@@ -50,14 +50,15 @@ export const registerUser = async (req, res) => {
                 return res.status(400).json({ message: 'auth.errors.invalid_referral' });
             }
 
-            // Check if referrer has paid at least 30% of their total pledge
-            if (referrer.pledgeUsdt > 0) {
-                const payPercent = (referrer.paidUsdtPreRegister / referrer.pledgeUsdt) * 100;
-                if (payPercent < 30) {
-                    return res.status(400).json({ message: 'auth.errors.referral_not_qualified' });
-                }
-            } else {
-                // If they haven't pledged anything, they are not qualified to refer
+            // Check qualification: must have paid at least 10 USDT from Transaction model
+            const referrerPayments = await Transaction.find({
+                from: referrer._id,
+                type: 'PAYMENT',
+                status: 'SUCCESS'
+            });
+            const referrerTotalPaid = referrerPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+            if (referrerTotalPaid < 10) {
                 return res.status(400).json({ message: 'auth.errors.referral_not_qualified' });
             }
         }
@@ -484,21 +485,19 @@ export const validateReferral = async (req, res) => {
             return res.status(404).json({ message: 'auth.errors.invalid_referral', valid: false });
         }
 
-        // Check qualification: must have paid >= 30% of pledge
-        if (user.pledgeUsdt > 0) {
-            const payPercent = (user.paidUsdtPreRegister / user.pledgeUsdt) * 100;
-            if (payPercent < 30) {
-                return res.status(400).json({ 
-                    message: 'auth.errors.referral_not_qualified', 
-                    valid: false,
-                    reason: 'payment_insufficient'
-                });
-            }
-        } else {
+        // Check qualification: must have paid at least 10 USDT from Transaction model
+        const successfulPayments = await Transaction.find({
+            from: user._id,
+            type: 'PAYMENT',
+            status: 'SUCCESS'
+        });
+        const totalPaid = successfulPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+        if (totalPaid < 10) {
             return res.status(400).json({ 
                 message: 'auth.errors.referral_not_qualified', 
                 valid: false,
-                reason: 'no_pledge'
+                reason: 'payment_insufficient'
             });
         }
 
