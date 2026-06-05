@@ -16,11 +16,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { useTranslation } from "react-i18next"
+import { useAuth } from "@/providers/AuthProvider"
 import { QRCodeCanvas } from "qrcode.react"
 import { cn } from "@/lib/utils"
 
 export default function KYCSection({ initialData }: { initialData?: any }) {
   const { t } = useTranslation()
+  const { syncProfile } = useAuth()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [userData, setUserData] = useState<any>(initialData || null)
@@ -108,6 +110,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
         portraitPhoto: idPhotos.portrait
       })
       toast.success(t("kyc.status.pending_title"))
+      await syncProfile()
       fetchProfile()
     } catch (err: any) {
       toast.error(err.response?.data?.message || t("kyc.errors.submit_failed"))
@@ -255,7 +258,10 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                       {t(`kyc.id_verification.status_${userData.kycStatus}`)}
                     </span>
                  </div>
-                 <p className="text-xs text-gray-400">{t("kyc.id_verification.note")}</p>
+                  <p className="text-xs text-gray-400">{t("kyc.id_verification.note")}</p>
+                  <p className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
+                    {t("kyc.id_verification.pending_payment_note")}
+                  </p>
               </div>
               
               <Button 

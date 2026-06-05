@@ -229,6 +229,7 @@
       "status_verified_ok": "Verificado",
       "status_rejected": "Rechazado",
       "note": "Nuestro equipo revisará su información dentro de 24-48 horas hábiles.",
+      "pending_payment_note": "(*) Una vez cargadas las fotos y el estado sea Pendiente, puede proceder a comprar/pagar AQE inmediatamente mientras espera la aprobación del administrador.",
       "submit": "Enviar verificación"
     },
     "facescan": {
@@ -670,5 +671,18 @@
   },
   "commissions": {
     "empty": "No se encontraron registros."
+  },
+  "guide": {
+    "title": "Guía de inicio para nuevos miembros",
+    "step1": "Crear cuenta",
+    "step2": "Verificación KYC",
+    "step3": "Iniciar pago",
+    "step4": "Elegir método y pagar",
+    "step5": "Pago exitoso",
+    "congrats": "¡Felicidades! Se ha unido con éxito al sistema.",
+    "awaiting": "Esperando aprobación",
+    "click_to_go": "Haga clic para completar este paso",
+    "dismiss": "Ocultar guía",
+    "show_btn": "Mostrar guía de pago"
   }
 }

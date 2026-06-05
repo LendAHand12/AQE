@@ -229,6 +229,7 @@
       "status_verified_ok": "Đã xác thực",
       "status_rejected": "Bị từ chối",
       "note": "Hệ thống sẽ duyệt thông tin của bạn trong vòng 24-48 giờ làm việc.",
+      "pending_payment_note": "(*) Sau khi tải ảnh lên thành công và trạng thái là Đang chờ duyệt (Pending), bạn có thể tiến hành thanh toán mua AQE ngay lập tức trong lúc chờ Quản trị viên duyệt hồ sơ.",
       "submit": "Gửi yêu cầu xác thực"
     },
     "facescan": {
@@ -669,5 +670,18 @@
   },
   "commissions": {
     "empty": "Không có dữ liệu."
+  },
+  "guide": {
+    "title": "Hướng dẫn bắt đầu cho thành viên mới",
+    "step1": "Tạo tài khoản",
+    "step2": "Xác thực KYC",
+    "step3": "Khởi tạo thanh toán",
+    "step4": "Chọn phương thức & chuyển khoản",
+    "step5": "Thanh toán thành công",
+    "congrats": "Chúc mừng bạn đã tham gia vào hệ thống thành công!",
+    "awaiting": "Chờ duyệt thanh toán",
+    "click_to_go": "Click để thực hiện bước này",
+    "dismiss": "Ẩn hướng dẫn",
+    "show_btn": "Hiện hướng dẫn thanh toán"
   }
 }

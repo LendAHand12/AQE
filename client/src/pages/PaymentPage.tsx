@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from "react-i18next";
+import { useAuth } from '@/providers/AuthProvider';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core';
@@ -37,6 +38,7 @@ interface Payment {
 
 export default function PaymentPage() {
   const { t } = useTranslation();
+  const { syncProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const paymentId = searchParams.get('pid');
@@ -120,6 +122,7 @@ export default function PaymentPage() {
           if (res.data.status === 'SUCCESS') {
             setStatus('success');
             setTxHash(res.data.hash);
+            syncProfile();
             clearInterval(interval);
           }
         } catch (e) { }
@@ -200,6 +203,7 @@ export default function PaymentPage() {
         setTxHash(hash);
         setStatus('success');
         toast.success(t("payments.page.success_msg"));
+        await syncProfile();
       } else {
         throw new Error("Backend verification failed");
       }
@@ -217,6 +221,7 @@ export default function PaymentPage() {
       await apiClient.post('/payments/confirm-manual', { paymentId });
       setStatus('awaiting');
       toast.success(t("payments.page.manual_confirm_success"));
+      await syncProfile();
     } catch (error: any) {
       console.error(error);
       setStatus('idle');

@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom"
 import Sidebar from "./Sidebar"
 import Header from "./Header"
+import UserPaymentGuide from "./UserPaymentGuide"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/providers/AuthProvider"
 
@@ -31,6 +32,9 @@ export default function DashboardLayout() {
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         
         <div className="p-4 md:p-5 flex-1">
+          {/* Reusable User Payment Guide */}
+          <UserPaymentGuide />
+          
           {/* This is where the specific page content will be rendered */}
           <Outlet />
         </div>

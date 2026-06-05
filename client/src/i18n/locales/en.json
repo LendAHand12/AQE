@@ -229,6 +229,7 @@
       "status_verified_ok": "Verified",
       "status_rejected": "Rejected",
       "note": "Our team will review your information within 24-48 working hours.",
+      "pending_payment_note": "(*) Once you have successfully uploaded the photos and the status changes to Pending, you can proceed to purchase/pay for AQE immediately while waiting for admin approval.",
       "submit": "Submit Verification"
     },
     "facescan": {
@@ -670,5 +671,18 @@
   },
   "commissions": {
     "empty": "No records found."
+  },
+  "guide": {
+    "title": "Onboarding Guide for New Members",
+    "step1": "Create Account",
+    "step2": "KYC Verification",
+    "step3": "Initiate Payment",
+    "step4": "Select Method & Pay",
+    "step5": "Payment Successful",
+    "congrats": "Congratulations! You have successfully joined the system.",
+    "awaiting": "Awaiting Approval",
+    "click_to_go": "Click to complete this step",
+    "dismiss": "Dismiss Guide",
+    "show_btn": "Show Payment Guide"
   }
 }
