@@ -19,21 +19,21 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'auth.errors.invalid_username_format' });
         }
 
-        const userExists = await User.findOne({ 
+        const userExists = await User.findOne({
             isDeleted: false,
             $or: [
-                { email }, 
+                { email },
                 { username: username.toLowerCase() },
                 { phone }
-            ] 
+            ]
         });
-        
+
         if (userExists) {
             let field = 'user_exists';
             if (userExists.email === email) field = 'email_exists';
             else if (userExists.username === username.toLowerCase()) field = 'username_exists';
             else if (userExists.phone === phone) field = 'phone_exists';
-            
+
             return res.status(400).json({ message: `auth.errors.${field}` });
         }
 
@@ -45,7 +45,7 @@ export const registerUser = async (req, res) => {
         if (refId) {
             // Look up by username (mặc định username làm ref)
             referrer = await User.findOne({ username: refId.toLowerCase(), isDeleted: false });
-            
+
             if (!referrer) {
                 return res.status(400).json({ message: 'auth.errors.invalid_referral' });
             }
@@ -65,10 +65,10 @@ export const registerUser = async (req, res) => {
 
         const confirmationToken = crypto.randomBytes(32).toString('hex');
         const user = await User.create({
-            fullName, 
-            username: username.toLowerCase(), 
-            email, 
-            phone, 
+            fullName,
+            username: username.toLowerCase(),
+            email,
+            phone,
             countryCode,
             password,
             referredBy: referrer ? referrer._id : null,
@@ -110,14 +110,14 @@ export const loginUser = async (req, res) => {
 
         if (user && (await user.matchPassword(password))) {
             if (!user.isActive) return res.status(401).json({ message: 'auth.errors.unconfirmed' });
-            
+
             if (user.isTwoFactorEnabled) {
                 return res.json({ requires2FA: true, userId: user._id });
             }
 
             res.json({
-                _id: user._id, 
-                fullName: user.fullName, 
+                _id: user._id,
+                fullName: user.fullName,
                 username: user.username,
                 email: user.email,
                 kycStatus: user.kycStatus,
@@ -145,8 +145,8 @@ export const verify2FALogin = async (req, res) => {
 
         if (isVerified) {
             res.json({
-                _id: user._id, 
-                fullName: user.fullName, 
+                _id: user._id,
+                fullName: user.fullName,
                 username: user.username,
                 email: user.email,
                 kycStatus: user.kycStatus,
@@ -196,9 +196,9 @@ export const updateUserProfile = async (req, res) => {
                 if (!usernameRegex.test(newUsername)) {
                     return res.status(400).json({ message: 'auth.errors.invalid_username_format' });
                 }
-                const usernameExists = await User.findOne({ 
-                    username: newUsername, 
-                    isDeleted: false 
+                const usernameExists = await User.findOne({
+                    username: newUsername,
+                    isDeleted: false
                 });
                 if (usernameExists) return res.status(400).json({ message: 'auth.errors.username_exists' });
                 user.username = newUsername;
@@ -206,9 +206,9 @@ export const updateUserProfile = async (req, res) => {
 
             // Check for phone uniqueness if changing
             if (req.body.phone && req.body.phone !== user.phone) {
-                const phoneExists = await User.findOne({ 
-                    phone: req.body.phone, 
-                    isDeleted: false 
+                const phoneExists = await User.findOne({
+                    phone: req.body.phone,
+                    isDeleted: false
                 });
                 if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
                 user.phone = req.body.phone;
@@ -281,7 +281,7 @@ export const generate2FA = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const { secret, qrCodeUrl } = await generateTwoFactorSecret(user.email);
-        
+
         user.twoFactorSecret = secret;
         await user.save();
 
@@ -369,9 +369,9 @@ export const getReferrals = async (req, res) => {
         const network = await Promise.all(f1sRaw.map(async (f1) => {
             const sales = await calculateUserSystemSales(f1._id);
             const networkSize = await calculateUserNetworkSize(f1._id);
-            const personalPaid = (f1.paidUsdtPreRegister || 0) + 
+            const personalPaid = (f1.paidUsdtPreRegister || 0) +
                 (f1.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
-            
+
             return {
                 ...f1.toObject(),
                 totalSales: sales,
@@ -382,7 +382,7 @@ export const getReferrals = async (req, res) => {
 
         // Calculate summary
         const totalF1 = f1sRaw.length;
-        
+
         // Calculate Total Network Count
         const networkStats = await User.aggregate([
             { $match: { _id: userId } },
@@ -437,7 +437,7 @@ export const getSubReferrals = async (req, res) => {
                     as: 'descendants'
                 }
             },
-            { 
+            {
                 $project: {
                     isInNetwork: {
                         $in: [new mongoose.Types.ObjectId(targetUserId), '$descendants._id']
@@ -452,13 +452,13 @@ export const getSubReferrals = async (req, res) => {
 
         const referralsRaw = await User.find({ referredBy: targetUserId, isDeleted: false })
             .select('fullName username email createdAt kycStatus isActive paidUsdtPreRegister pledgeRounds');
-        
+
         const referrals = await Promise.all(referralsRaw.map(async (ref) => {
             const sales = await calculateUserSystemSales(ref._id);
             const networkSize = await calculateUserNetworkSize(ref._id);
-            const personalPaid = (ref.paidUsdtPreRegister || 0) + 
+            const personalPaid = (ref.paidUsdtPreRegister || 0) +
                 (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
-                
+
             return {
                 ...ref.toObject(),
                 totalSales: sales,
@@ -494,8 +494,8 @@ export const validateReferral = async (req, res) => {
         const totalPaid = successfulPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
         if (totalPaid < 10) {
-            return res.status(400).json({ 
-                message: 'auth.errors.referral_not_qualified', 
+            return res.status(400).json({
+                message: 'auth.errors.referral_not_qualified',
                 valid: false,
                 reason: 'payment_insufficient'
             });
@@ -540,7 +540,7 @@ export const resetPassword = async (req, res) => {
         const { token } = req.params;
         const { password } = req.body;
 
-        const user = await User.findOne({ 
+        const user = await User.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() },
             isDeleted: false
@@ -570,13 +570,13 @@ export const recordWalletConnection = async (req, res) => {
         if (!walletAddress) {
             return res.status(400).json({ message: 'Wallet address is required' });
         }
-        
+
         await WalletConnection.create({
             user: req.user._id,
             walletAddress: walletAddress.toLowerCase(),
             walletName: walletName || null
         });
-        
+
         res.status(201).json({ message: 'Wallet connection recorded' });
     } catch (error) {
         res.status(500).json({ message: error.message });

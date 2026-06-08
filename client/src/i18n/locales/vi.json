@@ -228,6 +228,7 @@
       "status_pending": "Đang chờ duyệt",
       "status_verified_ok": "Đã xác thực",
       "status_rejected": "Bị từ chối",
+      "rejection_reason": "Lý do từ chối:",
       "note": "Hệ thống sẽ duyệt thông tin của bạn trong vòng 24-48 giờ làm việc.",
       "pending_payment_note": "(*) Sau khi tải ảnh lên thành công và trạng thái là Đang chờ duyệt (Pending), bạn có thể tiến hành thanh toán mua AQE ngay lập tức trong lúc chờ Quản trị viên duyệt hồ sơ.",
       "submit": "Gửi yêu cầu xác thực"
@@ -629,7 +630,11 @@
     "payment_rejected_title": "Thanh toán bị từ chối",
     "payment_rejected_msg": "Giao dịch (#{{paymentId}}) đã bị từ chối. Lý do: {{reason}}",
     "withdrawal_approved": "Yêu cầu rút tiền {{amount}} USDT của bạn đã được duyệt thành công!",
-    "withdrawal_rejected": "Yêu cầu rút tiền {{amount}} USDT của bạn đã bị từ chối và hoàn tiền."
+    "withdrawal_rejected": "Yêu cầu rút tiền {{amount}} USDT của bạn đã bị từ chối và hoàn tiền.",
+    "kyc_approved_title": "Xác thực KYC thành công",
+    "kyc_approved_msg": "Chúc mừng! Hồ sơ xác thực danh tính (KYC) của bạn đã được duyệt.",
+    "kyc_rejected_title": "Xác thực KYC bị từ chối",
+    "kyc_rejected_msg": "Hồ sơ xác thực danh tính (KYC) của bạn đã bị từ chối. Lý do: {{reason}}"
   },
   "confirm_email": {
     "verifying": "Xác thực Email",

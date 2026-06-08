@@ -15,6 +15,7 @@ interface Notification {
   type: string
   isRead: boolean
   messageParams?: any
+  metadata?: any
   createdAt: string
 }
 
@@ -163,7 +164,7 @@ export default function NotificationDropdown() {
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`text-sm font-bold ${!n.isRead ? 'text-[#0d1f1d]' : 'text-gray-600'}`}>{n.title}</p>
+                        <p className={`text-sm font-bold ${!n.isRead ? 'text-[#0d1f1d]' : 'text-gray-600'}`}>{t(n.title)}</p>
                         <span className="text-[10px] text-gray-400 font-medium shrink-0">
                           {formatDistanceToNow(new Date(n.createdAt), { 
                             addSuffix: true,
@@ -171,7 +172,7 @@ export default function NotificationDropdown() {
                           })}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{n.message}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{t(n.message, n.messageParams || n.metadata)}</p>
                     </div>
                     {!n.isRead && (
                       <div className="absolute left-2 top-1/2 -translate-y-1/2">

@@ -188,6 +188,8 @@ export default function AdminUserProfilePage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
+  const [isRejectReasonDialogOpen, setIsRejectReasonDialogOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState("")
 
   // Manual Deposit state
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false)
@@ -215,6 +217,23 @@ export default function AdminUserProfilePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRejectConfirm = () => {
+    if (!rejectReason.trim()) {
+      toast.error("Please enter a rejection reason")
+      return
+    }
+    setEditingUser({
+      ...editingUser,
+      kycStatus: "rejected",
+      kycRejectionReason: rejectReason
+    })
+    setIsRejectReasonDialogOpen(false)
+  }
+
+  const handleRejectCancel = () => {
+    setIsRejectReasonDialogOpen(false)
   }
 
   const handleUpdate = async () => {
@@ -1094,7 +1113,17 @@ export default function AdminUserProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-500">KYC Status</label>
-                    <Select value={editingUser?.kycStatus} onValueChange={(v) => setEditingUser({ ...editingUser, kycStatus: v })}>
+                    <Select 
+                      value={editingUser?.kycStatus} 
+                      onValueChange={(v) => {
+                        if (v === "rejected") {
+                          setRejectReason(editingUser?.kycRejectionReason || "")
+                          setIsRejectReasonDialogOpen(true)
+                        } else {
+                          setEditingUser({ ...editingUser, kycStatus: v, kycRejectionReason: null })
+                        }
+                      }}
+                    >
                       <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unverified">Unverified</SelectItem>
@@ -1104,6 +1133,17 @@ export default function AdminUserProfilePage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {editingUser?.kycStatus === 'rejected' && (
+                    <div className="col-span-2 space-y-2">
+                      <label className="text-sm font-bold text-red-500">Rejection Reason</label>
+                      <Input 
+                        value={editingUser?.kycRejectionReason || ""} 
+                        onChange={(e) => setEditingUser({ ...editingUser, kycRejectionReason: e.target.value })} 
+                        className="h-11 rounded-[8px] border-red-200 focus:border-red-500" 
+                        placeholder="e.g., blurry documents, name mismatch..."
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1198,6 +1238,28 @@ export default function AdminUserProfilePage() {
           />
         </div>
       )}
+      <Dialog open={isRejectReasonDialogOpen} onOpenChange={setIsRejectReasonDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-red-600">KYC Rejection Reason</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <label className="text-sm font-semibold text-gray-700 block">
+              Please enter the reason for rejecting this KYC:
+            </label>
+            <textarea
+              className="w-full h-24 p-3 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-red-500 text-sm"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="e.g., Blurry documents, name mismatch..."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleRejectCancel}>Cancel</Button>
+            <Button onClick={handleRejectConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold">Confirm Reject</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

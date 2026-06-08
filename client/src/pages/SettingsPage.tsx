@@ -182,7 +182,11 @@ export default function SettingsPage() {
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    let value = e.target.value
+    if (e.target.name === "username") {
+      value = value.toLowerCase().replace(/[^a-z0-9]/g, "")
+    }
+    setFormData({ ...formData, [e.target.name]: value })
   }
 
   const handleGenderChange = (value: string) => {
@@ -237,14 +241,7 @@ export default function SettingsPage() {
       setUploading(false)
     }
   }
-
   const handleSave = async () => {
-    const usernameRegex = /^[a-z0-9]+$/;
-    if (formData.username && !usernameRegex.test(formData.username)) {
-      toast.error(t("auth.errors.invalid_username_format"));
-      return;
-    }
-
     setSaving(true)
     try {
       const response = await apiClient.put("/auth/profile", formData)

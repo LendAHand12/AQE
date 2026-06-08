@@ -228,6 +228,7 @@
       "status_pending": "Pending Review",
       "status_verified_ok": "Verified",
       "status_rejected": "Rejected",
+      "rejection_reason": "Reason for rejection:",
       "note": "Our team will review your information within 24-48 working hours.",
       "pending_payment_note": "(*) Once you have successfully uploaded the photos and the status changes to Pending, you can proceed to purchase/pay for AQE immediately while waiting for admin approval.",
       "submit": "Submit Verification"
@@ -630,7 +631,11 @@
     "payment_rejected_title": "Payment Rejected",
     "payment_rejected_msg": "Your transaction (#{{paymentId}}) has been rejected. Reason: {{reason}}",
     "withdrawal_approved": "Your withdrawal request for {{amount}} USDT has been successfully approved!",
-    "withdrawal_rejected": "Your withdrawal request for {{amount}} USDT has been rejected and refunded."
+    "withdrawal_rejected": "Your withdrawal request for {{amount}} USDT has been rejected and refunded.",
+    "kyc_approved_title": "KYC Verification Approved",
+    "kyc_approved_msg": "Congratulations! Your identity verification (KYC) has been approved.",
+    "kyc_rejected_title": "KYC Verification Rejected",
+    "kyc_rejected_msg": "Your identity verification (KYC) was rejected. Reason: {{reason}}"
   },
   "confirm_email": {
     "verifying": "Verifying Email",

@@ -74,17 +74,17 @@ export default function RegisterForm() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    let value = e.target.value
+    if (e.target.name === "username") {
+      value = value.toLowerCase().replace(/[^a-z0-9]/g, "")
+    }
+    setFormData({ ...formData, [e.target.name]: value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const usernameRegex = /^[a-z0-9]+$/;
-    if (!usernameRegex.test(formData.username)) {
-      setError(t("auth.errors.invalid_username_format"));
-      return;
-    }
+
 
     if (formData.password !== formData.confirmPassword) {
       setError(t("auth.errors.password_mismatch"))

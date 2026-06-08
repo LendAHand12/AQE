@@ -426,21 +426,39 @@ export const updateUserByAdmin = async (req, res) => {
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
                 const kycType = req.body.kycStatus === 'verified' ? 'KYC_APPROVED' : 'KYC_REJECTED';
-                const title = req.body.kycStatus === 'verified' ? 'KYC Approved' : 'KYC Rejected';
-                const message = req.body.kycStatus === 'verified' 
-                    ? 'Congratulations! Your identity verification has been approved.' 
-                    : 'Your identity verification was rejected. Please check your documents and try again.';
+                const title = req.body.kycStatus === 'verified' ? 'notifications.kyc_approved_title' : 'notifications.kyc_rejected_title';
+                
+                let message;
+                if (req.body.kycStatus === 'verified') {
+                    message = 'notifications.kyc_approved_msg';
+                    user.kycRejectionReason = null;
+                } else if (req.body.kycStatus === 'rejected') {
+                    const reason = req.body.kycRejectionReason || 'Please check your documents and try again.';
+                    message = 'notifications.kyc_rejected_msg';
+                    user.kycRejectionReason = reason;
+                } else {
+                    message = `KYC Status updated to ${req.body.kycStatus}.`;
+                }
 
                 const notification = await Notification.create({
                     userId: user._id,
                     title,
                     message,
                     type: kycType,
-                    isRead: false
+                    isRead: false,
+                    metadata: {
+                        kycStatus: req.body.kycStatus,
+                        reason: user.kycRejectionReason
+                    }
                 });
 
                 // Emit real-time notification
-                emitNotification(user._id, notification);
+                emitNotification(user._id, {
+                    ...notification.toObject(),
+                    messageParams: { reason: user.kycRejectionReason }
+                });
+            } else if (req.body.kycStatus === 'rejected' && req.body.kycRejectionReason !== undefined) {
+                user.kycRejectionReason = req.body.kycRejectionReason;
             }
 
             user.kycStatus = req.body.kycStatus || user.kycStatus;

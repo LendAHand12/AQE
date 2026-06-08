@@ -259,6 +259,11 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                     </span>
                  </div>
                   <p className="text-xs text-gray-400">{t("kyc.id_verification.note")}</p>
+                  {userData.kycStatus === 'rejected' && userData.kycRejectionReason && (
+                    <p className="text-xs font-semibold text-red-600 mt-2 bg-red-50 border border-red-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
+                      {t("kyc.id_verification.rejection_reason")} <span className="font-normal">{userData.kycRejectionReason}</span>
+                    </p>
+                  )}
                   <p className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
                     {t("kyc.id_verification.pending_payment_note")}
                   </p>
