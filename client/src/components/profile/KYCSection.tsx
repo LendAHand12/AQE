@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react"
-import { 
-  ShieldCheck, 
-  ScanFace, 
-  Key, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  ScanFace,
+  Key,
+  CheckCircle2,
   ShieldAlert,
   Loader2,
   Upload,
@@ -19,6 +19,70 @@ import { useTranslation } from "react-i18next"
 import { useAuth } from "@/providers/AuthProvider"
 import { QRCodeCanvas } from "qrcode.react"
 import { cn } from "@/lib/utils"
+
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(file)
+      return
+    }
+
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target?.result as string
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX_WIDTH = 1600
+        const MAX_HEIGHT = 1600
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width
+            width = MAX_WIDTH
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height
+            height = MAX_HEIGHT
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(file)
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              resolve(file)
+            }
+          },
+          'image/jpeg',
+          0.8
+        )
+      }
+      img.onerror = () => {
+        resolve(file)
+      }
+    }
+    reader.onerror = () => {
+      resolve(file)
+    }
+  })
+}
 
 export default function KYCSection({ initialData }: { initialData?: any }) {
   const { t } = useTranslation()
@@ -38,13 +102,13 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
     if (!initialData) {
       fetchProfile()
     } else {
-       setUserData(initialData)
-       setIdPhotos({
-         front: initialData.idCardFront || "",
-         back: initialData.idCardBack || "",
-         portrait: initialData.portraitPhoto || ""
-       })
-       updateStep(initialData)
+      setUserData(initialData)
+      setIdPhotos({
+        front: initialData.idCardFront || "",
+        back: initialData.idCardBack || "",
+        portrait: initialData.portraitPhoto || ""
+      })
+      updateStep(initialData)
     }
   }, [initialData])
 
@@ -52,9 +116,9 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
     // Determine current step based on sequential logic
     if (data.kycStatus === 'verified') {
       if (data.faceTecTid) {
-         setStep(3)
+        setStep(3)
       } else {
-         setStep(2)
+        setStep(2)
       }
     } else {
       setStep(1)
@@ -70,7 +134,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
         back: res.data.idCardBack || "",
         portrait: res.data.portraitPhoto || ""
       })
-      
+
       updateStep(res.data)
     } catch (err) {
       toast.error(t("kyc.fetch_error"))
@@ -82,10 +146,15 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
     if (!file) return
 
     setIsUploading(type)
-    const formData = new FormData()
-    formData.append("image", file)
 
     try {
+      const compressedBlob = await compressImage(file)
+      const formData = new FormData()
+      
+      // Force filename to use .jpg extension
+      const filename = file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+      formData.append("image", compressedBlob, filename)
+
       const res = await apiClient.post("/auth/upload", formData)
       setIdPhotos(prev => ({ ...prev, [type]: res.data.imageUrl }))
       toast.success(t(`kyc.id_verification.upload_${type}`) + " " + t("settings.save_success"))
@@ -94,7 +163,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
       if (errMsg) {
         toast.error(t(errMsg));
       } else {
-        toast.error(t("errors.upload_failed"));
+        toast.error(t("auth.errors.upload_failed"));
       }
     } finally {
       setIsUploading(null)
@@ -161,9 +230,9 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
   }
 
   const renderStepIcon = (s: number, icon: any) => {
-    const isCompleted = (s === 1 && userData?.kycStatus === 'verified') || 
-                      (s === 2 && userData?.faceTecTid) || 
-                      (s === 3 && userData?.isTwoFactorEnabled)
+    const isCompleted = (s === 1 && userData?.kycStatus === 'verified') ||
+      (s === 2 && userData?.faceTecTid) ||
+      (s === 3 && userData?.isTwoFactorEnabled)
     const isActive = step === s
 
     return (
@@ -192,7 +261,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
           { id: 2, key: "step_2", icon: ScanFace },
           { id: 3, key: "step_3", icon: Key }
         ].map((s) => (
-          <button 
+          <button
             key={s.id}
             onClick={() => setStep(s.id)}
             className={cn(
@@ -235,10 +304,10 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                         <span className="text-[11px] font-medium">{t(`kyc.id_verification.upload_${item.label}`)}</span>
                       </div>
                     )}
-                    
+
                     {(userData.kycStatus === 'unverified' || userData.kycStatus === 'rejected') && (
-                      <input 
-                        type="file" 
+                      <input
+                        type="file"
                         accept="image/*"
                         className="absolute inset-0 opacity-0 cursor-pointer"
                         onChange={(e) => handleFileUpload(e, item.label as any)}
@@ -252,29 +321,29 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
 
             <div className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-1">
-                 <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-gray-800">{t("kyc.id_verification.status_verified")}</h4>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                      userData.kycStatus === 'verified' ? "bg-green-100 text-green-600" : 
-                      userData.kycStatus === 'pending' ? "bg-amber-100 text-amber-600" : 
-                      userData.kycStatus === 'rejected' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"
-                    )}>
-                      {t(`kyc.id_verification.status_${userData.kycStatus}`)}
-                    </span>
-                 </div>
-                  <p className="text-xs text-gray-400">{t("kyc.id_verification.note")}</p>
-                  {userData.kycStatus === 'rejected' && userData.kycRejectionReason && (
-                    <p className="text-xs font-semibold text-red-600 mt-2 bg-red-50 border border-red-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
-                      {t("kyc.id_verification.rejection_reason")} <span className="font-normal">{userData.kycRejectionReason}</span>
-                    </p>
-                  )}
-                  <p className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
-                    {t("kyc.id_verification.pending_payment_note")}
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-gray-800">{t("kyc.id_verification.status_verified")}</h4>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    userData.kycStatus === 'verified' ? "bg-green-100 text-green-600" :
+                      userData.kycStatus === 'pending' ? "bg-amber-100 text-amber-600" :
+                        userData.kycStatus === 'rejected' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"
+                  )}>
+                    {t(`kyc.id_verification.status_${userData.kycStatus}`)}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400">{t("kyc.id_verification.note")}</p>
+                {userData.kycStatus === 'rejected' && userData.kycRejectionReason && (
+                  <p className="text-xs font-semibold text-red-600 mt-2 bg-red-50 border border-red-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
+                    {t("kyc.id_verification.rejection_reason")} <span className="font-normal">{userData.kycRejectionReason}</span>
                   </p>
+                )}
+                <p className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl max-w-[600px] leading-relaxed">
+                  {t("kyc.id_verification.pending_payment_note")}
+                </p>
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={handleSubmitID}
                 disabled={loading || (userData.kycStatus !== 'unverified' && userData.kycStatus !== 'rejected')}
                 className="w-full md:w-auto px-10 h-12 rounded-xl bg-[#276152] font-bold text-sm shadow-lg shadow-[#276152]/20"
@@ -294,7 +363,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                     <h3 className="text-2xl font-bold text-gray-800">{t("kyc.facescan.title")}</h3>
                     <p className="text-sm text-gray-500 leading-relaxed">{t("kyc.facescan.standard")}</p>
                   </div>
-                  
+
                   {userData.kycStatus !== 'verified' ? (
                     <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
                       <Lock className="size-5 text-amber-500 mt-0.5" />
@@ -309,7 +378,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                       </div>
                     </div>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={handleFaceScan}
                       disabled={loading}
                       className="w-full h-12 rounded-xl bg-[#276152] font-bold"
@@ -319,7 +388,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                   )}
                 </div>
                 <div className="md:flex-1 bg-[#276152] flex items-center justify-center p-12 text-white/10">
-                   <ScanFace size={240} />
+                  <ScanFace size={240} />
                 </div>
               </CardContent>
             </Card>
@@ -332,10 +401,10 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
               <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
                 <div className="md:w-[40%] bg-gray-50 flex flex-col items-center justify-center p-10 gap-6">
                   <div className="bg-white p-4 rounded-3xl shadow-xl shadow-gray-200/50">
-                    <QRCodeCanvas 
-                        value={`otpauth://totp/AQEstate:${userData.email}?secret=JBSWY3DPEHPK3PXP&issuer=AQEstate`}
-                        size={180}
-                        level="H"
+                    <QRCodeCanvas
+                      value={`otpauth://totp/AQEstate:${userData.email}?secret=JBSWY3DPEHPK3PXP&issuer=AQEstate`}
+                      size={180}
+                      level="H"
                     />
                   </div>
                   <div className="w-full space-y-2">
@@ -343,14 +412,14 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                       {t("kyc.google_auth.secret_key")}
                     </label>
                     <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl flex items-center justify-between gap-4 font-mono text-sm tracking-widest text-[#276152]">
-                       JBSW Y3DP EHPK 3PXP
-                       <button onClick={() => copyToClipboard("JBSWY3DPEHPK3PXP")} className="text-gray-400 hover:text-[#276152] transition-colors">
-                         {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                       </button>
+                      JBSW Y3DP EHPK 3PXP
+                      <button onClick={() => copyToClipboard("JBSWY3DPEHPK3PXP")} className="text-gray-400 hover:text-[#276152] transition-colors">
+                        {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                      </button>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="md:w-[60%] p-10 space-y-8">
                   <div className="space-y-4">
                     <div className="space-y-1">
@@ -358,22 +427,22 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                       <p className="text-sm text-gray-500">{t("kyc.google_auth.desc")}</p>
                     </div>
                     <p className="text-xs text-gray-400 leading-relaxed bg-gray-50 p-4 rounded-xl italic">
-                       {t("kyc.google_auth.instructions")}
+                      {t("kyc.google_auth.instructions")}
                     </p>
                   </div>
 
                   {!userData.faceTecTid ? (
-                     <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
-                        <Lock className="size-5 text-amber-500 mt-0.5" />
-                        <p className="text-xs text-amber-800 font-medium">{t("kyc.errors.step_locked")}</p>
-                     </div>
+                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+                      <Lock className="size-5 text-amber-500 mt-0.5" />
+                      <p className="text-xs text-amber-800 font-medium">{t("kyc.errors.step_locked")}</p>
+                    </div>
                   ) : userData.isTwoFactorEnabled ? (
                     <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3">
                       <ShieldCheck className="size-6 text-green-500" />
                       <p className="text-sm text-green-800 font-bold">{t("kyc.steps.twofa_enabled")}</p>
                     </div>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={handleEnable2FA}
                       disabled={loading}
                       className="w-full h-12 rounded-xl bg-[#276152] font-bold shadow-lg shadow-[#276152]/20"
@@ -396,7 +465,7 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
         <div className="space-y-1">
           <p className="font-bold text-[#276152] text-sm">{t("kyc.security_note")}</p>
           <p className="text-[#276152]/70 text-xs leading-relaxed max-w-[800px]">
-             {t("kyc.security_note_desc")}
+            {t("kyc.security_note_desc")}
           </p>
         </div>
       </div>
