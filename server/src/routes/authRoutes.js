@@ -2,6 +2,7 @@ import express from 'express';
 import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin, recordWalletConnection } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
+import { convertHeicToJpg } from '../middleware/heicConverter.js';
 
 const router = express.Router();
 
@@ -33,7 +34,7 @@ router.post('/wallet-connections', protect, recordWalletConnection);
 
 // Upload route
 router.post('/upload', protect, (req, res) => {
-    upload.single('image')(req, res, (err) => {
+    upload.single('image')(req, res, async (err) => {
         if (err) {
             let errMsg = 'errors.upload_failed';
             if (err.code === 'LIMIT_FILE_SIZE') {
@@ -46,6 +47,18 @@ router.post('/upload', protect, (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'errors.select_image_required' });
         }
+
+        try {
+            let nextCalled = false;
+            await convertHeicToJpg(req, res, () => { nextCalled = true; });
+            if (!nextCalled) return; // Response already sent due to an error in conversion
+        } catch (convErr) {
+            if (!res.headersSent) {
+                return res.status(400).json({ message: 'errors.upload_failed' });
+            }
+            return;
+        }
+
         const imageUrl = `/uploads/${req.file.filename}`;
         res.json({ imageUrl });
     });

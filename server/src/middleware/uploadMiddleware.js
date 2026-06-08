@@ -21,14 +21,16 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedExts = /jpeg|jpg|png|webp|heic|heif/;
+    const allowedMimes = /jpeg|jpg|png|webp|heic|heif|octet-stream/;
+
+    const extname = allowedExts.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedMimes.test(file.mimetype) || file.mimetype === '';
 
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb(new Error('Only images (jpeg, jpg, png, webp) are allowed'));
+        cb(new Error('Only images (jpeg, jpg, png, webp, heic, heif) are allowed'));
     }
 };
 

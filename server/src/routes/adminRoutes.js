@@ -37,6 +37,7 @@ import {
     deleteProperty 
 } from '../controllers/propertyController.js';
 import { upload } from '../middleware/uploadMiddleware.js';
+import { convertHeicToJpg } from '../middleware/heicConverter.js';
 import { exportUsers, exportTransactions, exportWithdrawals } from '../controllers/exportController.js';
 
 
@@ -98,11 +99,11 @@ router.post('/2fa/disable', adminProtect, disable2FA);
 // Properties Management
 router.route('/properties')
     .get(adminProtect, getProperties)
-    .post(adminProtect, upload.array('images', 10), createProperty);
+    .post(adminProtect, upload.array('images', 10), convertHeicToJpg, createProperty);
 
 router.route('/properties/:id')
     .get(adminProtect, getPropertyById)
-    .put(adminProtect, upload.array('images', 10), updateProperty)
+    .put(adminProtect, upload.array('images', 10), convertHeicToJpg, updateProperty)
     .delete(adminProtect, deleteProperty);
 
 
