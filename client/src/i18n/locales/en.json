@@ -55,6 +55,10 @@
     "checking_referral": "Checking referral...",
     "register_success_title": "Registration Successful",
     "register_success_desc": "Your account has been created. Redirecting to login...",
+    "register_success_email_title": "Verify Your Email",
+    "register_success_email_desc_prefix": "We have sent an activation link to your email address: ",
+    "register_success_email_desc_suffix": "Please check your inbox (including spam folder) and follow the instructions to activate your account.",
+    "go_to_mailbox": "Go to Mailbox",
     "two_fa_title": "Two-Factor Authentication",
     "two_fa_desc": "Open Google Authenticator and enter the 6-digit code.",
     "confirm": "Confirm",
@@ -75,7 +79,11 @@
       "phone_exists": "This phone number is already in use",
       "email_exists": "This email address is already in use",
       "username_exists": "This username is already in use",
-      "unconfirmed": "Your account's email has not been confirmed yet. Please check your inbox to activate."
+      "unconfirmed": "Your account's email has not been confirmed yet. Please check your inbox to activate.",
+      "upload_failed": "Failed to upload image. Please try again.",
+      "file_too_large": "Image size is too large (Maximum 5MB). Please try again with a smaller image or screenshot it to reduce size.",
+      "only_images_allowed": "Only image formats are allowed (JPEG, JPG, PNG, WEBP).",
+      "select_image_required": "Please select an image before uploading."
     }
   },
   "dashboard": {

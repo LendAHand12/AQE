@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { Mail, Lock, Eye, EyeOff, User, Loader2, Fingerprint, Link2, ChevronDown } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User, Loader2, Fingerprint, Link2, ChevronDown, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import apiClient from "@/lib/axios"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 const COUNTRIES = [
   { code: "+84", iso: "vn" },
@@ -48,6 +49,17 @@ export default function RegisterForm() {
     refId: "",
     countryCode: i18n.language === "vi" ? "+84" : "+1"
   })
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState("")
+
+  const getMailProviderUrl = (email: string) => {
+    if (!email) return "https://mail.google.com"
+    const domain = email.split("@")[1]?.toLowerCase()
+    if (domain === "gmail.com") return "https://mail.google.com"
+    if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com") return "https://outlook.live.com"
+    if (domain === "yahoo.com") return "https://mail.yahoo.com"
+    return domain ? `https://mail.${domain}` : "https://mail.google.com"
+  }
 
   // Track referral ID from URL & Validate
   useEffect(() => {
@@ -105,7 +117,9 @@ export default function RegisterForm() {
     setError("")
 
     try {
-      const response = await apiClient.post("/auth/register", {
+      const submittedEmail = formData.email
+
+      await apiClient.post("/auth/register", {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
@@ -115,10 +129,8 @@ export default function RegisterForm() {
         refId: formData.refId
       })
 
-      toast.success(t("auth.register_success_title"), {
-        description: t(response.data?.message || "auth.register_success_desc"),
-        duration: 5000,
-      })
+      setRegisteredEmail(submittedEmail)
+      setIsSuccessOpen(true)
 
       // Clear form on success
       setFormData({
@@ -131,11 +143,6 @@ export default function RegisterForm() {
         refId: "",
         countryCode: i18n.language === "vi" ? "+84" : "+1"
       })
-      
-      // Navigate after a short delay
-      setTimeout(() => {
-        navigate("/login")
-      }, 3000)
     } catch (err: any) {
       const msg = err.response?.data?.message || "auth.errors.unknown"
       setError(msg)
@@ -146,7 +153,8 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg animate-in fade-in zoom-in duration-300">
           {t(error)}
@@ -375,5 +383,79 @@ export default function RegisterForm() {
         )}
       </button>
     </form>
-  )
+
+    <AnimatePresence>
+      {isSuccessOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-transparent"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            className="relative z-10 w-full max-w-[440px] bg-white rounded-[32px] border border-gray-100 shadow-2xl p-8 md:p-10 text-center flex flex-col items-center"
+          >
+            <div className="relative size-24 mb-6 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.1, 1] }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="absolute inset-0 bg-[#276152]/10 rounded-full animate-pulse"
+              />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 15, stiffness: 150, delay: 0.1 }}
+                className="relative size-20 bg-[#276152] rounded-full flex items-center justify-center shadow-lg shadow-[#276152]/25"
+              >
+                <svg className="size-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <motion.path
+                    d="M20 6L9 17l-5-5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ delay: 0.3, duration: 0.4, ease: "easeInOut" }}
+                  />
+                </svg>
+              </motion.div>
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#0d1f1d] tracking-tight">
+              {t("auth.register_success_email_title")}
+            </h2>
+
+            <p className="text-[#6b7280] text-[15px] leading-relaxed mt-4">
+              {t("auth.register_success_email_desc_prefix")}
+              <span className="font-bold text-[#276152] block my-2 break-all bg-[#276152]/5 border border-[#276152]/10 py-2 px-3 rounded-xl text-sm select-all font-mono">
+                {registeredEmail}
+              </span>
+              {t("auth.register_success_email_desc_suffix")}
+            </p>
+
+            <a
+              href={getMailProviderUrl(registeredEmail)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-12 bg-[#276152] hover:bg-[#1e4d41] text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-[#276152]/15 hover:shadow-xl hover:shadow-[#276152]/25 active:scale-[0.98] flex items-center justify-center gap-2 group mt-8 font-sans text-[15px]"
+            >
+              <span>{t("auth.go_to_mailbox")}</span>
+              <ExternalLink size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+
+            <button
+              onClick={() => navigate("/login")}
+              className="w-full h-12 border-2 border-gray-100 hover:bg-gray-50 text-gray-700 font-bold rounded-2xl transition-all duration-300 active:scale-[0.98] mt-3 font-sans text-[15px]"
+            >
+              {t("auth.back_to_login")}
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  </>
+)
 }

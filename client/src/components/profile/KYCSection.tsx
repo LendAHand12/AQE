@@ -89,8 +89,13 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
       const res = await apiClient.post("/auth/upload", formData)
       setIdPhotos(prev => ({ ...prev, [type]: res.data.imageUrl }))
       toast.success(t(`kyc.id_verification.upload_${type}`) + " " + t("settings.save_success"))
-    } catch (err) {
-      toast.error(t("errors.upload_failed"))
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message;
+      if (errMsg) {
+        toast.error(t(errMsg));
+      } else {
+        toast.error(t("errors.upload_failed"));
+      }
     } finally {
       setIsUploading(null)
     }

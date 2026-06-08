@@ -436,6 +436,11 @@ export const updateUserByAdmin = async (req, res) => {
                     const reason = req.body.kycRejectionReason || 'Please check your documents and try again.';
                     message = 'notifications.kyc_rejected_msg';
                     user.kycRejectionReason = reason;
+                    
+                    // Clear user's KYC photos so they must re-upload
+                    user.idCardFront = null;
+                    user.idCardBack = null;
+                    user.portraitPhoto = null;
                 } else {
                     message = `KYC Status updated to ${req.body.kycStatus}.`;
                 }

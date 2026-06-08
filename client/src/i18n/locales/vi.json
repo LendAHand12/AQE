@@ -55,6 +55,10 @@
     "checking_referral": "Đang kiểm tra mã giới thiệu...",
     "register_success_title": "Đăng ký thành công",
     "register_success_desc": "Tài khoản của bạn đã được tạo. Đang chuyển hướng đăng nhập...",
+    "register_success_email_title": "Xác minh Email của bạn",
+    "register_success_email_desc_prefix": "Chúng tôi đã gửi một liên kết kích hoạt đến địa chỉ email: ",
+    "register_success_email_desc_suffix": "Vui lòng kiểm tra hộp thư (bao gồm cả thư rác) và làm theo hướng dẫn để kích hoạt tài khoản.",
+    "go_to_mailbox": "Đi đến hộp thư",
     "two_fa_title": "Xác thực 2 lớp",
     "two_fa_desc": "Mở ứng dụng Google Authenticator và nhập mã 6 số để tiếp tục.",
     "confirm": "Xác nhận",
@@ -75,7 +79,11 @@
       "phone_exists": "Số điện thoại này đã được sử dụng",
       "email_exists": "Địa chỉ email này đã được sử dụng",
       "username_exists": "Tên đăng nhập này đã được sử dụng",
-      "unconfirmed": "Tài khoản của bạn chưa được xác minh email. Vui lòng kiểm tra hộp thư để kích hoạt."
+      "unconfirmed": "Tài khoản của bạn chưa được xác minh email. Vui lòng kiểm tra hộp thư để kích hoạt.",
+      "upload_failed": "Tải lên ảnh thất bại. Vui lòng thử lại.",
+      "file_too_large": "Kích thước ảnh quá lớn (Tối đa 5MB). Vui lòng thử lại với ảnh nhỏ hơn hoặc chụp màn hình để giảm dung lượng.",
+      "only_images_allowed": "Chỉ cho phép các định dạng ảnh (JPEG, JPG, PNG, WEBP).",
+      "select_image_required": "Vui lòng chọn ảnh trước khi tải lên."
     }
   },
   "dashboard": {

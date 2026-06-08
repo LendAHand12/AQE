@@ -35,10 +35,16 @@ router.post('/wallet-connections', protect, recordWalletConnection);
 router.post('/upload', protect, (req, res) => {
     upload.single('image')(req, res, (err) => {
         if (err) {
-            return res.status(400).json({ message: err.message });
+            let errMsg = 'errors.upload_failed';
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                errMsg = 'errors.file_too_large';
+            } else if (err.message && err.message.includes('Only images')) {
+                errMsg = 'errors.only_images_allowed';
+            }
+            return res.status(400).json({ message: errMsg });
         }
         if (!req.file) {
-            return res.status(400).json({ message: 'Vui lòng chọn ảnh' });
+            return res.status(400).json({ message: 'errors.select_image_required' });
         }
         const imageUrl = `/uploads/${req.file.filename}`;
         res.json({ imageUrl });
