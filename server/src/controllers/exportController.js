@@ -2,6 +2,8 @@ import exceljs from 'exceljs';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Withdrawal from '../models/Withdrawal.js';
+import BalanceHistory from '../models/BalanceHistory.js';
+import { getSystemTime, getStartOfDay } from '../utils/time.js';
 import dayjs from 'dayjs';
 
 /**
@@ -46,6 +48,10 @@ export const exportUsers = async (req, res) => {
             { header: 'KYC Status', key: 'kycStatus', width: 15 },
             { header: 'USDT Balance', key: 'usdtBalance', width: 15 },
             { header: 'Total AQE', key: 'totalAqe', width: 15 },
+            { header: 'Tổng lãi AQE sẽ nhận', key: 'totalExpectedBonus', width: 22 },
+            { header: 'Tổng lãi đã nhận', key: 'totalClaimedBonus', width: 20 },
+            { header: 'Số lãi còn lại', key: 'totalRemainingBonus', width: 20 },
+            { header: 'Số lãi nhận mỗi ngày', key: 'dailyBonus', width: 22 },
             { header: 'Joined At', key: 'createdAt', width: 20 }
         ];
 
@@ -54,20 +60,117 @@ export const exportUsers = async (req, res) => {
         sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF276152' } };
         sheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
-        users.forEach(user => {
+        const nowVN = getSystemTime();
+        const todayMidnight = getStartOfDay(nowVN);
+        const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
+        const cutOffDate = new Date(cutOffDateStr);
+
+        for (const user of users) {
+            // 1. Calculate total yield already received (type: 'BONUS')
+            const bonusHistories = await BalanceHistory.find({
+                userId: user._id,
+                symbol: 'AQE',
+                status: 'SUCCESS',
+                type: 'BONUS'
+            }).select('amount');
+            const totalBonusReceived = bonusHistories.reduce((sum, h) => sum + h.amount, 0);
+
+            // 2. Calculate pledge reward yield
+            const rewardTransactions = await BalanceHistory.find({
+                userId: user._id,
+                symbol: 'AQE',
+                status: 'SUCCESS',
+                type: 'REWARD'
+            }).select('amount');
+            const totalRewardAqe = rewardTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+            // 3. Eligible balance
+            const eligibleBalance = Math.max(0, (user.aqeBalance + user.preRegisterTokens) - totalRewardAqe);
+
+            // 4. Find acquisitions
+            const acquisitions = await BalanceHistory.find({
+                userId: user._id,
+                symbol: 'AQE',
+                status: 'SUCCESS',
+                type: 'RECEIVE'
+            }).select('amount createdAt').sort({ createdAt: 1 });
+
+            // 5. Check if today's bonus exists to determine future schedule start date
+            const todayBonusExists = await BalanceHistory.findOne({
+                userId: user._id,
+                symbol: 'AQE',
+                type: 'BONUS',
+                status: 'SUCCESS',
+                createdAt: { $gte: todayMidnight }
+            });
+            const scheduleStartDate = todayBonusExists 
+                ? new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000) 
+                : new Date(todayMidnight.getTime());
+
+            let remainingEligible = eligibleBalance;
+            const processedAcqs = [];
+
+            for (const acq of acquisitions) {
+                if (remainingEligible <= 0) break;
+                const heldAmount = Math.min(acq.amount, remainingEligible);
+                remainingEligible -= heldAmount;
+
+                const purchaseDateVN = getSystemTime(acq.createdAt);
+                let bonusStartDate = purchaseDateVN < cutOffDate ? getStartOfDay(cutOffDate) : getStartOfDay(purchaseDateVN);
+                const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+                processedAcqs.push({
+                    amount: heldAmount,
+                    startDate: bonusStartDate,
+                    endDate: bonusEndDate
+                });
+            }
+
+            if (remainingEligible > 0) {
+                const userCreateDateVN = getSystemTime(user.createdAt);
+                let bonusStartDate = userCreateDateVN < cutOffDate ? getStartOfDay(cutOffDate) : getStartOfDay(userCreateDateVN);
+                const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+                processedAcqs.push({
+                    amount: remainingEligible,
+                    startDate: bonusStartDate,
+                    endDate: bonusEndDate
+                });
+            }
+
+            const totalExpected = eligibleBalance * 0.06;
+            let totalRemaining = 0;
+            let dailyBonusSum = 0;
+
+            processedAcqs.forEach(acq => {
+                if (todayMidnight >= acq.startDate && todayMidnight < acq.endDate) {
+                    dailyBonusSum += acq.amount * 0.06 / 365;
+                }
+                if (acq.endDate > scheduleStartDate) {
+                    const daysRemaining = Math.max(0, Math.round((acq.endDate.getTime() - scheduleStartDate.getTime()) / (24 * 60 * 60 * 1000)));
+                    if (daysRemaining > 0) {
+                        totalRemaining += acq.amount * 0.06 * (daysRemaining / 365);
+                    }
+                }
+            });
+
             sheet.addRow({
                 _id: user._id.toString(),
                 fullName: user.fullName,
                 username: user.username,
                 email: user.email,
                 phone: user.phone || 'N/A',
-                status: user.status,
+                status: user.status || (user.isActive ? 'Active' : 'Inactive'),
                 kycStatus: user.kycStatus,
                 usdtBalance: user.usdtBalance,
-                totalAqe: (user.officialAqeBalance || 0) + (user.temporaryAqeBalance || 0),
+                totalAqe: (user.aqeBalance || 0) + (user.preRegisterTokens || 0),
+                totalExpectedBonus: Number(totalExpected.toFixed(5)),
+                totalClaimedBonus: Number(totalBonusReceived.toFixed(5)),
+                totalRemainingBonus: Number(totalRemaining.toFixed(5)),
+                dailyBonus: Number(dailyBonusSum.toFixed(5)),
                 createdAt: dayjs(user.createdAt).format('DD/MM/YYYY HH:mm:ss')
             });
-        });
+        }
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename=' + `users_export_${dayjs().format('YYYYMMDD')}.xlsx`);
