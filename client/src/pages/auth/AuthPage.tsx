@@ -16,7 +16,8 @@ import RegisterForm from "@/components/auth/RegisterForm"
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm"
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm"
 import { cn } from "@/lib/utils"
-import loginBannerNew from "@/assets/login_banner_new.png"
+import loginBannerNew from "@/assets/login_banner_new.jpg"
+import registerBannerNew from "@/assets/register_banner_new.png"
 
 interface AuthPageProps {
   mode: "login" | "register" | "forgot-password" | "reset-password"
@@ -26,6 +27,9 @@ export default function AuthPage({ mode }: AuthPageProps) {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const [isLangOpen, setIsLangOpen] = useState(false)
+
+  const bannerSrc = mode === "register" ? registerBannerNew : loginBannerNew
+  const containerBg = mode === "register" ? "bg-white" : "bg-[#f4f0e5]"
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
@@ -182,9 +186,12 @@ export default function AuthPage({ mode }: AuthPageProps) {
       </div>
 
       {/* Left Panel - Illustration/Brand */}
-      <div className="relative hidden items-center justify-center overflow-hidden bg-[#faf9f6] p-6 select-none lg:flex lg:w-[55%] xl:p-10">
+      <div className={cn(
+        "relative hidden items-center justify-center overflow-hidden select-none lg:flex lg:w-[55%]",
+        containerBg
+      )}>
         <motion.img
-          src={loginBannerNew}
+          src={bannerSrc}
           alt="AQ Estate Infographic"
           className="pointer-events-none h-full w-full object-contain transition-transform duration-[12s] ease-out hover:scale-[1.01]"
           initial={{ opacity: 0, scale: 0.99 }}
