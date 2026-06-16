@@ -20,6 +20,7 @@ const COUNTRIES = [
   { code: "+86", iso: "cn" },
   { code: "+886", iso: "tw" }, // Taiwan
   { code: "+91", iso: "in" },
+  { code: "+234", iso: "ng" }, // Nigeria
   { code: "+61", iso: "au" }, // Australia
   { code: "+60", iso: "my" }, // Malaysia
   { code: "+1", iso: "ca" }, // Canada

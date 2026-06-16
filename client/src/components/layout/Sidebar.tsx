@@ -75,11 +75,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
     { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },
     { icon: Headset, label: t("sidebar.tickets", { defaultValue: "Support Tickets" }), path: "/tickets", key: "tickets" },
-  ]
-
-  const bottomMenuItems: SidebarItem[] = [
     { icon: Settings, label: t("sidebar.settings"), path: "/settings", key: "settings" },
   ]
+
+  const bottomMenuItems: SidebarItem[] = []
 
   const handleLogout = () => {
     logout()

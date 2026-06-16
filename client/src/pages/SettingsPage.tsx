@@ -56,6 +56,7 @@ const COUNTRIES = [
   { code: "+86", iso: "cn" },
   { code: "+886", iso: "tw" },
   { code: "+91", iso: "in" },
+  { code: "+234", iso: "ng" }, // Nigeria
   { code: "+61", iso: "au" },
   { code: "+60", iso: "my" },
   { code: "+1", iso: "ca" },

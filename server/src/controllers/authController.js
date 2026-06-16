@@ -369,8 +369,13 @@ export const getReferrals = async (req, res) => {
         const network = await Promise.all(f1sRaw.map(async (f1) => {
             const sales = await calculateUserSystemSales(f1._id);
             const networkSize = await calculateUserNetworkSize(f1._id);
-            const personalPaid = (f1.paidUsdtPreRegister || 0) +
-                (f1.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
+            const payments = await Transaction.find({
+                from: f1._id,
+                type: 'PAYMENT',
+                status: 'SUCCESS',
+                symbol: 'USDT'
+            });
+            const personalPaid = payments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
             return {
                 ...f1.toObject(),
@@ -456,8 +461,13 @@ export const getSubReferrals = async (req, res) => {
         const referrals = await Promise.all(referralsRaw.map(async (ref) => {
             const sales = await calculateUserSystemSales(ref._id);
             const networkSize = await calculateUserNetworkSize(ref._id);
-            const personalPaid = (ref.paidUsdtPreRegister || 0) +
-                (ref.pledgeRounds?.reduce((sum, round) => sum + (round.paidUsdt || 0), 0) || 0);
+            const payments = await Transaction.find({
+                from: ref._id,
+                type: 'PAYMENT',
+                status: 'SUCCESS',
+                symbol: 'USDT'
+            });
+            const personalPaid = payments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
             return {
                 ...ref.toObject(),

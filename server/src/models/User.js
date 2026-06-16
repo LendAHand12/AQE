@@ -190,13 +190,41 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Encrypt password before saving
+// Encrypt password and set nation before saving
 userSchema.pre('save', async function() {
-    if (!this.isModified('password')) {
-        return;
+    if (this.isModified('password')) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
     }
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+
+    const COUNTRY_CODES_MAP = {
+        '+84': 'Vietnam',
+        '+1': 'United States',
+        '+44': 'United Kingdom',
+        '+49': 'Germany',
+        '+33': 'France',
+        '+81': 'Japan',
+        '+82': 'South Korea',
+        '+420': 'Czech Republic',
+        '+86': 'China',
+        '+886': 'Taiwan',
+        '+91': 'India',
+        '+61': 'Australia',
+        '+60': 'Malaysia',
+        '+971': 'UAE',
+        '+66': 'Thailand',
+        '+65': 'Singapore',
+        '+234': 'Nigeria'
+    };
+
+    if (this.isNew || this.isModified('countryCode')) {
+        if (this.countryCode && (!this.nation || this.nation === 'Việt Nam' || this.nation === 'Vietnam')) {
+            const mappedNation = COUNTRY_CODES_MAP[this.countryCode];
+            if (mappedNation) {
+                this.nation = mappedNation;
+            }
+        }
+    }
 });
 
 const User = mongoose.model('User', userSchema);
