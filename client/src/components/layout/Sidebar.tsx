@@ -11,7 +11,8 @@ import {
   X,
   Wallet,
   Headset,
-  Coins
+  Coins,
+  Gamepad2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logo from "@/assets/logo_green.svg"
@@ -71,6 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     // { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
     { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
+    { icon: Gamepad2, label: i18n.language === 'vi' ? 'Trò chơi Plinko' : 'Plinko Game', path: "/plinko", key: "plinko" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },
     { icon: CreditCard, label: t("sidebar.balance_history"), path: "/balance-history", key: "balance" },

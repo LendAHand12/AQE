@@ -24,6 +24,7 @@ import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import bonusRoutes from './routes/bonusRoutes.js';
+import plinkoRoutes from './routes/plinkoRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 import { initPaymentListener } from './services/paymentListener.js';
 import { createServer } from 'http';
@@ -63,6 +64,7 @@ app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/bonus', bonusRoutes);
+app.use('/api/plinko', plinkoRoutes);
 
 // Root route
 app.get('/', (req, res) => {

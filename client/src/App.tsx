@@ -34,6 +34,7 @@ import AssetsPage from "@/pages/AssetsPage"
 import KycCallbackPage from "@/pages/KycCallbackPage"
 import ClaimPage from "@/pages/ClaimPage"
 import PaymentPage from "@/pages/PaymentPage"
+import PlinkoPage from "@/pages/PlinkoPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -73,6 +74,7 @@ export function App() {
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
+                <Route path="/plinko" element={<PlinkoPage />} />
                 <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
                 <Route path="/user/claim" element={<ClaimPage />} />
                 <Route path="/referrals" element={<ReferralPage />} />

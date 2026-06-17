@@ -702,6 +702,14 @@ export default function AdminUserProfilePage() {
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase">
+                        Plinko Plays
+                      </p>
+                      <p className="text-[14px] font-bold text-emerald-600">
+                        {user.plinkoPlays ?? 0} plays
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase">
                         Referred By
                       </p>
                       {user.referredBy ? (
@@ -1614,6 +1622,22 @@ export default function AdminUserProfilePage() {
                       })
                     }
                     className="h-11 rounded-[8px] border-gray-200 font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-500">
+                    Plinko Plays
+                  </label>
+                  <Input
+                    type="number"
+                    value={editingUser?.plinkoPlays ?? 0}
+                    onChange={(e) =>
+                      setEditingUser({
+                        ...editingUser,
+                        plinkoPlays: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="h-11 rounded-[8px] border-gray-200"
                   />
                 </div>
                 <div className="space-y-2">

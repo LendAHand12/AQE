@@ -206,6 +206,25 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 });
             }
 
+            // Credit Plinko plays: 10 plays per 100 USDT
+            const playsToAdd = Math.floor(processingAmount / 100) * 10;
+            if (playsToAdd > 0) {
+                user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+                
+                await Notification.create({
+                    userId: user._id,
+                    title: 'Plinko Plays Credited',
+                    message: `You have been credited with ${playsToAdd} Plinko plays for your purchase of ${processingAmount} USDT. Go to the Plinko page to play and win AQE!`,
+                    type: 'SYSTEM'
+                });
+                
+                emitNotification(user._id, {
+                    title: 'Plinko Plays Credited',
+                    message: `+${playsToAdd} Plinko plays!`,
+                    type: 'SYSTEM'
+                });
+            }
+
             await user.save();
             console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
 
@@ -312,6 +331,25 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
 
             if (isLivePhase) {
                 user.aqeBalance += tokensCalculated;
+            }
+
+            // Credit Plinko plays: 10 plays per 100 USDT
+            const playsToAdd = Math.floor(processingAmount / 100) * 10;
+            if (playsToAdd > 0) {
+                user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+                
+                await Notification.create({
+                    userId: user._id,
+                    title: 'Plinko Plays Credited',
+                    message: `You have been credited with ${playsToAdd} Plinko plays for your payment of ${processingAmount} USDT. Go to the Plinko page to play and win AQE!`,
+                    type: 'SYSTEM'
+                });
+                
+                emitNotification(user._id, {
+                    title: 'Plinko Plays Credited',
+                    message: `+${playsToAdd} Plinko plays!`,
+                    type: 'SYSTEM'
+                });
             }
 
             await user.save();
@@ -455,6 +493,25 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
 
     if (isLivePhase) {
         user.aqeBalance += tokensCalculated;
+    }
+
+    // Credit Plinko plays: 10 plays per 100 USDT
+    const playsToAdd = Math.floor(paidAmount / 100) * 10;
+    if (playsToAdd > 0) {
+        user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+        
+        await Notification.create({
+            userId: user._id,
+            title: 'Plinko Plays Credited',
+            message: `You have been credited with ${playsToAdd} Plinko plays for your manual deposit of ${paidAmount} USDT. Go to the Plinko page to play and win AQE!`,
+            type: 'SYSTEM'
+        });
+        
+        emitNotification(user._id, {
+            title: 'Plinko Plays Credited',
+            message: `+${playsToAdd} Plinko plays!`,
+            type: 'SYSTEM'
+        });
     }
 
     await user.save();

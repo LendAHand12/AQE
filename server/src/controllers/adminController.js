@@ -426,6 +426,7 @@ export const updateUserByAdmin = async (req, res) => {
             user.address = req.body.address ?? user.address;
             user.nation = req.body.nation ?? user.nation;
             user.walletAddress = req.body.walletAddress ?? user.walletAddress;
+            user.plinkoPlays = req.body.plinkoPlays !== undefined ? Number(req.body.plinkoPlays) : user.plinkoPlays;
 
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
