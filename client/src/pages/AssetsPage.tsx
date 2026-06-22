@@ -62,6 +62,7 @@ export default function AssetsPage() {
 
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
+  const [isConvertOpen, setIsConvertOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET')
   const [zelleInfo, setZelleInfo] = useState('')
@@ -111,7 +112,7 @@ export default function AssetsPage() {
     }
 
     const currentBalance = summary.usdtBalance;
-    const fee = 1.0;
+    const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
     const withdrawable = currentBalance - fee;
 
     if (withdrawable < 10) {
@@ -135,6 +136,35 @@ export default function AssetsPage() {
 
       toast.success(res.data.message);
       setIsWithdrawOpen(false);
+      fetchData();
+      syncProfile();
+    } catch (err: any) {
+      toast.error(t(err.response?.data?.message) || t("auth.errors.unknown"));
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  const handleConvert = async () => {
+    const currentBalance = summary.usdtBalance;
+    if (currentBalance < 10) {
+      toast.error(t("assets.withdraw_dialog.insufficient_balance"));
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      const res = await apiClient.post("/withdrawals/request", {
+        paymentMethod: 'AQE'
+      });
+
+      if (res.data.url) {
+        window.location.href = res.data.url;
+        return;
+      }
+
+      toast.success(res.data.message);
+      setIsConvertOpen(false);
       fetchData();
       syncProfile();
     } catch (err: any) {
@@ -193,9 +223,19 @@ export default function AssetsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
-            onClick={() => setIsWithdrawOpen(true)}
+            onClick={() => setIsConvertOpen(true)}
+            className="h-[52px] px-8 bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-amber-600/20"
+          >
+            <ArrowUpRight size={20} />
+            {t("assets.withdraw_dialog.method_aqe")}
+          </Button>
+          <Button
+            onClick={() => {
+              setPaymentMethod(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET');
+              setIsWithdrawOpen(true);
+            }}
             className="h-[52px] px-8 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-[#276152]/20"
           >
             <ArrowUpRight size={20} />
@@ -350,16 +390,32 @@ export default function AssetsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        {item.paymentMethod === 'ZELLE' ? (
+                        {item.paymentMethod === 'AQE' ? (
                           <div className="flex flex-col">
-                            <span className="text-[13px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full w-fit">Zelle</span>
+                            <span className="text-[13px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit border border-amber-100">
+                              {t("assets.withdraw_dialog.method_aqe")}
+                            </span>
+                            <span className="text-[12px] text-gray-500 mt-1">
+                              {user?.language === 'vi' 
+                                ? "Quy đổi sang số dư AQE hưởng lãi 6%" 
+                                : "Converted to AQE (6% APR)"}
+                            </span>
+                          </div>
+                        ) : item.paymentMethod === 'ZELLE' ? (
+                          <div className="flex flex-col">
+                            <span className="text-[13px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full w-fit border border-orange-100">Zelle</span>
                             <span className="text-[14px] font-medium text-[#111827] mt-1">{item.zelleName || "N/A"}</span>
                             <span className="text-[12px] text-gray-500">{item.zelleInfo}</span>
                           </div>
                         ) : (
-                          <p className="text-[14px] text-[#111827] font-mono font-medium">
-                            {item.walletAddress ? `${item.walletAddress.substring(0, 6)}...${item.walletAddress.substring(item.walletAddress.length - 4)}` : "-"}
-                          </p>
+                          <div className="flex flex-col">
+                            <span className="text-[13px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit border border-emerald-100">
+                              {t("assets.withdraw_dialog.method_wallet")}
+                            </span>
+                            <p className="text-[14px] text-[#111827] font-mono font-medium mt-1">
+                              {item.walletAddress ? `${item.walletAddress.substring(0, 6)}...${item.walletAddress.substring(item.walletAddress.length - 4)}` : "-"}
+                            </p>
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-5 text-right whitespace-nowrap">
@@ -441,30 +497,30 @@ export default function AssetsPage() {
 
             <div className="space-y-4">
               {/* Method Selection */}
-              <div className={cn("grid gap-2 p-1.5 bg-gray-100 rounded-[16px]", canUseZelle ? "grid-cols-2" : "grid-cols-1")}>
-                <button
-                  disabled={!hasWallet}
-                  onClick={() => setPaymentMethod('WALLET')}
-                  className={cn(
-                    "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
-                    paymentMethod === 'WALLET' ? "bg-white text-[#276152] shadow-sm" : "text-gray-500",
-                    !hasWallet && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {t("assets.withdraw_dialog.method_wallet")}
-                </button>
-                {canUseZelle && (
+              {canUseZelle && (
+                <div className="grid gap-2 p-1.5 bg-gray-100 rounded-[16px] grid-cols-2">
+                  <button
+                    disabled={!hasWallet}
+                    onClick={() => setPaymentMethod('WALLET')}
+                    className={cn(
+                      "py-2.5 text-[12px] font-bold rounded-[12px] transition-all",
+                      paymentMethod === 'WALLET' ? "bg-white text-[#276152] shadow-sm" : "text-gray-500",
+                      !hasWallet && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {t("assets.withdraw_dialog.method_wallet")}
+                  </button>
                   <button
                     onClick={() => setPaymentMethod('ZELLE')}
                     className={cn(
-                      "py-2.5 text-[13px] font-bold rounded-[12px] transition-all",
+                      "py-2.5 text-[12px] font-bold rounded-[12px] transition-all",
                       paymentMethod === 'ZELLE' ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"
                     )}
                   >
                     {t("assets.withdraw_dialog.method_zelle")}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {!hasWallet && paymentMethod === 'WALLET' && (
                 <p className="text-[11px] text-red-500 font-bold px-1">
@@ -513,8 +569,12 @@ export default function AssetsPage() {
                 </div>
                 <div className="h-px bg-gray-200/60" />
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-[15px] font-bold text-gray-900">{t("assets.withdraw_dialog.total_deduct")}</span>
-                  <span className="text-[20px] font-black text-[#276152]">{receiveAmount.toLocaleString()} USDT</span>
+                  <span className="text-[15px] font-bold text-gray-900">
+                    {t("assets.withdraw_dialog.total_deduct")}
+                  </span>
+                  <span className="text-[20px] font-black text-[#276152]">
+                    {receiveAmount.toLocaleString()} USDT
+                  </span>
                 </div>
               </div>
 
@@ -538,6 +598,75 @@ export default function AssetsPage() {
                 </>
               ) : (
                 t("assets.withdraw_dialog.confirm_btn")
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to AQE Dialog */}
+      <Dialog open={isConvertOpen} onOpenChange={setIsConvertOpen}>
+        <DialogContent className="max-w-md rounded-[24px] p-8 border-none shadow-2xl">
+          <div className="space-y-6">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-[24px] font-bold text-gray-900">{t("assets.withdraw_dialog.method_aqe")}</DialogTitle>
+              <DialogDescription className="text-[14px] text-gray-500">
+                {user?.language === 'vi' 
+                  ? "Quy đổi số dư USDT hiện tại của bạn sang số dư AQE để hưởng lãi suất."
+                  : "Convert your current USDT balance to AQE balance to earn daily yield."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="p-4 bg-amber-50/50 rounded-[16px] border border-amber-100/50 space-y-1">
+                <p className="text-[12px] text-amber-700/60 font-bold uppercase tracking-wider">{t("assets.withdraw_dialog.method_aqe")}</p>
+                <p className="text-[13px] text-amber-800 leading-relaxed font-medium">
+                  {t("assets.withdraw_dialog.method_aqe_desc")}
+                </p>
+              </div>
+
+              <div className="p-5 rounded-[20px] bg-gray-50 border border-gray-100 space-y-4">
+                <div className="flex justify-between text-[14px]">
+                  <span className="text-gray-500">{t("assets.withdraw_dialog.amount_label")}</span>
+                  <span className="font-bold text-gray-900">{currentBalance.toLocaleString()} USDT</span>
+                </div>
+                <div className="flex justify-between text-[14px]">
+                  <span className="text-gray-500">{t("assets.withdraw_dialog.fee_note")}</span>
+                  <span className="font-bold text-gray-900">0 USDT</span>
+                </div>
+                <div className="h-px bg-gray-200/60" />
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-[15px] font-bold text-gray-900">
+                    {t("assets.bonus.claim_option_aqe")}
+                  </span>
+                  <span className="text-[20px] font-black text-[#276152]">
+                    {currentBalance.toLocaleString()} AQE
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 rounded-[16px] p-4 border border-amber-100 flex gap-3">
+                <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-[12px] text-amber-800 leading-relaxed">
+                  {user?.language === 'vi' 
+                    ? "Lưu ý: Số AQE được quy đổi sẽ được chuyển ngay lập tức vào số dư AQE của bạn và bắt đầu tính lãi 6% APR hàng ngày."
+                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily yield."}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleConvert}
+              disabled={withdrawing}
+              className="w-full h-[56px] bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold text-[16px] shadow-lg shadow-amber-600/10"
+            >
+              {withdrawing ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {t("assets.withdraw_dialog.processing")}
+                </>
+              ) : (
+                user?.language === 'vi' ? "Xác nhận quy đổi" : "Confirm Conversion"
               )}
             </Button>
           </div>

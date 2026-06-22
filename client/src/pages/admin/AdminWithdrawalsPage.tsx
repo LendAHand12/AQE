@@ -261,7 +261,14 @@ export default function AdminWithdrawalsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        {item.paymentMethod === 'ZELLE' ? (
+                        {item.paymentMethod === 'AQE' ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-[13px] text-amber-600 bg-amber-50 px-2 py-1 rounded w-fit border border-amber-100">
+                              AQE Conversion
+                            </span>
+                            <span className="text-xs text-gray-400 font-medium">Converted to interest-bearing AQE balance</span>
+                          </div>
+                        ) : item.paymentMethod === 'ZELLE' ? (
                           <div className="flex flex-col gap-1">
                             <span className="font-bold text-[13px] text-orange-600 bg-orange-50 px-2 py-1 rounded w-fit border border-orange-100">
                               Zelle: {item.zelleName || "N/A"}
@@ -294,10 +301,11 @@ export default function AdminWithdrawalsPage() {
                       <div className="flex justify-center">
                         <Badge className={cn(
                           "rounded-full font-bold border-none px-3 py-1 text-[10px]",
+                          item.paymentMethod === 'AQE' ? "bg-amber-50 text-amber-600 border border-amber-100" :
                           item.paymentMethod === 'ZELLE' ? "bg-orange-50 text-orange-600" :
                           item.method === 'AUTO' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
                         )}>
-                          {item.paymentMethod === 'ZELLE' ? 'ZELLE' : item.method}
+                          {item.paymentMethod === 'AQE' ? 'AQE CONVERT' : item.paymentMethod === 'ZELLE' ? 'ZELLE' : item.method}
                         </Badge>
                       </div>
                     </TableCell>
