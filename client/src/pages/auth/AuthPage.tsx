@@ -294,6 +294,23 @@ export default function AuthPage({ mode }: AuthPageProps) {
               </p>
             </div>
           )}
+
+          {/* Footer for Register Page */}
+          {mode === "register" && (
+            <div className="pt-6 border-t border-gray-100 w-full text-center flex items-center justify-center gap-3 text-xs text-[#9ca3af]">
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="hover:text-[#276152] transition-colors font-medium">
+                {t("auth.terms", { defaultValue: "Terms" })}
+              </a>
+              <span>•</span>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-[#276152] transition-colors font-medium">
+                {t("auth.policy", { defaultValue: "Privacy Policy" })}
+              </a>
+              <span>•</span>
+              <a href="/return-policy" target="_blank" rel="noopener noreferrer" className="hover:text-[#276152] transition-colors font-medium">
+                Return Policy
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
