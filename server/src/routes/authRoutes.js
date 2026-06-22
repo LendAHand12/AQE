@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin, recordWalletConnection } from '../controllers/authController.js';
+import { registerUser, loginUser, confirmEmail, getUserProfile, updateUserProfile, updateFaceTecStatus, submitIdVerification, getReferrals, getSubReferrals, forgotPassword, resetPassword, generate2FA, enable2FA, disable2FA, verify2FALogin, recordWalletConnection, requestProfileUpdate, completeProfileUpdate } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 import { convertHeicToJpg } from '../middleware/heicConverter.js';
@@ -28,6 +28,8 @@ router.post('/verify-id', protect, submitIdVerification);
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
+router.post('/profile/request-update', protect, requestProfileUpdate);
+router.post('/profile/complete-update', protect, completeProfileUpdate);
 
 // Wallet Connection History
 router.post('/wallet-connections', protect, recordWalletConnection);

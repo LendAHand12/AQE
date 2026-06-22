@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import WalletConnection from '../models/WalletConnection.js';
 import Commission from '../models/Commission.js';
@@ -590,6 +591,137 @@ export const recordWalletConnection = async (req, res) => {
         res.status(201).json({ message: 'Wallet connection recorded' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Request Profile Update with FaceID verification
+// @route   POST /api/auth/profile/request-update
+// @access  Private
+export const requestProfileUpdate = async (req, res) => {
+    const { user } = req;
+    
+    try {
+        // FaceID Registered check
+        if (user.kycStatus !== 'verified' || !user.faceTecTid) {
+            return res.status(400).json({ message: 'Bạn cần phải đăng ký khuôn mặt (FaceID) trước khi cập nhật thông tin cá nhân.' });
+        }
+
+        // Generate Callback Token
+        const token = jwt.sign(
+            { 
+                userId: user._id, 
+                profileUpdates: req.body
+            }, 
+            process.env.JWT_SECRET || 'secret_key', 
+            { expiresIn: '15m' }
+        );
+
+        // Generate Facetec Redirect URL
+        const callbackUrl = `${process.env.FRONTEND_URL}/user/claim-profile?token=${token}`;
+        const facetecUrl = `${process.env.FACETEC_BASE_URL}/verify.html?callback=${encodeURIComponent(callbackUrl)}&user_id=${user._id}`;
+
+        res.json({ url: facetecUrl });
+    } catch (error) {
+        console.error('Request Profile Update Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Complete Profile Update after FaceID success
+// @route   POST /api/auth/profile/complete-update
+// @access  Private
+export const completeProfileUpdate = async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        if (!token) {
+            return res.status(400).json({ message: 'withdrawals.errors.invalid_token' });
+        }
+
+        // Verify Token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const { userId, profileUpdates } = decoded;
+
+        if (userId !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'withdrawals.errors.invalid_token' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'auth.errors.user_not_found' });
+        }
+
+        // Validate username if provided and updated
+        if (profileUpdates.username && profileUpdates.username !== user.username) {
+            const usernameRegex = /^[a-z0-9]+$/;
+            if (!usernameRegex.test(profileUpdates.username)) {
+                return res.status(400).json({ message: 'auth.errors.invalid_username_format' });
+            }
+            const usernameExists = await User.findOne({
+                username: profileUpdates.username.toLowerCase(),
+                isDeleted: false,
+                _id: { $ne: user._id }
+            });
+            if (usernameExists) return res.status(400).json({ message: 'auth.errors.username_exists' });
+            user.username = profileUpdates.username.toLowerCase();
+        }
+
+        // Validate phone if provided and updated
+        if (profileUpdates.phone && profileUpdates.phone !== user.phone) {
+            const phoneExists = await User.findOne({
+                phone: profileUpdates.phone,
+                isDeleted: false,
+                _id: { $ne: user._id }
+            });
+            if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
+            user.phone = profileUpdates.phone;
+        }
+
+        // Update other fields
+        user.fullName = profileUpdates.fullName || user.fullName;
+        user.birthday = profileUpdates.birthday || user.birthday;
+        user.gender = profileUpdates.gender || user.gender;
+        user.telegram = profileUpdates.telegram || user.telegram;
+        user.address = profileUpdates.address || user.address;
+        user.nation = profileUpdates.nation || user.nation;
+        user.walletAddress = profileUpdates.walletAddress || user.walletAddress;
+        user.avatar = profileUpdates.avatar || user.avatar;
+        user.countryCode = profileUpdates.countryCode || user.countryCode;
+
+        if (profileUpdates.bankAccounts) {
+            user.bankAccounts = profileUpdates.bankAccounts;
+        }
+
+        if (profileUpdates.password) {
+            user.password = profileUpdates.password;
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            success: true,
+            message: 'settings.save_success',
+            user: {
+                _id: updatedUser._id,
+                fullName: updatedUser.fullName,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                countryCode: updatedUser.countryCode,
+                birthday: updatedUser.birthday,
+                gender: updatedUser.gender,
+                telegram: updatedUser.telegram,
+                address: updatedUser.address,
+                nation: updatedUser.nation,
+                avatar: updatedUser.avatar,
+                walletAddress: updatedUser.walletAddress,
+                bankAccounts: updatedUser.bankAccounts,
+                kycStatus: updatedUser.kycStatus
+            }
+        });
+    } catch (error) {
+        console.error('Complete Profile Update Error:', error);
+        res.status(400).json({ message: 'withdrawals.errors.invalid_token_or_expired' });
     }
 };
 

@@ -33,6 +33,7 @@ import BalanceHistoryPage from "@/pages/BalanceHistoryPage"
 import AssetsPage from "@/pages/AssetsPage"
 import KycCallbackPage from "@/pages/KycCallbackPage"
 import ClaimPage from "@/pages/ClaimPage"
+import ClaimProfilePage from "@/pages/ClaimProfilePage"
 import PaymentPage from "@/pages/PaymentPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
@@ -75,6 +76,7 @@ export function App() {
                 <Route path="/assets" element={<AssetsPage />} />
                 <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
                 <Route path="/user/claim" element={<ClaimPage />} />
+                <Route path="/user/claim-profile" element={<ClaimProfilePage />} />
                 <Route path="/referrals" element={<ReferralPage />} />
                 <Route path="/tickets" element={<TicketsPage />} />
                 <Route path="/tickets/create" element={<CreateTicketPage />} />

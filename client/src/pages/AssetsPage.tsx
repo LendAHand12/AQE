@@ -112,7 +112,7 @@ export default function AssetsPage() {
     }
 
     const currentBalance = summary.usdtBalance;
-    const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
+    const fee = 1.0;
     const withdrawable = currentBalance - fee;
 
     if (withdrawable < 10) {
@@ -224,13 +224,13 @@ export default function AssetsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button
+          {/* <Button
             onClick={() => setIsConvertOpen(true)}
             className="h-[52px] px-8 bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-amber-600/20"
           >
             <ArrowUpRight size={20} />
             {t("assets.withdraw_dialog.method_aqe")}
-          </Button>
+          </Button> */}
           <Button
             onClick={() => {
               setPaymentMethod(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET');
