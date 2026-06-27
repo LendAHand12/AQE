@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
+import { useAuth } from "@/providers/AuthProvider"
 import { 
   User, 
   CheckCircle2, 
@@ -107,6 +108,7 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: any) => {
 
 export default function SettingsPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   
@@ -213,6 +215,13 @@ export default function SettingsPage() {
   const handleApplyCrop = async () => {
     if (!imageToCrop || !croppedAreaPixels) return
 
+    if (user?.kycStatus !== 'verified' || !user?.faceTecTid) {
+      toast.error(user?.language === 'vi' 
+        ? "Bạn cần phải đăng ký khuôn mặt (FaceID) trước khi cập nhật thông tin cá nhân." 
+        : "You must register your face (FaceID) before updating your personal information.");
+      return;
+    }
+
     setUploading(true)
     try {
       const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels)
@@ -228,14 +237,12 @@ export default function SettingsPage() {
       const updatedFormData = { ...formData, avatar: imageUrl }
       setFormData(updatedFormData)
       
-      // Automatically Save to DB
-      await apiClient.put("/auth/profile", updatedFormData)
-      
-      toast.success(t("settings.avatar.update_success"))
-      localStorage.setItem("user", JSON.stringify(updatedFormData))
-      window.dispatchEvent(new Event("profileUpdate"))
-      setIsCropModalOpen(false)
-      setImageToCrop(null)
+      // Automatically Save to DB via FaceID
+      const requestRes = await apiClient.post("/auth/profile/request-update", updatedFormData)
+      if (requestRes.data.url) {
+        window.location.href = requestRes.data.url;
+        return;
+      }
     } catch (err: any) {
       toast.error(t("settings.avatar.process_error"))
     } finally {
@@ -243,12 +250,21 @@ export default function SettingsPage() {
     }
   }
   const handleSave = async () => {
+    if (user?.kycStatus !== 'verified' || !user?.faceTecTid) {
+      toast.error(user?.language === 'vi' 
+        ? "Bạn cần phải đăng ký khuôn mặt (FaceID) trước khi cập nhật thông tin cá nhân." 
+        : "You must register your face (FaceID) before updating your personal information.");
+      return;
+    }
+
     setSaving(true)
     try {
-      const response = await apiClient.put("/auth/profile", formData)
+      const response = await apiClient.post("/auth/profile/request-update", formData)
+      if (response.data.url) {
+        window.location.href = response.data.url;
+        return;
+      }
       toast.success(t("settings.save_success"))
-      localStorage.setItem("user", JSON.stringify(response.data))
-      window.dispatchEvent(new Event("profileUpdate"))
     } catch (err: any) {
       toast.error(err.response?.data?.message || t("errors.update_failed"))
     } finally {

@@ -47,6 +47,7 @@ export const exportUsers = async (req, res) => {
             { header: 'Status', key: 'status', width: 15 },
             { header: 'KYC Status', key: 'kycStatus', width: 15 },
             { header: 'USDT Balance', key: 'usdtBalance', width: 15 },
+            { header: 'Tổng nạp USDT', key: 'totalDepositedUsdt', width: 18 },
             { header: 'Total AQE', key: 'totalAqe', width: 15 },
             { header: 'Tổng lãi AQE sẽ nhận', key: 'totalExpectedBonus', width: 22 },
             { header: 'Tổng lãi đã nhận', key: 'totalClaimedBonus', width: 20 },
@@ -154,6 +155,15 @@ export const exportUsers = async (req, res) => {
                 }
             });
 
+            // Calculate total USDT deposited (type: 'PAYMENT', status: 'SUCCESS')
+            const userPayments = await Transaction.find({
+                from: user._id,
+                type: 'PAYMENT',
+                status: 'SUCCESS',
+                symbol: 'USDT'
+            }).select('amount');
+            const totalDeposited = userPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+ 
             sheet.addRow({
                 _id: user._id.toString(),
                 fullName: user.fullName,
@@ -163,6 +173,7 @@ export const exportUsers = async (req, res) => {
                 status: user.status || (user.isActive ? 'Active' : 'Inactive'),
                 kycStatus: user.kycStatus,
                 usdtBalance: user.usdtBalance,
+                totalDepositedUsdt: totalDeposited,
                 totalAqe: (user.aqeBalance || 0) + (user.preRegisterTokens || 0),
                 totalExpectedBonus: Number(totalExpected.toFixed(5)),
                 totalClaimedBonus: Number(totalBonusReceived.toFixed(5)),

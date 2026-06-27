@@ -33,6 +33,7 @@ import BalanceHistoryPage from "@/pages/BalanceHistoryPage"
 import AssetsPage from "@/pages/AssetsPage"
 import KycCallbackPage from "@/pages/KycCallbackPage"
 import ClaimPage from "@/pages/ClaimPage"
+import ClaimProfilePage from "@/pages/ClaimProfilePage"
 import PaymentPage from "@/pages/PaymentPage"
 import PlinkoPage from "@/pages/PlinkoPage"
 import { SocketProvider } from "./providers/SocketProvider"
@@ -45,6 +46,7 @@ import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
 import BuyPage from "@/pages/BuyPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
+import ReturnPolicyPage from "@/pages/ReturnPolicyPage"
 
 export function App() {
   return (
@@ -77,6 +79,7 @@ export function App() {
                 <Route path="/plinko" element={<PlinkoPage />} />
                 <Route path="/user/kyc-callback" element={<KycCallbackPage />} />
                 <Route path="/user/claim" element={<ClaimPage />} />
+                <Route path="/user/claim-profile" element={<ClaimProfilePage />} />
                 <Route path="/referrals" element={<ReferralPage />} />
                 <Route path="/tickets" element={<TicketsPage />} />
                 <Route path="/tickets/create" element={<CreateTicketPage />} />
@@ -112,6 +115,7 @@ export function App() {
             <Route path="/explorer" element={<ExplorerPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/return-policy" element={<ReturnPolicyPage />} />
 
             {/* Not Found page */}
             <Route path="*" element={<NotFoundPage />} />

@@ -17,7 +17,7 @@ import Notification from '../models/Notification.js';
 export const requestWithdrawal = async (req, res) => {
     const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET' } = req.body;
     const { user } = req;
-    const fee = 1.0;
+    const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
 
     try {
         if (paymentMethod === 'WALLET' && !walletAddress) {
@@ -28,7 +28,7 @@ export const requestWithdrawal = async (req, res) => {
             if (!zelleName) return res.status(400).json({ message: 'Tên tài khoản Zelle là bắt buộc' });
         }
 
-        // 1. Check Balance (Withdraw ALL)
+        // 1. Check Balance (Withdraw/Convert ALL)
         const withdrawalAmount = user.usdtBalance - fee;
         if (withdrawalAmount < 10) {
             return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
@@ -101,16 +101,21 @@ export const completeWithdrawal = async (req, res) => {
 
         const user = await User.findById(userId);
         const withdrawalAmount = parseFloat(amount);
-        const fee = 1.0;
+        const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
         const totalDeduction = withdrawalAmount + fee;
 
         if (user.usdtBalance < totalDeduction) {
             return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
         }
 
-        // 2. Process Withdrawal (same as before)
+        // 2. Process Withdrawal
         const balanceBefore = user.usdtBalance;
         user.usdtBalance -= totalDeduction;
+
+        if (paymentMethod === 'AQE') {
+            const aqeBefore = user.aqeBalance || 0;
+            user.aqeBalance = aqeBefore + withdrawalAmount;
+        }
         await user.save();
 
         await BalanceHistory.create({
@@ -119,11 +124,28 @@ export const completeWithdrawal = async (req, res) => {
             fee: fee,
             symbol: 'USDT',
             type: 'WITHDRAW',
-            status: withdrawalAmount <= 200 ? 'SUCCESS' : 'PENDING',
+            status: 'SUCCESS', // since internal conversion is instant
             balanceBefore: balanceBefore,
             balanceAfter: user.usdtBalance,
-            description: `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleName + ' - ' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
+            description: paymentMethod === 'AQE'
+                ? `Converted USDT to AQE balance`
+                : `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleName + ' - ' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
         });
+
+        // Create AQE RECEIVE history so it qualifies for 6% daily interest
+        if (paymentMethod === 'AQE') {
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: withdrawalAmount,
+                symbol: 'AQE',
+                type: 'RECEIVE',
+                status: 'SUCCESS',
+                isOfficial: true,
+                balanceBefore: user.aqeBalance - withdrawalAmount,
+                balanceAfter: user.aqeBalance,
+                description: `Converted from USDT withdrawal`
+            });
+        }
 
         const withdrawal = await Withdrawal.create({
             userId: user._id,
@@ -134,10 +156,21 @@ export const completeWithdrawal = async (req, res) => {
             amount: withdrawalAmount,
             fee: fee,
             symbol: 'USDT',
-            method: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'AUTO' : 'MANUAL',
-            status: (paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'SUCCESS' : 'PENDING',
-            description: `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleName + ' (' + zelleInfo + ')' : walletAddress}`
+            method: 'AUTO',
+            status: paymentMethod === 'AQE' ? 'SUCCESS' : ((paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'SUCCESS' : 'PENDING'),
+            description: paymentMethod === 'AQE'
+                ? `Converted USDT to AQE balance`
+                : `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleName + ' (' + zelleInfo + ')' : walletAddress}`
         });
+
+        if (paymentMethod === 'AQE') {
+            return res.json({
+                success: true,
+                message: 'withdrawals.success_aqe',
+                paymentMethod,
+                status: 'SUCCESS'
+            });
+        }
 
         if (paymentMethod === 'WALLET' && withdrawalAmount <= 200) {
             try {

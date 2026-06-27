@@ -18,7 +18,7 @@ const withdrawalSchema = mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['WALLET', 'ZELLE'],
+        enum: ['WALLET', 'ZELLE', 'AQE'],
         default: 'WALLET'
     },
     amount: {
