@@ -224,13 +224,13 @@ export default function AssetsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* <Button
+          <Button
             onClick={() => setIsConvertOpen(true)}
             className="h-[52px] px-8 bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-amber-600/20"
           >
             <ArrowUpRight size={20} />
             {t("assets.withdraw_dialog.method_aqe")}
-          </Button> */}
+          </Button>
           <Button
             onClick={() => {
               setPaymentMethod(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET');
