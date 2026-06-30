@@ -9,6 +9,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "src": path.resolve(__dirname, "./src"),
+      "@sounds": path.resolve(__dirname, "./src/pages/plinko/components/Game/sounds"),
+      "store": path.resolve(__dirname, "./src/store"),
+      "utils": path.resolve(__dirname, "./src/utils"),
+      "styles": path.resolve(__dirname, "./src/styles")
     },
   },
   server: {

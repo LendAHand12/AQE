@@ -7,7 +7,16 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "src/*": ["./src/*"],
+      "@sounds/*": ["./src/pages/plinko/components/Game/sounds/*"],
+      "store/auth": ["./src/pages/plinko/store/auth.ts"],
+      "store/game": ["./src/pages/plinko/store/game.ts"],
+      "store/*": ["./src/pages/plinko/store/*"],
+      "utils/random": ["./src/pages/plinko/utils/random.ts"],
+      "utils/*": ["./src/pages/plinko/utils/*"],
+      "styles/colors": ["./src/styles/colors.ts"],
+      "styles/*": ["./src/styles/*"]
     }
   }
 }
