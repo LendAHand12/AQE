@@ -8,7 +8,9 @@ import {
   Calendar,
   Layers,
   Sparkles,
-  UserCheck
+  UserCheck,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -148,6 +150,7 @@ export default function InvestmentPackagesPage() {
   const [packages, setPackages] = useState<Package[]>([])
   const [userProfile, setUserProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false)
   const [selectedSegment, setSelectedSegment] = useState<string>("Tất cả")
   
   // Checkout Modal States
@@ -420,216 +423,227 @@ export default function InvestmentPackagesPage() {
 
       {/* Benefit Comparison Section */}
       {packages.length > 0 && (
-        <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm space-y-6 overflow-hidden">
-          <div>
-            <h3 className="text-lg font-black text-[#0d1f1d]">
-              {t("packages.comparison.title", { defaultValue: "So sánh quyền lợi các gói" })}
-            </h3>
-            <p className="text-xs text-gray-500 font-medium mt-1">
-              {t("packages.comparison.subtitle", { defaultValue: "Xem chi tiết các đặc quyền nghỉ dưỡng đi kèm với từng cấp độ đầu tư." })}
-            </p>
+        <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm space-y-6 overflow-hidden transition-all duration-300">
+          <div 
+            onClick={() => setIsComparisonOpen(!isComparisonOpen)}
+            className="flex items-center justify-between cursor-pointer select-none group"
+          >
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-[#0d1f1d] group-hover:text-[#276152] transition-colors flex items-center gap-2">
+                <span>{t("packages.comparison.title", { defaultValue: "So sánh quyền lợi các gói" })}</span>
+              </h3>
+              <p className="text-xs text-gray-500 font-medium mt-1">
+                {t("packages.comparison.subtitle", { defaultValue: "Xem chi tiết các đặc quyền nghỉ dưỡng đi kèm với từng cấp độ đầu tư." })}
+              </p>
+            </div>
+            
+            <div className="size-10 rounded-2xl bg-gray-50 text-[#0d1f1d] flex items-center justify-center group-hover:bg-[#d9ede8]/30 group-hover:text-[#276152] transition-all shrink-0">
+              {isComparisonOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="pb-4 font-bold text-xs text-gray-500 uppercase tracking-wider pl-4 w-[200px]">
-                    {t("packages.comparison.benefit", { defaultValue: "Quyền lợi" })}
-                  </th>
-                  {sortedPackages.map((pkg) => {
-                    const colors = getPackageColors(pkg.color);
-                    return (
-                      <th key={pkg._id} className="pb-4 text-center font-extrabold text-xs text-gray-900 min-w-[120px]">
-                        <div className="flex flex-col items-center">
-                          <span>{pkg.title}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full mt-1 font-bold animate-pulse" style={{ color: colors.primary, backgroundColor: colors.badgeBg }}>
-                            ${pkg.price.toLocaleString()} USDT
-                          </span>
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {/* Stay Days */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.stay_days", { defaultValue: "Số ngày lưu trú" })}</td>
-                  {sortedPackages.map((pkg) => (
-                    <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
-                      {pkg.stayDays || getPackageBenefits(pkg.price, t).stayDays}
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Room Type */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.room_type", { defaultValue: "Loại phòng" })}</td>
-                  {sortedPackages.map((pkg) => (
-                    <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
-                      {pkg.roomType || getPackageBenefits(pkg.price, t).roomType}
-                    </td>
-                  ))}
-                </tr>
-
-                {/* VIP Lounge */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.vip_lounge", { defaultValue: "VIP Lounge" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasVip = pkg.vipLounge !== undefined ? pkg.vipLounge : getPackageBenefits(pkg.price, t).vipLounge;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasVip ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
+          {isComparisonOpen && (
+            <div className="overflow-x-auto pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="pb-4 font-bold text-xs text-gray-500 uppercase tracking-wider pl-4 w-[200px]">
+                      {t("packages.comparison.benefit", { defaultValue: "Quyền lợi" })}
+                    </th>
+                    {sortedPackages.map((pkg) => {
+                      const colors = getPackageColors(pkg.color);
+                      return (
+                        <th key={pkg._id} className="pb-4 text-center font-extrabold text-xs text-gray-900 min-w-[120px]">
+                          <div className="flex flex-col items-center">
+                            <span>{pkg.title}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full mt-1 font-bold animate-pulse" style={{ color: colors.primary, backgroundColor: colors.badgeBg }}>
+                              ${pkg.price.toLocaleString()} USDT
+                            </span>
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {/* Stay Days */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.stay_days", { defaultValue: "Số ngày lưu trú" })}</td>
+                    {sortedPackages.map((pkg) => (
+                      <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
+                        {pkg.stayDays || getPackageBenefits(pkg.price, t).stayDays}
                       </td>
-                    );
-                  })}
-                </tr>
+                    ))}
+                  </tr>
 
-                {/* Accompanying guests */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.guests", { defaultValue: "Số khách đi kèm" })}</td>
-                  {sortedPackages.map((pkg) => (
-                    <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
-                      {pkg.guests || getPackageBenefits(pkg.price, t).guests}
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Room Service */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.room_service", { defaultValue: "Room Service" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasService = pkg.roomService !== undefined ? pkg.roomService : getPackageBenefits(pkg.price, t).roomService;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasService ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
+                  {/* Room Type */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.room_type", { defaultValue: "Loại phòng" })}</td>
+                    {sortedPackages.map((pkg) => (
+                      <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
+                        {pkg.roomType || getPackageBenefits(pkg.price, t).roomType}
                       </td>
-                    );
-                  })}
-                </tr>
+                    ))}
+                  </tr>
 
-                {/* Transportation */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.transportation", { defaultValue: "Transportation" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasTrans = pkg.transportation !== undefined ? pkg.transportation : getPackageBenefits(pkg.price, t).transport;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasTrans ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
+                  {/* VIP Lounge */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.vip_lounge", { defaultValue: "VIP Lounge" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasVip = pkg.vipLounge !== undefined ? pkg.vipLounge : getPackageBenefits(pkg.price, t).vipLounge;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasVip ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Accompanying guests */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.guests", { defaultValue: "Số khách đi kèm" })}</td>
+                    {sortedPackages.map((pkg) => (
+                      <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
+                        {pkg.guests || getPackageBenefits(pkg.price, t).guests}
                       </td>
-                    );
-                  })}
-                </tr>
+                    ))}
+                  </tr>
 
-                {/* Service Savings */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.savings", { defaultValue: "Mức tiết kiệm" })}</td>
-                  {sortedPackages.map((pkg) => (
-                    <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
-                      {pkg.savings || getPackageBenefits(pkg.price, t).savings}
-                    </td>
-                  ))}
-                </tr>
+                  {/* Room Service */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.room_service", { defaultValue: "Room Service" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasService = pkg.roomService !== undefined ? pkg.roomService : getPackageBenefits(pkg.price, t).roomService;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasService ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
 
-                {/* Wellness & Fitness */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.wellness", { defaultValue: "Wellness & Fitness" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasWell = pkg.wellness !== undefined ? pkg.wellness : getPackageBenefits(pkg.price, t).wellness;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasWell ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
+                  {/* Transportation */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.transportation", { defaultValue: "Transportation" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasTrans = pkg.transportation !== undefined ? pkg.transportation : getPackageBenefits(pkg.price, t).transport;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasTrans ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Service Savings */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.savings", { defaultValue: "Mức tiết kiệm" })}</td>
+                    {sortedPackages.map((pkg) => (
+                      <td key={pkg._id} className="py-4 text-center font-semibold text-gray-900">
+                        {pkg.savings || getPackageBenefits(pkg.price, t).savings}
                       </td>
-                    );
-                  })}
-                </tr>
+                    ))}
+                  </tr>
 
-                {/* Booking priority */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.priority", { defaultValue: "Ưu tiên đặt chỗ" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasPrio = pkg.priority !== undefined ? pkg.priority : getPackageBenefits(pkg.price, t).priority;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasPrio ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
+                  {/* Wellness & Fitness */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.wellness", { defaultValue: "Wellness & Fitness" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasWell = pkg.wellness !== undefined ? pkg.wellness : getPackageBenefits(pkg.price, t).wellness;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasWell ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
 
-                {/* Personal Concierge */}
-                <tr className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.concierge", { defaultValue: "Concierge cá nhân" })}</td>
-                  {sortedPackages.map((pkg) => {
-                    const hasConcierge = pkg.concierge !== undefined ? pkg.concierge : getPackageBenefits(pkg.price, t).concierge;
-                    return (
-                      <td key={pkg._id} className="py-4">
-                        <div className="flex justify-center">
-                          {hasConcierge ? (
-                            <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
+                  {/* Booking priority */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.priority", { defaultValue: "Ưu tiên đặt chỗ" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasPrio = pkg.priority !== undefined ? pkg.priority : getPackageBenefits(pkg.price, t).priority;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasPrio ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
 
-                {/* CTA Row */}
-                <tr className="bg-gray-50/30">
-                  <td className="py-4 pl-4 border-t border-gray-100" />
-                  {sortedPackages.map((pkg) => {
-                    const colors = getPackageColors(pkg.color);
-                    return (
-                      <td key={pkg._id} className="py-4 px-2 border-t border-gray-100">
-                        <div className="flex justify-center">
-                          <Button
-                            onClick={() => handlePurchaseClick(pkg)}
-                            className="text-white text-xs font-bold py-1 px-3 h-9 rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all w-full max-w-[120px]"
-                            style={{ backgroundColor: colors.primary }}
-                          >
-                            {t("packages.comparison.invest_now", { defaultValue: "Đầu tư ngay" })}
-                          </Button>
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  {/* Personal Concierge */}
+                  <tr className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 pl-4 font-bold text-gray-700">{t("packages.comparison.concierge", { defaultValue: "Concierge cá nhân" })}</td>
+                    {sortedPackages.map((pkg) => {
+                      const hasConcierge = pkg.concierge !== undefined ? pkg.concierge : getPackageBenefits(pkg.price, t).concierge;
+                      return (
+                        <td key={pkg._id} className="py-4">
+                          <div className="flex justify-center">
+                            {hasConcierge ? (
+                              <span className="size-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* CTA Row */}
+                  <tr className="bg-gray-50/30">
+                    <td className="py-4 pl-4 border-t border-gray-100" />
+                    {sortedPackages.map((pkg) => {
+                      const colors = getPackageColors(pkg.color);
+                      return (
+                        <td key={pkg._id} className="py-4 px-2 border-t border-gray-100">
+                          <div className="flex justify-center">
+                            <Button
+                              onClick={() => handlePurchaseClick(pkg)}
+                              className="text-white text-xs font-bold py-1 px-3 h-9 rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all w-full max-w-[120px]"
+                              style={{ backgroundColor: colors.primary }}
+                            >
+                              {t("packages.comparison.invest_now", { defaultValue: "Đầu tư ngay" })}
+                            </Button>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

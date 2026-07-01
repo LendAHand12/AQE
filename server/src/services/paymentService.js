@@ -146,8 +146,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             phase = 'LIVE';
         }
 
-        // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
-        const price = 1.0;
+        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
+        const price = 1.02;
 
         const isPostMay = nowVN > may31VN;
         const isLivePhase = nowVN >= julyFirstVN;
@@ -402,8 +402,8 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     const may31VN = new Date('2026-05-31T23:59:59');
     const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-    // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
-    const price = 1.0;
+    // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
+    const price = 1.02;
 
     const tokensCalculated = paidAmount / price;
     const isLivePhase = nowVN >= julyFirstVN;

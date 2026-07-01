@@ -4,7 +4,6 @@ import {
   Loader2,
   CheckCircle2,
   ShieldAlert,
-  Calendar,
   Clock,
   ArrowRight,
   Link2
@@ -113,12 +112,13 @@ export default function BuyPage() {
 
   const isKycVerified = userProfile?.kycStatus === 'verified' || userProfile?.kycStatus === 'pending'
 
-  // June Promotion check (Client side)
-  const now = new Date()
+  // June Promotion check aligned with Chicago timezone (system timezone)
+  const nowChicagoStr = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
+  const now = new Date(nowChicagoStr)
   const isJune = now.getMonth() === 5 && now.getFullYear() === 2026 // 5 = June in JS Date
 
-  const expectedAqe = purchaseAmount
-  const bonusAqe = isJune ? purchaseAmount * 0.05 : 0
+  const expectedAqe = purchaseAmount / 1.02
+  const bonusAqe = isJune ? expectedAqe * 0.05 : 0
   const totalReceived = expectedAqe + bonusAqe
 
   return (
@@ -136,7 +136,7 @@ export default function BuyPage() {
         </div>
 
         {/* Special Promotion Alert Card */}
-        {isJune ? (
+        {isJune && (
           <div className="bg-emerald-50 border border-emerald-100 rounded-[16px] p-4 flex items-start gap-3 shadow-sm">
             <div className="size-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
               <CheckCircle2 size={16} />
@@ -147,20 +147,6 @@ export default function BuyPage() {
               </p>
               <p className="text-[13px] text-emerald-600">
                 {t("buy.june_promo_desc")}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-amber-50/50 border border-amber-100 rounded-[16px] p-4 flex items-start gap-3 shadow-sm">
-            <div className="size-8 bg-amber-500 rounded-full flex items-center justify-center text-white shrink-0">
-              <Calendar size={16} />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-[15px] font-bold text-amber-800">
-                {t("buy.upcoming_promo_title")}
-              </p>
-              <p className="text-[13px] text-amber-600">
-                {t("buy.upcoming_promo_desc")}
               </p>
             </div>
           </div>
@@ -227,18 +213,24 @@ export default function BuyPage() {
             <div className="bg-gray-50/80 rounded-[12px] p-4 space-y-2.5 border border-gray-100/50 text-[13px]">
               <div className="flex justify-between items-center text-gray-500">
                 <span>{t("buy.expected_label")}</span>
-                <span className="font-bold text-gray-800">{expectedAqe.toLocaleString()} AQE</span>
+                <span className="font-bold text-gray-800">
+                  {expectedAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })} AQE
+                </span>
               </div>
               {isJune && (
                 <div className="flex justify-between items-center text-emerald-600">
                   <span>{t("buy.bonus_label")}</span>
-                  <span className="font-bold">+{bonusAqe.toLocaleString()} AQE</span>
+                  <span className="font-bold">
+                    +{bonusAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })} AQE
+                  </span>
                 </div>
               )}
               <div className="w-full h-[1px] bg-gray-200/50 my-0.5"></div>
               <div className="flex justify-between items-center text-sm font-extrabold text-[#0d1f1d]">
                 <span>{t("buy.total_received")}</span>
-                <span className="text-base text-[#276152]">{totalReceived.toLocaleString()} AQE</span>
+                <span className="text-base text-[#276152]">
+                  {totalReceived.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })} AQE
+                </span>
               </div>
             </div>
           )}

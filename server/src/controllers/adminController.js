@@ -1063,7 +1063,7 @@ export const manualDepositUser = async (req, res) => {
         }
 
         const amountNum = parseFloat(paidAmount);
-        const price = 1.0;
+        const price = 1.02;
         const tokensCalculated = amountNum / price;
 
         // 5% bonus only in June 2026

@@ -94,8 +94,8 @@ export const submitPreRegisterPayment = async (req, res) => {
             user.pledgeUsdt = pledgeAmountNum;
         }
 
-        // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
-        const price = 1.0;
+        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
+        const price = 1.02;
 
         const tokensCalculated = amountNum / price;
 
@@ -448,7 +448,7 @@ export const approveManualPayment = async (req, res) => {
             const nowVN = getSystemTime();
             
             const isPackage = !!transaction.metadata?.packageId;
-            let finalTokensCalculated = transaction.amount / 1.0; // fallback price = 1.0
+            let finalTokensCalculated = transaction.amount / 1.02; // fallback price = 1.02
             let finalBonusPercent = 0;
 
             if (isPackage) {
@@ -564,7 +564,7 @@ export const approveManualPayment = async (req, res) => {
         const may31VN = new Date('2026-05-31T23:59:59');
         const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-        let price = 1.0;
+        let price = 1.02;
         const tokensCalculated = transaction.amount / price;
 
         // Update Transaction

@@ -97,6 +97,15 @@ export default function AdminPackagesPage() {
     fetchPackages()
   }, [])
 
+  // Auto calculate AQE Received (including Bonus)
+  useEffect(() => {
+    const priceNum = parseFloat(price) || 0
+    const bonusNum = parseFloat(bonusPercent) || 0
+    const baseAqe = priceNum / 1.02
+    const totalAqe = baseAqe * (1 + bonusNum / 100)
+    setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
+  }, [price, bonusPercent])
+
   const fetchPackages = async () => {
     setLoading(true)
     try {
@@ -158,13 +167,19 @@ export default function AdminPackagesPage() {
     setWellness(!!pkg.wellness)
     setPriority(!!pkg.priority)
     setConcierge(!!pkg.concierge)
+    
+    // Explicitly update calculated AQE Amount for editing modal
+    const baseAqe = pkg.aqeAmount || (pkg.price / 1.02)
+    const totalAqe = baseAqe * (1 + pkg.bonusPercent / 100)
+    setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
+    
     setIsModalOpen(true)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title || !price || !aqeAmount || !description) {
+    if (!title || !price || !description) {
       toast.error("Please enter all required information")
       return
     }
@@ -172,7 +187,7 @@ export default function AdminPackagesPage() {
     const payload = {
       title,
       price: Number(price),
-      aqeAmount: Number(aqeAmount),
+      aqeAmount: Number(price) / 1.02, // auto calculated base amount saved to DB
       bonusPercent: Number(bonusPercent || 0),
       f1CommissionPercent: Number(f1CommissionPercent || 0),
       f2CommissionPercent: Number(f2CommissionPercent || 0),
@@ -252,7 +267,7 @@ export default function AdminPackagesPage() {
                 <th className="py-4 px-6">Investment Package</th>
                 <th className="py-4 px-6">Price (USDT)</th>
                 <th className="py-4 px-6">Segment</th>
-                <th className="py-4 px-6">Receive AQE (Base)</th>
+                <th className="py-4 px-6">AQE Received</th>
                 <th className="py-4 px-6">Color</th>
                 <th className="py-4 px-6">Bonus (%)</th>
                 <th className="py-4 px-6">Commission F1/F2</th>
@@ -281,7 +296,7 @@ export default function AdminPackagesPage() {
                         {pkg.segment === "Cao cấp" ? "Premium" : pkg.segment === "Nâng cao" ? "Advanced" : "Basic"}
                       </span>
                     </td>
-                    <td className="py-4 px-6">{pkg.aqeAmount.toLocaleString()} AQE</td>
+                    <td className="py-4 px-6">{(pkg.aqeAmount * (1 + pkg.bonusPercent / 100)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} AQE</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1.5">
                         <span className="size-3.5 rounded-full border border-gray-200" style={{ backgroundColor: pkg.color || '#276152' }} />
@@ -380,15 +395,12 @@ export default function AdminPackagesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase select-none">AQE Received (Base) *</label>
+                  <label className="text-xs font-bold text-gray-400 uppercase select-none">AQE Received (including Bonus)</label>
                   <Input
-                    required
-                    type="number"
-                    min={0}
+                    disabled
                     value={aqeAmount}
-                    onChange={(e) => setAqeAmount(e.target.value)}
-                    placeholder="980"
-                    className="h-11 rounded-xl"
+                    placeholder="Auto calculated"
+                    className="h-11 rounded-xl bg-gray-50 border-gray-200 text-[#276152] font-black cursor-not-allowed select-none"
                   />
                 </div>
               </div>
