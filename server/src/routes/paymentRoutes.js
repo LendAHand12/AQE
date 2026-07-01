@@ -19,6 +19,7 @@ import {
     sellToken
 } from '../controllers/blockchainController.js';
 import { protect } from '../middleware/auth.js';
+import { getPackages } from '../controllers/packageController.js';
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post('/confirm-manual', protect, confirmManualPayment);
 router.get('/pledge', protect, getMyPreRegister);
 router.get('/history', protect, getPaymentHistory);
 router.get('/my-payments', protect, getUserPayments);
+router.get('/packages', protect, getPackages);
 // Financial History & Stats
 router.get('/my-commissions', protect, getUserCommissions);
 router.get('/my-balance-history', protect, getUserBalanceHistory);

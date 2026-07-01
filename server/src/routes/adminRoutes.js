@@ -39,6 +39,12 @@ import {
 import { upload } from '../middleware/uploadMiddleware.js';
 import { convertHeicToJpg } from '../middleware/heicConverter.js';
 import { exportUsers, exportTransactions, exportWithdrawals } from '../controllers/exportController.js';
+import {
+    adminGetPackages,
+    adminCreatePackage,
+    adminUpdatePackage,
+    adminDeletePackage
+} from '../controllers/packageController.js';
 
 
 const router = express.Router();
@@ -106,6 +112,14 @@ router.route('/properties/:id')
     .put(adminProtect, upload.array('images', 10), convertHeicToJpg, updateProperty)
     .delete(adminProtect, deleteProperty);
 
+// Packages Management
+router.route('/packages')
+    .get(adminProtect, checkPermission('PACKAGES_VIEW'), adminGetPackages)
+    .post(adminProtect, checkPermission('PACKAGES_EDIT'), adminCreatePackage);
+
+router.route('/packages/:id')
+    .put(adminProtect, checkPermission('PACKAGES_EDIT'), adminUpdatePackage)
+    .delete(adminProtect, checkPermission('PACKAGES_DELETE'), adminDeletePackage);
 
 // Admin Accounts Management
 router.route('/accounts')

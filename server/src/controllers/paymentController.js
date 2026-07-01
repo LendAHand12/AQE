@@ -11,6 +11,7 @@ import { finalizeBlockchainPayment, processCommissions } from '../services/payme
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
+import InvestmentPackage from '../models/InvestmentPackage.js';
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -245,12 +246,8 @@ export const getUserPayments = async (req, res) => {
 
 // @desc    Create a new payment for QR flow
 export const createPayment = async (req, res) => {
-    const { amount, pledgeAmount, method, isDirectPurchase } = req.body;
+    const { amount, pledgeAmount, method, isDirectPurchase, packageId } = req.body;
     try {
-        if (!amount || amount <= 0) {
-            return res.status(400).json({ message: 'Invalid amount' });
-        }
-
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -260,12 +257,29 @@ export const createPayment = async (req, res) => {
             return res.status(400).json({ message: 'payments.pending_manual_exists' });
         }
 
+        let purchaseAmount = amount;
+        let packageData = null;
+
+        if (packageId) {
+            packageData = await InvestmentPackage.findById(packageId);
+            if (!packageData) {
+                return res.status(400).json({ message: 'Không tìm thấy gói đầu tư tương ứng' });
+            }
+            purchaseAmount = packageData.price;
+        }
+
+        if (!purchaseAmount || purchaseAmount <= 0) {
+            return res.status(400).json({ message: 'Invalid amount' });
+        }
+
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
 
         const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
         
         let description = "";
-        if (isDirectPurchase) {
+        if (packageData) {
+            description = `Purchase of Investment Package: ${packageData.title} (${methodText})`;
+        } else if (isDirectPurchase) {
             description = `Direct purchase of AQE digital units (${methodText})`;
         } else {
             description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
@@ -275,12 +289,22 @@ export const createPayment = async (req, res) => {
             paymentId,
             from: req.user._id,
             to: process.env.ADMIN_WALLET_ADDRESS,
-            amount,
+            amount: purchaseAmount,
             symbol: 'USDT',
             type: 'PAYMENT',
             status: 'PENDING',
             description,
-            metadata: { pledgeAmount, method, isDirectPurchase: !!isDirectPurchase }
+            metadata: { 
+                pledgeAmount, 
+                method, 
+                isDirectPurchase: !!isDirectPurchase || !!packageId,
+                packageId: packageData ? packageData._id : undefined,
+                packageTitle: packageData ? packageData.title : undefined,
+                aqeAmount: packageData ? packageData.aqeAmount : undefined,
+                bonusPercent: packageData ? packageData.bonusPercent : undefined,
+                f1CommissionPercent: packageData ? packageData.f1CommissionPercent : undefined,
+                f2CommissionPercent: packageData ? packageData.f2CommissionPercent : undefined
+            }
         });
 
         const qrUrl = `${process.env.FRONTEND_URL}/pay?pid=${paymentId}`;
@@ -420,21 +444,26 @@ export const approveManualPayment = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const isDirect = transaction.metadata?.isDirectPurchase === true;
-
         if (isDirect) {
             const nowVN = getSystemTime();
-            const juneStart = new Date('2026-06-01T00:00:00');
-            const juneEnd = new Date('2026-06-30T23:59:59');
-            const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+            
+            const isPackage = !!transaction.metadata?.packageId;
+            let finalTokensCalculated = transaction.amount / 1.0; // fallback price = 1.0
+            let finalBonusPercent = 0;
 
-            let price = 1.0;
-            const tokensCalculated = transaction.amount / price;
-            let bonusPercent = 0;
-            if (isJune) {
-                bonusPercent = 0.05;
+            if (isPackage) {
+                finalTokensCalculated = transaction.metadata.aqeAmount || finalTokensCalculated;
+                finalBonusPercent = transaction.metadata.bonusPercent || 0;
+            } else {
+                const juneStart = new Date('2026-06-01T00:00:00');
+                const juneEnd = new Date('2026-06-30T23:59:59');
+                const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+                if (isJune) {
+                    finalBonusPercent = 5;
+                }
             }
-            const bonusTokens = tokensCalculated * bonusPercent;
+
+            const bonusTokens = finalTokensCalculated * (finalBonusPercent / 100);
 
             // Update Transaction
             transaction.status = 'SUCCESS';
@@ -443,24 +472,25 @@ export const approveManualPayment = async (req, res) => {
             await transaction.save();
 
             const balanceBefore = user.aqeBalance;
-            // Direct purchase credits directly to aqeBalance (always official)
-            user.aqeBalance += tokensCalculated;
+            user.aqeBalance += finalTokensCalculated;
 
             // Log purchase receipt
             await BalanceHistory.create({
                 userId: user._id,
-                amount: tokensCalculated,
+                amount: finalTokensCalculated,
                 symbol: 'AQE',
                 type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
                 balanceBefore,
                 balanceAfter: user.aqeBalance,
-                description: `Manual Payment Approved (Zelle)`
+                description: isPackage 
+                    ? `Manual Payment Approved (Zelle) - Package: ${transaction.metadata.packageTitle}`
+                    : `Manual Payment Approved (Zelle)`
             });
 
-            // Log bonus reward if in June
-            if (isJune && bonusTokens > 0) {
+            // Log bonus reward
+            if (bonusTokens > 0) {
                 const balanceBeforeBonus = user.aqeBalance;
                 user.aqeBalance += bonusTokens;
                 await BalanceHistory.create({
@@ -472,20 +502,39 @@ export const approveManualPayment = async (req, res) => {
                     isOfficial: true,
                     balanceBefore: balanceBeforeBonus,
                     balanceAfter: user.aqeBalance,
-                    description: `June Promotion: 5% Bonus for purchasing AQE digital units`
+                    description: isPackage
+                        ? `Package Bonus: ${finalBonusPercent}% for ${transaction.metadata.packageTitle}`
+                        : `June Promotion: 5% Bonus for purchasing AQE digital units`
+                });
+            }
+
+            // Record purchased package on User
+            if (isPackage) {
+                user.purchasedPackages.push({
+                    packageId: transaction.metadata.packageId,
+                    title: transaction.metadata.packageTitle,
+                    price: transaction.amount,
+                    aqeAmount: finalTokensCalculated,
+                    bonusPercent: finalBonusPercent,
+                    purchasedAt: new Date()
                 });
             }
 
             await user.save();
 
             // Process commissions
-            await processCommissions(user, transaction.amount);
+            await processCommissions(user, transaction.amount, transaction);
 
             // Notify user
+            const title = isPackage ? 'Investment Package Approved' : 'Token Purchase Approved';
+            const message = isPackage
+                ? `Your manual payment of ${transaction.amount} USDT for ${transaction.metadata.packageTitle} has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
+                : `Your manual payment of ${transaction.amount} USDT has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
+
             await Notification.create({
                 userId: user._id,
-                title: 'Token Purchase Approved',
-                message: `Your manual payment of ${transaction.amount} USDT has been approved. You received ${tokensCalculated.toFixed(2)} AQE tokens${isJune ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+                title,
+                message,
                 type: 'PAYMENT'
             });
 
@@ -575,7 +624,7 @@ export const approveManualPayment = async (req, res) => {
         await user.save();
 
         // Process Commissions
-        await processCommissions(user, transaction.amount);
+        await processCommissions(user, transaction.amount, transaction);
 
         // Notify User
         await Notification.create({

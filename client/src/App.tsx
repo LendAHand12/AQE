@@ -11,6 +11,7 @@ import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage"
 import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
 import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
+import AdminPackagesPage from "@/pages/admin/AdminPackagesPage"
 import AdminPropertyPage from "@/pages/admin/AdminPropertyPage"
 import AddPropertyPage from "@/pages/admin/AddPropertyPage"
 import EditPropertyPage from "@/pages/admin/EditPropertyPage"
@@ -44,6 +45,7 @@ import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
 import BuyPage from "@/pages/BuyPage"
+import InvestmentPackagesPage from "@/pages/InvestmentPackagesPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage"
 
@@ -72,6 +74,7 @@ export function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
                 <Route path="/buy" element={<BuyPage />} />
+                <Route path="/investment-packages" element={<InvestmentPackagesPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
@@ -100,6 +103,7 @@ export function App() {
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
               <Route path="/admin/token-settings" element={<TokenSettingsPage />} />
+              <Route path="/admin/packages" element={<AdminPackagesPage />} />
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />

@@ -70,6 +70,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
     // { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
     { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
+    { icon: Coins, label: t("sidebar.investment_packages", { defaultValue: "Các gói đầu tư" }), path: "/investment-packages", key: "investment-packages" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },

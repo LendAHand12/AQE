@@ -997,8 +997,15 @@ export default function AdminUserProfilePage() {
                               {tx.amount?.toLocaleString()}{" "}
                               {tx.symbol || "USDT"}
                             </TableCell>
-                            <TableCell className="max-w-[200px] truncate text-sm text-gray-600">
-                              {tx.description}
+                            <TableCell className="max-w-[200px] text-sm text-gray-600">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="truncate">{tx.description}</span>
+                                {tx.metadata?.packageTitle && (
+                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-bold w-fit uppercase select-none leading-none mt-0.5">
+                                    Pkg: {tx.metadata.packageTitle}
+                                  </span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="pr-6 text-right">
                               {tx.hash ? (

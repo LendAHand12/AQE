@@ -180,7 +180,15 @@ const userSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
-    bankAccounts: [bankAccountSchema]
+    bankAccounts: [bankAccountSchema],
+    purchasedPackages: [{
+        packageId: { type: mongoose.Schema.Types.ObjectId, ref: 'InvestmentPackage' },
+        title: { type: String },
+        price: { type: Number },
+        aqeAmount: { type: Number },
+        bonusPercent: { type: Number },
+        purchasedAt: { type: Date, default: Date.now }
+    }]
 }, {
     timestamps: true
 });

@@ -72,6 +72,11 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
           title: "Support Tickets", 
           description: "Manage user support requests" 
         };
+        case "/admin/packages":
+        return { 
+          title: "Manage Investment Packages", 
+          description: "Create and configure AQE investment packages for users." 
+        };
       default:
         return { 
           title: "Management System", 

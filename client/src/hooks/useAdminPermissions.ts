@@ -20,6 +20,9 @@ export type AdminPermission =
   | "SETTINGS_EDIT"
   | "TICKETS_VIEW"
   | "TICKETS_MANAGE"
+  | "PACKAGES_VIEW"
+  | "PACKAGES_EDIT"
+  | "PACKAGES_DELETE"
 
 export const useAdminPermissions = () => {
   const adminInfo = useMemo(() => {

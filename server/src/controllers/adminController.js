@@ -749,7 +749,8 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                 type: tx.type,
                 status: tx.status,
                 description: tx.description,
-                createdAt: tx.createdAt
+                createdAt: tx.createdAt,
+                metadata: tx.metadata
             }));
         } else if (category === 'COMMISSION') {
             const query = {};
