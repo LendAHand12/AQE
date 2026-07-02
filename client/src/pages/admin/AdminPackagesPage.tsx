@@ -112,7 +112,7 @@ export default function AdminPackagesPage() {
       const res = await apiClient.get("/admin/packages")
       setPackages(res.data)
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load investment packages")
+      toast.error(err.response?.data?.message || "Failed to load partnership packages")
     } finally {
       setLoading(false)
     }
@@ -279,7 +279,7 @@ export default function AdminPackagesPage() {
               {packages.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-gray-400 font-medium">
-                    No investment packages have been created yet.
+                    No partnership packages have been created yet.
                   </td>
                 </tr>
               ) : (

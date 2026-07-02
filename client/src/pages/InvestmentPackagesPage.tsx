@@ -192,7 +192,7 @@ export default function InvestmentPackagesPage() {
       setUserProfile(profileRes.data)
       setPackages(packagesRes.data)
     } catch (err) {
-      console.error("Fetch Investment Packages error:", err)
+      console.error("Fetch Partnership Packages error:", err)
       toast.error(t("packages.fetch_error", { defaultValue: "Không thể tải thông tin gói đầu tư" }))
     } finally {
       setLoading(false)

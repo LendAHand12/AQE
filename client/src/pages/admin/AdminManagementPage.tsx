@@ -93,7 +93,7 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    category: "Investment Packages",
+    category: "Partnership Packages",
     permissions: [
       { id: "PACKAGES_VIEW", label: "View List" },
       { id: "PACKAGES_EDIT", label: "Add/Edit Packages" },

@@ -1,7 +1,7 @@
 import InvestmentPackage from '../models/InvestmentPackage.js';
 import AdminLog from '../models/AdminLog.js';
 
-// @desc    Get active investment packages for users
+// @desc    Get active Partnership packages for users
 // @route   GET /api/payments/packages
 // @access  Protected (User)
 export const getPackages = async (req, res) => {
@@ -13,7 +13,7 @@ export const getPackages = async (req, res) => {
     }
 };
 
-// @desc    Get all investment packages for admin
+// @desc    Get all Partnership packages for admin
 // @route   GET /api/admin/packages
 // @access  Admin
 export const adminGetPackages = async (req, res) => {
