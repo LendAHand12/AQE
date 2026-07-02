@@ -800,12 +800,12 @@ export default function InvestmentPackagesPage() {
                     <p className="text-gray-400 uppercase tracking-wider text-[9px] mb-1">{t("packages.aqe_amount_label")}</p>
                     <p className="text-lg font-black" style={{ color: modalColors.primary }}>{(detailPackage.aqeAmount * (1 + detailPackage.bonusPercent/100)).toLocaleString()} AQE</p>
                   </div>
-                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
+                  {/* <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                     <p className="text-gray-400 uppercase tracking-wider text-[9px] mb-1">{t("packages.referral_commission")}</p>
                     <p className="text-xs text-blue-800 font-extrabold mt-1">
                       F1: {detailPackage.f1CommissionPercent}% | F2: {detailPackage.f2CommissionPercent}%
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

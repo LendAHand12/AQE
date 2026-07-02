@@ -731,6 +731,7 @@
     "empty_packages": "No partnership packages available in this category.",
     "detail_title": "Package Details",
     "aqe_received_label": "AQE Received",
+    "aqe_amount_label": "AQE Received",
     "referral_commission_label": "Referral Commission",
     "close_btn": "Close",
     "invest_now": "Invest Now",
