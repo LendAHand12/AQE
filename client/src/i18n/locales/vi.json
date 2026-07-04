@@ -72,6 +72,7 @@
       "unknown": "Đã có lỗi xảy ra. Vui lòng thử lại.",
       "invalid_username_format": "Tên đăng nhập chỉ được chứa chữ cái viết thường và số (không có dấu, không có khoảng trắng)",
       "invalid_2fa": "Vui lòng nhập đủ 6 số",
+      "invalid_2fa_code": "Mã xác thực 2FA không chính xác",
       "referral_required": "Mã giới thiệu là bắt buộc",
       "referral_not_qualified": "Mã giới thiệu này không đủ điều kiện",
       "invalid_referral": "Mã giới thiệu không hợp lệ",
@@ -255,7 +256,8 @@
       "instructions": "Quét mã QR bên cạnh bằng ứng dụng Google Authenticator để kích hoạt bảo mật 2 lớp.",
       "secret_key": "Mã khóa bí mật",
       "copy": "Đã sao chép mã khóa",
-      "setup": "Kích hoạt 2FA"
+      "setup": "Kích hoạt 2FA",
+      "enter_code": "Nhập mã 6 chữ số từ ứng dụng:"
     },
     "status": {
       "pending_title": "Đang chờ xử lý",

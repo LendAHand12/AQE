@@ -12,12 +12,12 @@ import {
   Lock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "@/providers/AuthProvider"
-import { QRCodeCanvas } from "qrcode.react"
 import { cn } from "@/lib/utils"
 
 const compressImage = (file: File): Promise<Blob> => {
@@ -97,6 +97,8 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
   })
   const [isUploading, setIsUploading] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [twoFactorData, setTwoFactorData] = useState<{ secret: string; qrCodeUrl: string } | null>(null)
+  const [twofaCode, setTwofaCode] = useState("")
 
   useEffect(() => {
     if (!initialData) {
@@ -111,6 +113,12 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
       updateStep(initialData)
     }
   }, [initialData])
+
+  useEffect(() => {
+    if (step === 3 && userData && !userData.isTwoFactorEnabled && !twoFactorData) {
+      generate2FA()
+    }
+  }, [step, userData])
 
   const updateStep = (data: any) => {
     // Determine current step based on sequential logic
@@ -209,14 +217,37 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
     }
   }
 
-  const handleEnable2FA = async () => {
+  const generate2FA = async () => {
     setLoading(true)
     try {
-      await apiClient.post("/auth/setup-2fa", { secret: "JBSWY3DPEHPK3PXP" })
-      toast.success(t("kyc.google_auth.setup") + " " + t("settings.save_success"))
+      const res = await apiClient.get("/auth/2fa/generate")
+      setTwoFactorData(res.data)
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Không thể tạo mã QR 2FA")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEnable2FA = async () => {
+    if (twofaCode.length !== 6) {
+      toast.error(t("auth.errors.invalid_2fa", { defaultValue: "Mã 2FA phải đủ 6 chữ số" }))
+      return
+    }
+
+    setLoading(true)
+    try {
+      await apiClient.post("/auth/2fa/enable", { code: twofaCode })
+      toast.success(t("kyc.google_auth.enable_success") || t("kyc.google_auth.setup") + " " + t("settings.save_success"))
+      await syncProfile()
       fetchProfile()
-    } catch (err) {
-      toast.error(t("kyc.errors.submit_failed"))
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message;
+      if (errMsg) {
+        toast.error(t(errMsg));
+      } else {
+        toast.error(t("kyc.errors.submit_failed"));
+      }
     } finally {
       setLoading(false)
     }
@@ -401,19 +432,29 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
               <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
                 <div className="md:w-[40%] bg-gray-50 flex flex-col items-center justify-center p-10 gap-6">
                   <div className="bg-white p-4 rounded-3xl shadow-xl shadow-gray-200/50">
-                    <QRCodeCanvas
-                      value={`otpauth://totp/AQEstate:${userData.email}?secret=JBSWY3DPEHPK3PXP&issuer=AQEstate`}
-                      size={180}
-                      level="H"
-                    />
+                    {twoFactorData?.qrCodeUrl ? (
+                      <img
+                        src={twoFactorData.qrCodeUrl}
+                        alt="2FA QR Code"
+                        className="size-[180px] object-contain"
+                      />
+                    ) : (
+                      <div className="size-[180px] flex items-center justify-center text-gray-400 font-medium text-xs">
+                        Generating QR Code...
+                      </div>
+                    )}
                   </div>
                   <div className="w-full space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block text-center">
                       {t("kyc.google_auth.secret_key")}
                     </label>
-                    <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl flex items-center justify-between gap-4 font-mono text-sm tracking-widest text-[#276152]">
-                      JBSW Y3DP EHPK 3PXP
-                      <button onClick={() => copyToClipboard("JBSWY3DPEHPK3PXP")} className="text-gray-400 hover:text-[#276152] transition-colors">
+                    <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl flex items-center justify-between gap-4 font-mono text-sm tracking-widest text-[#276152] select-all">
+                      {twoFactorData?.secret ? twoFactorData.secret.match(/.{1,4}/g)?.join(' ') : "Generating..."}
+                      <button 
+                        onClick={() => copyToClipboard(twoFactorData?.secret || "")} 
+                        disabled={!twoFactorData}
+                        className="text-gray-400 hover:text-[#276152] transition-colors shrink-0"
+                      >
                         {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                       </button>
                     </div>
@@ -442,13 +483,28 @@ export default function KYCSection({ initialData }: { initialData?: any }) {
                       <p className="text-sm text-green-800 font-bold">{t("kyc.steps.twofa_enabled")}</p>
                     </div>
                   ) : (
-                    <Button
-                      onClick={handleEnable2FA}
-                      disabled={loading}
-                      className="w-full h-12 rounded-xl bg-[#276152] font-bold shadow-lg shadow-[#276152]/20"
-                    >
-                      {loading ? <Loader2 className="animate-spin" /> : t("kyc.google_auth.setup")}
-                    </Button>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-gray-600 block px-1">
+                          {t("kyc.google_auth.enter_code", { defaultValue: "Nhập mã 6 chữ số từ ứng dụng:" })}
+                        </label>
+                        <Input
+                          type="text"
+                          maxLength={6}
+                          placeholder="000000"
+                          value={twofaCode}
+                          onChange={(e) => setTwofaCode(e.target.value.replace(/\D/g, ''))}
+                          className="h-12 text-center text-lg font-bold font-mono tracking-[0.5em] focus:border-[#276152] focus:ring-[#276152] border-[#d5d7db] rounded-xl"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleEnable2FA}
+                        disabled={loading || twofaCode.length !== 6}
+                        className="w-full h-12 rounded-xl bg-[#276152] font-bold shadow-lg shadow-[#276152]/20"
+                      >
+                        {loading ? <Loader2 className="animate-spin" /> : t("kyc.google_auth.setup")}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>

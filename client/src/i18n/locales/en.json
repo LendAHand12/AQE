@@ -72,6 +72,7 @@
       "unknown": "An error occurred. Please try again.",
       "invalid_username_format": "Username must be lowercase and contain only letters and numbers (no spaces, no accents)",
       "invalid_2fa": "Please enter all 6 digits",
+      "invalid_2fa_code": "Invalid 2FA authentication code",
       "referral_required": "Referral ID is required",
       "referral_not_qualified": "This referral code is not qualified",
       "invalid_referral": "Invalid referral code",
@@ -255,7 +256,8 @@
       "instructions": "Scan the QR code with Google Authenticator app to enable 2FA.",
       "secret_key": "Secret Key",
       "copy": "Secret key copied",
-      "setup": "Enable 2FA"
+      "setup": "Enable 2FA",
+      "enter_code": "Enter the 6-digit code from the app:"
     },
     "status": {
       "pending_title": "Processing",
