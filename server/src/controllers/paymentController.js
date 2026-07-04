@@ -444,6 +444,8 @@ export const approveManualPayment = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const isDirect = transaction.metadata?.isDirectPurchase === true;
+
         if (isDirect) {
             const nowVN = getSystemTime();
             
