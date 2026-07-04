@@ -23,17 +23,9 @@ export default function BuyPage() {
   const [purchaseAmount, setPurchaseAmount] = useState<number>(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
-  const [referralStats, setReferralStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [isBlockchainModalOpen, setIsBlockchainModalOpen] = useState(false)
   const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
-
-  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success(t("pre_register.copied"))
-  }
 
   useEffect(() => {
     fetchInitialData()
@@ -61,15 +53,13 @@ export default function BuyPage() {
   const fetchInitialData = async () => {
     setLoading(true)
     try {
-      const [profileRes, pledgeRes, referralRes] = await Promise.all([
+      const [profileRes, pledgeRes] = await Promise.all([
         apiClient.get("/auth/profile"),
-        apiClient.get("/payments/pledge"), // Contains user's legacy pledge & awaiting approval amounts
-        apiClient.get("/auth/referrals")
+        apiClient.get("/payments/pledge") // Contains user's legacy pledge & awaiting approval amounts
       ])
 
       setUserProfile(profileRes.data)
       setAwaitingPayment(pledgeRes.data)
-      setReferralStats(referralRes.data.summary)
     } catch (err) {
       console.error("Fetch Buy Page Initial Data Error:", err)
     } finally {
