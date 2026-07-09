@@ -64,7 +64,7 @@ export default function RegisterForm() {
 
   // Track referral ID from URL & Validate
   useEffect(() => {
-    const ref = searchParams.get("ref")
+    const ref = searchParams.get("ref") || localStorage.getItem("referral_code")
     if (ref) {
       setFormData(prev => ({ ...prev, refId: ref }))
       validateReferral(ref)
@@ -132,6 +132,7 @@ export default function RegisterForm() {
 
       setRegisteredEmail(submittedEmail)
       setIsSuccessOpen(true)
+      localStorage.removeItem("referral_code")
 
       // Clear form on success
       setFormData({
@@ -327,16 +328,12 @@ export default function RegisterForm() {
           type="text"
           name="refId"
           value={formData.refId}
-          onChange={(e) => {
-            handleChange(e);
-            if (e.target.value) validateReferral(e.target.value);
-            else setIsReferralValid(true); // Don't block if they haven't typed yet, or let submit handle it
-          }}
+          disabled
           required
           placeholder={t("auth.ref_id_placeholder")}
           className={cn(
-            "w-full h-[44px] pl-10 pr-4 bg-white border rounded-[8px] outline-none transition-all text-[#111827] placeholder:text-[#9ca3af]",
-            !isReferralValid ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-[#9ca3af] focus:border-[#276152] focus:ring-[#276152]"
+            "w-full h-[44px] pl-10 pr-4 bg-gray-50 border rounded-[8px] outline-none transition-all text-gray-400 cursor-not-allowed",
+            !isReferralValid ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-200"
           )}
         />
       </div>

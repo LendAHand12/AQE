@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Globe, Check } from "lucide-react"
+import { Globe, Check, Home } from "lucide-react"
 import LoginForm from "@/components/auth/LoginForm"
 import RegisterForm from "@/components/auth/RegisterForm"
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm"
@@ -38,6 +38,17 @@ export default function AuthPage({ mode }: AuthPageProps) {
 
   return (
     <div className="relative flex min-h-screen overflow-hidden bg-white">
+      {/* Homepage Redirect Button */}
+      <div className="absolute top-6 left-6 z-50">
+        <a 
+          href="https://aqestate.net/"
+          className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12px] font-bold text-[#276152] uppercase shadow-sm backdrop-blur-md transition-all outline-none hover:bg-white active:scale-95 hover:shadow-md"
+        >
+          <Home className="h-3.5 w-3.5" />
+          <span>{i18n.language === "vi" ? "Trang chủ" : "Homepage"}</span>
+        </a>
+      </div>
+
       {/* Language Switcher Overlay */}
       <div className="absolute top-6 right-6 z-50">
         <Dialog open={isLangOpen} onOpenChange={setIsLangOpen}>

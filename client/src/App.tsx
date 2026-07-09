@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { useEffect } from "react"
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import AuthPage from "@/pages/auth/AuthPage"
 import Dashboard from "@/pages/Dashboard"
 import SettingsPage from "@/pages/SettingsPage"
@@ -49,15 +50,35 @@ import InvestmentPackagesPage from "@/pages/InvestmentPackagesPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage"
 
+function ExternalRedirect({ url }: { url: string }) {
+  useEffect(() => {
+    window.location.replace(url)
+  }, [url])
+  return null
+}
+
+function ReferralTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const ref = params.get("ref")
+    if (ref) {
+      localStorage.setItem("referral_code", ref)
+    }
+  }, [location])
+  return null
+}
+
 export function App() {
   return (
     <BrowserRouter>
+      <ReferralTracker />
       <AuthProvider>
         <SocketProvider>
           <Toaster position="top-right" richColors />
           <Routes>
             {/* Redirect root based on auth status is handled by guards, but default to login */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<ExternalRedirect url="https://aqestate.net/" />} />
 
             {/* Auth routes (Public only) */}
             <Route element={<PublicRoute />}>

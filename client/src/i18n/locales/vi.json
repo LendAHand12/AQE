@@ -436,7 +436,10 @@
       "zelle_name_label": "Tên tài khoản (Account Name)",
       "zelle_name_placeholder": "Nhập tên tài khoản (VD: John Doe)",
       "zelle_info_label": "Email hoặc Số điện thoại Zelle",
-      "zelle_info_placeholder": "Nhập Email hoặc SĐT của bạn"
+      "zelle_info_placeholder": "Nhập Email hoặc SĐT của bạn",
+      "kyc_warning_title": "Yêu cầu xác thực khuôn mặt",
+      "kyc_warning_desc": "Để thực hiện quy đổi hoặc rút tiền, bạn cần hoàn thành xác thực khuôn mặt (FaceID).",
+      "kyc_warning_btn": "Xác thực ngay"
     },
     "empty_history": "Chưa có lịch sử rút tiền",
     "status": {
