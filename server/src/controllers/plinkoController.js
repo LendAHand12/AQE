@@ -1,19 +1,8 @@
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import PlinkoHistory from '../models/PlinkoHistory.js';
-
-// Define the Plinko slots (total 9 slots)
-const SLOTS = [
-    { amount: 100, weight: 25 },
-    { amount: 150, weight: 20 },
-    { amount: 200, weight: 15 },
-    { amount: 300, weight: 12 },
-    { amount: 500, weight: 8 },
-    { amount: 750, weight: 4 },
-    { amount: 1000, weight: 1 }, // jackpot
-    { amount: 500, weight: 8 },
-    { amount: 200, weight: 15 }
-];
+import PlinkoSettings from '../models/PlinkoSettings.js';
+import AdminLog from '../models/AdminLog.js';
 
 // @desc    Get user's Plinko info (plays and recent history)
 // @route   GET /api/plinko/info
@@ -29,9 +18,15 @@ export const getPlinkoInfo = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(20);
 
+        let settings = await PlinkoSettings.findOne();
+        if (!settings) {
+            settings = await PlinkoSettings.create({});
+        }
+
         res.json({
             plinkoPlays: user.plinkoPlays || 0,
-            history
+            history,
+            settings
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -52,23 +47,34 @@ export const playPlinko = async (req, res) => {
             return res.status(400).json({ message: 'No Plinko plays remaining. Deposit 100 USDT to get 10 plays!' });
         }
 
+        // Fetch Plinko Settings
+        let settings = await PlinkoSettings.findOne();
+        if (!settings) {
+            settings = await PlinkoSettings.create({});
+        }
+
+        const slots = settings.slots;
+        if (!slots || slots.length === 0) {
+            return res.status(500).json({ message: 'Plinko slots configuration is empty' });
+        }
+
         // 1. Deduct 1 play
         user.plinkoPlays -= 1;
 
         // 2. Select slot and reward based on weights
-        const totalWeight = SLOTS.reduce((sum, slot) => sum + slot.weight, 0);
+        const totalWeight = slots.reduce((sum, slot) => sum + slot.weight, 0);
         let randomNum = Math.floor(Math.random() * totalWeight);
         let slotIndex = 0;
         
-        for (let i = 0; i < SLOTS.length; i++) {
-            randomNum -= SLOTS[i].weight;
+        for (let i = 0; i < slots.length; i++) {
+            randomNum -= slots[i].weight;
             if (randomNum < 0) {
                 slotIndex = i;
                 break;
             }
         }
         
-        const rewardAmount = SLOTS[slotIndex].amount;
+        const rewardAmount = slots[slotIndex].amount;
 
         // 3. Update user balance (AQE)
         const balanceBefore = user.aqeBalance || 0;
@@ -102,6 +108,57 @@ export const playPlinko = async (req, res) => {
             newBalance: user.aqeBalance,
             playedAt: plinkoLog.playedAt
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Plinko settings (Admin)
+// @route   GET /api/admin/plinko-settings
+// @access  Private
+export const getPlinkoSettingsAdmin = async (req, res) => {
+    try {
+        let settings = await PlinkoSettings.findOne();
+        if (!settings) {
+            settings = await PlinkoSettings.create({});
+        }
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update Plinko settings (Admin)
+// @route   PUT /api/admin/plinko-settings
+// @access  Private
+export const updatePlinkoSettingsAdmin = async (req, res) => {
+    const { engineGravity, frictionAir, vxMultiplier, slots } = req.body;
+    try {
+        let settings = await PlinkoSettings.findOne();
+        if (!settings) {
+            settings = new PlinkoSettings();
+        }
+
+        settings.engineGravity = engineGravity !== undefined ? Number(engineGravity) : settings.engineGravity;
+        settings.frictionAir = frictionAir !== undefined ? Number(frictionAir) : settings.frictionAir;
+        settings.vxMultiplier = vxMultiplier !== undefined ? Number(vxMultiplier) : settings.vxMultiplier;
+        
+        if (slots && Array.isArray(slots)) {
+            settings.slots = slots;
+        }
+
+        const updatedSettings = await settings.save();
+
+        // Log the action
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'UPDATE_PLINKO_SETTINGS',
+            target: 'PLINKO',
+            details: req.body
+        });
+
+        res.json({ message: 'Cập nhật cài đặt Plinko thành công', settings: updatedSettings });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

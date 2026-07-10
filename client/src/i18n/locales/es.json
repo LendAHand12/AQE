@@ -694,5 +694,17 @@
     "click_to_go": "Haga clic para completar este paso",
     "dismiss": "Ocultar guía",
     "show_btn": "Mostrar guía de pago"
+  },
+  "plinko": {
+    "wallet_balance": "Saldo de cartera:",
+    "play_turns": "Jugadas:",
+    "turn": "Jugadas",
+    "balls_to_drop": "Bolas a soltar:",
+    "balls": "bolas",
+    "balls_in_board": "Bolas en tablero: {{count}}/15",
+    "processing": "Procesando...",
+    "no_plays_remaining": "SIN JUGADAS RESTANTES",
+    "drop_ball": "SOLTAR BOLA",
+    "play_error": "Ocurrió un error al iniciar el juego"
   }
 }

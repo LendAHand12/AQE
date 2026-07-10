@@ -787,5 +787,17 @@
       "item_5": "Benefits may depend on room availability and booking schedules.",
       "view_terms": "View Terms & Conditions →"
     }
+  },
+  "plinko": {
+    "wallet_balance": "Wallet Balance:",
+    "play_turns": "Plays:",
+    "turn": "Plays",
+    "balls_to_drop": "Balls to drop:",
+    "balls": "balls",
+    "balls_in_board": "Balls on board: {{count}}/15",
+    "processing": "Processing...",
+    "no_plays_remaining": "NO PLAYS REMAINING",
+    "drop_ball": "DROP BALL",
+    "play_error": "An error occurred while starting the game"
   }
 }

@@ -10,7 +10,7 @@ const ball = {
 }
 
 const engine = {
-  engineGravity: 1.0
+  engineGravity: 0.45
 }
 
 const world = {

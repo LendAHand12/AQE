@@ -786,5 +786,17 @@
       "item_5": "Các quyền lợi có thể phụ thuộc vào tình trạng phòng và lịch đặt chỗ.",
       "view_terms": "Xem điều khoản và điều kiện →"
     }
+  },
+  "plinko": {
+    "wallet_balance": "Số dư ví:",
+    "play_turns": "Lượt chơi:",
+    "turn": "Lượt",
+    "balls_to_drop": "Số bóng thả:",
+    "balls": "bóng",
+    "balls_in_board": "Bóng trong bảng: {{count}}/15",
+    "processing": "Đang xử lý...",
+    "no_plays_remaining": "HẾT LƯỢT CHƠI",
+    "drop_ball": "THẢ BÓNG",
+    "play_error": "Có lỗi xảy ra khi bắt đầu chơi"
   }
 }
