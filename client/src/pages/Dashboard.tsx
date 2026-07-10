@@ -10,8 +10,10 @@ import {
   Wallet, 
   Plus, 
   ArrowUp,
-  Loader2
+  Loader2,
+  Link2
 } from "lucide-react"
+import { toast } from "sonner"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
@@ -19,6 +21,8 @@ import dayjs from "dayjs"
 export default function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
   // API State
   const [loading, setLoading] = useState(true)
@@ -30,6 +34,8 @@ export default function Dashboard() {
   })
   const [totalSales, setTotalSales] = useState(0)
   const [monthlyCommission, setMonthlyCommission] = useState(0)
+  const [userProfile, setUserProfile] = useState<any>(null)
+  const [referralStats, setReferralStats] = useState<any>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +56,7 @@ export default function Dashboard() {
           const referralsRes = await apiClient.get("/auth/referrals")
           if (referralsRes.data?.summary) {
             setTotalSales(referralsRes.data.summary.totalSales || 0)
+            setReferralStats(referralsRes.data.summary)
           }
         } catch (e) {
           console.error("Failed to fetch referrals stats:", e)
@@ -67,6 +74,14 @@ export default function Dashboard() {
           setMonthlyCommission(monthlySum)
         } catch (e) {
           console.error("Failed to fetch commissions list:", e)
+        }
+
+        // 4. Fetch user profile
+        try {
+          const profileRes = await apiClient.get("/auth/profile")
+          setUserProfile(profileRes.data)
+        } catch (e) {
+          console.error("Failed to fetch profile:", e)
         }
       } catch (err) {
         console.error("Dashboard Fetch Error:", err)
@@ -242,6 +257,61 @@ export default function Dashboard() {
             </div>
           )
         })}
+      </div>
+
+      {/* Referral / Invite Friends Card */}
+      <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="size-8 rounded-full bg-[#d9ede8] flex items-center justify-center text-[#276152] shrink-0">
+                <Link2 size={16} />
+              </div>
+              <h3 className="text-[16px] font-bold text-[#111827]">
+                {t("pre_register.ref_card_title")}
+              </h3>
+            </div>
+            <p className="text-[13px] text-gray-400 font-medium md:pl-10">
+              {t("pre_register.ref_card_desc")}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:w-1/2">
+            <div className="flex-1 bg-gray-50 rounded-[12px] px-4 h-11 flex items-center overflow-hidden border border-gray-100 relative min-w-[200px]">
+              <span className="text-[13px] font-medium text-gray-500 truncate">
+                {FRONTEND_URL ? `${FRONTEND_URL.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}` : `register?ref=${userProfile?.username || 'TN2024AQE'}`}
+              </span>
+              {(!userProfile || (userProfile.totalPaid || 0) < 10) && (
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-[0.5px] flex items-center justify-center px-3">
+                  <span className="text-[11px] font-black text-amber-600 uppercase tracking-tight text-center leading-tight">
+                    {t("pre_register.referral_lock_msg")}
+                  </span>
+                </div>
+              )}
+            </div>
+            <button
+              disabled={!userProfile || (userProfile.totalPaid || 0) < 10}
+              onClick={() => {
+                navigator.clipboard.writeText(`${FRONTEND_URL}/register?ref=${userProfile?.username || 'TN2024AQE'}`);
+                toast.success(t("pre_register.copied"));
+              }}
+              className="bg-[#276152] hover:bg-[#1e4d40] disabled:opacity-50 text-white rounded-[12px] px-6 h-11 font-bold text-[13px] transition-all active:scale-[0.97]"
+            >
+              {t("pre_register.copy_btn")}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-6 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 shrink-0 text-[13px]">
+            <div>
+              <p className="text-gray-400 font-medium">{t("pre_register.total_referrals")}</p>
+              <p className="text-[20px] font-black text-[#276152]">{referralStats?.totalReferrals || 0}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 font-medium">{t("pre_register.total_commission")}</p>
+              <p className="text-[20px] font-black text-[#276152]">{referralStats?.totalCommission || 0} <span className="text-xs">USDT</span></p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions Row */}

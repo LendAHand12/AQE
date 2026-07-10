@@ -72,6 +72,7 @@
       "unknown": "An error occurred. Please try again.",
       "invalid_username_format": "Username must be lowercase and contain only letters and numbers (no spaces, no accents)",
       "invalid_2fa": "Please enter all 6 digits",
+      "invalid_2fa_code": "Invalid 2FA authentication code",
       "referral_required": "Referral ID is required",
       "referral_not_qualified": "This referral code is not qualified",
       "invalid_referral": "Invalid referral code",
@@ -255,7 +256,8 @@
       "instructions": "Scan the QR code with Google Authenticator app to enable 2FA.",
       "secret_key": "Secret Key",
       "copy": "Secret key copied",
-      "setup": "Enable 2FA"
+      "setup": "Enable 2FA",
+      "enter_code": "Enter the 6-digit code from the app:"
     },
     "status": {
       "pending_title": "Processing",
@@ -273,6 +275,7 @@
     "dashboard": "Dashboard",
     "preRegister": "Pre-Register",
     "buy_aqe": "Participate AQE",
+    "investment_packages": "Partnership Packages",
     "referrals": "Referral System",
     "payment_history": "Payment History",
     "balance_history": "Transactions History",
@@ -433,7 +436,10 @@
       "zelle_name_label": "Account Name",
       "zelle_name_placeholder": "Enter account name (e.g. John Doe)",
       "zelle_info_label": "Zelle Email or Phone",
-      "zelle_info_placeholder": "Enter Email or Phone number"
+      "zelle_info_placeholder": "Enter Email or Phone number",
+      "kyc_warning_title": "Face Verification Required",
+      "kyc_warning_desc": "To perform conversion or withdrawal, you must complete face verification (FaceID).",
+      "kyc_warning_btn": "Verify Now"
     },
     "empty_history": "No withdrawal history yet",
     "status": {
@@ -700,5 +706,86 @@
     "click_to_go": "Click to complete this step",
     "dismiss": "Dismiss Guide",
     "show_btn": "Show Payment Guide"
+  },
+  "packages": {
+    "title": "AQE Partnership Packages",
+    "subtitle": "Choose the right package to receive AQE and unlock premium resort privileges.",
+    "breadcrumb_home": "Home",
+    "breadcrumb_packages": "Partnership Packages",
+    "view_history": "Investment History",
+    "promo_partner": "Limited Partner Promotion",
+    "partner_title": "Exclusive Partner Packages",
+    "partner_desc": "Join the AQE ecosystem and receive corresponding resort privileges for each level of investment.",
+    "dates_label": "01/07 – 30/09/2026",
+    "rate_label": "1 AQE = 1.02 USDT (Fixed rate)",
+    "stats": {
+      "total_packages": "Total Packages",
+      "min_price": "Entry Level From",
+      "max_aqe": "Receive Up To",
+      "service_saving": "Service Savings"
+    },
+    "filter_all": "All",
+    "filter_basic": "Basic",
+    "filter_advanced": "Advanced",
+    "filter_premium": "Premium",
+    "participate_now": "Participate Now",
+    "view_details": "View Details",
+    "kyc_warning_title": "KYC Verification Required to Invest",
+    "kyc_warning_desc": "To protect legal ownership of resort real estate, you need to complete identity verification.",
+    "kyc_verify_btn": "Verify Now",
+    "empty_packages": "No partnership packages available in this category.",
+    "detail_title": "Package Details",
+    "aqe_received_label": "AQE Received",
+    "aqe_amount_label": "AQE Received",
+    "referral_commission_label": "Referral Commission",
+    "close_btn": "Close",
+    "invest_now": "Invest Now",
+    "package_unit": "Packages",
+    "up_to_50": "Up to 50%",
+    "invest_with": "Participate with",
+    "aqe_received": "AQE Received:",
+    "included_bonus": "Bonus included:",
+    "comparison": {
+      "title": "Compare Package Benefits",
+      "subtitle": "View detailed resort privileges associated with each investment level.",
+      "benefit": "Benefits",
+      "stay_days": "Resort stay duration",
+      "room_type": "Room type category",
+      "vip_lounge": "VIP Lounge access",
+      "guests": "Accompanying guests",
+      "room_service": "Room Service",
+      "transportation": "Transportation service",
+      "savings": "Resort services discount",
+      "wellness": "Wellness & Fitness access",
+      "priority": "Priority booking option",
+      "concierge": "Personal Concierge",
+      "invest_now": "Invest Now"
+    },
+    "process": {
+      "title": "Investment Process",
+      "step_1_title": "Choose Investment Package",
+      "step_1_desc": "Review and compare the benefits of each package.",
+      "step_2_title": "Confirm Information",
+      "step_2_desc": "Verify the participation amount and expected AQE tokens.",
+      "step_3_title": "Make Payment",
+      "step_3_desc": "Complete USDT transfer via Blockchain or Zelle QR Code."
+    },
+    "benefits": {
+      "stay_2": "2 days / year",
+      "stay_5": "5 days / year",
+      "stay_7": "7 days / year",
+      "stay_14": "14 days / year",
+      "guests_none": "None",
+      "savings_unlimited": "Unlimited"
+    },
+    "notes": {
+      "title": "Important Notes",
+      "item_1": "The program applies from July 1st to September 30th, 2026.",
+      "item_2": "Listing rate starting July 1st, 2026 is 1 AQE = 1.02 USDT.",
+      "item_3": "Resort privileges are applied according to the terms of each package.",
+      "item_4": "Users must complete account verification before investing.",
+      "item_5": "Benefits may depend on room availability and booking schedules.",
+      "view_terms": "View Terms & Conditions →"
+    }
   }
 }

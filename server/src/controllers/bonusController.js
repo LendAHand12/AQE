@@ -223,8 +223,8 @@ export const claimBonus = async (req, res) => {
                 newAqeBalance: user.aqeBalance
             };
         } else {
-            // Pegged rate: 1 AQE = 1 USDT for claim
-            const price = 1.0;
+            // Pegged rate: 1 AQE = 1.02 USDT for claim
+            const price = 1.02;
             const usdtAmount = amountToClaim * price;
 
             const balanceBefore = user.usdtBalance || 0;

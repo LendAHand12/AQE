@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { useEffect } from "react"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import AuthPage from "@/pages/auth/AuthPage"
 import Dashboard from "@/pages/Dashboard"
 import SettingsPage from "@/pages/SettingsPage"
@@ -11,6 +12,7 @@ import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage"
 import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
 import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
+import AdminPackagesPage from "@/pages/admin/AdminPackagesPage"
 import AdminPropertyPage from "@/pages/admin/AdminPropertyPage"
 import AddPropertyPage from "@/pages/admin/AddPropertyPage"
 import EditPropertyPage from "@/pages/admin/EditPropertyPage"
@@ -45,18 +47,39 @@ import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
 import BuyPage from "@/pages/BuyPage"
+import InvestmentPackagesPage from "@/pages/InvestmentPackagesPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage"
+
+function ExternalRedirect({ url }: { url: string }) {
+  useEffect(() => {
+    window.location.replace(url)
+  }, [url])
+  return null
+}
+
+function ReferralTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const ref = params.get("ref")
+    if (ref) {
+      localStorage.setItem("referral_code", ref)
+    }
+  }, [location])
+  return null
+}
 
 export function App() {
   return (
     <BrowserRouter>
+      <ReferralTracker />
       <AuthProvider>
         <SocketProvider>
           <Toaster position="top-right" richColors />
           <Routes>
             {/* Redirect root based on auth status is handled by guards, but default to login */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<ExternalRedirect url="https://aqestate.net/" />} />
 
             {/* Auth routes (Public only) */}
             <Route element={<PublicRoute />}>
@@ -73,6 +96,7 @@ export function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
                 <Route path="/buy" element={<BuyPage />} />
+                <Route path="/investment-packages" element={<InvestmentPackagesPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
@@ -102,6 +126,7 @@ export function App() {
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
               <Route path="/admin/token-settings" element={<TokenSettingsPage />} />
+              <Route path="/admin/packages" element={<AdminPackagesPage />} />
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />

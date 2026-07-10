@@ -91,6 +91,14 @@ const PERMISSION_GROUPS = [
       { id: "TICKETS_VIEW", label: "View Tickets" },
       { id: "TICKETS_MANAGE", label: "Reply and Resolve Tickets" },
     ]
+  },
+  {
+    category: "Partnership Packages",
+    permissions: [
+      { id: "PACKAGES_VIEW", label: "View List" },
+      { id: "PACKAGES_EDIT", label: "Add/Edit Packages" },
+      { id: "PACKAGES_DELETE", label: "Delete Packages" },
+    ]
   }
 ]
 

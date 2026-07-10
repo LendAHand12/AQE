@@ -80,6 +80,12 @@ const mainNavItems: NavItem[] = [
     requiredPermission: "SETTINGS_VIEW"
   },
   {
+    title: "Partnership Packages",
+    href: "/admin/packages",
+    icon: HandCoins,
+    requiredPermission: "PACKAGES_VIEW"
+  },
+  {
     title: "Admin Management",
     href: "/admin/accounts",
     icon: ShieldAlert,

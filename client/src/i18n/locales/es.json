@@ -428,7 +428,10 @@
       "zelle_name_label": "Nombre de cuenta",
       "zelle_name_placeholder": "Ingrese el nombre de la cuenta (por ejemplo, John Doe)",
       "zelle_info_label": "Correo electrónico o teléfono de Zelle",
-      "zelle_info_placeholder": "Ingrese el correo electrónico o el número de teléfono"
+      "zelle_info_placeholder": "Ingrese el correo electrónico o el número de teléfono",
+      "kyc_warning_title": "Verificación facial requerida",
+      "kyc_warning_desc": "Para realizar la conversión o el retiro, debe completar la verificación facial (FaceID).",
+      "kyc_warning_btn": "Verificar ahora"
     },
     "empty_history": "Aún no hay historial de retiros",
     "status": {

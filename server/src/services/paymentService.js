@@ -9,13 +9,25 @@ import { getSystemTime } from '../utils/time.js';
 /**
  * Shared logic to process commissions
  */
-export async function processCommissions(buyer, amountPaid) {
+export async function processCommissions(buyer, amountPaid, transaction) {
     if (!buyer.referredBy) return;
 
-    const amountF1 = amountPaid * 0.08;
-    const amountF2 = amountPaid * 0.02;
+    let f1Percent = 8;
+    let f2Percent = 2;
 
-    // F1 - 8%
+    if (transaction && transaction.metadata) {
+        if (typeof transaction.metadata.f1CommissionPercent === 'number') {
+            f1Percent = transaction.metadata.f1CommissionPercent;
+        }
+        if (typeof transaction.metadata.f2CommissionPercent === 'number') {
+            f2Percent = transaction.metadata.f2CommissionPercent;
+        }
+    }
+
+    const amountF1 = amountPaid * (f1Percent / 100);
+    const amountF2 = amountPaid * (f2Percent / 100);
+
+    // F1 - f1Percent%
     const f1 = await User.findById(buyer.referredBy);
     if (f1) {
         const balanceBeforeF1 = f1.usdtBalance || 0;
@@ -27,7 +39,7 @@ export async function processCommissions(buyer, amountPaid) {
             fromUserId: buyer._id,
             amountUsdt: amountF1,
             level: 1,
-            percentage: 8,
+            percentage: f1Percent,
             salesAmount: amountPaid
         });
 
@@ -40,7 +52,7 @@ export async function processCommissions(buyer, amountPaid) {
             isOfficial: true,
             balanceBefore: balanceBeforeF1,
             balanceAfter: f1.usdtBalance,
-            description: `Commission Level 1 from ${buyer.username}`
+            description: `Commission Level 1 (${f1Percent}%) from ${buyer.username}`
         });
 
         // Notify F1
@@ -56,7 +68,7 @@ export async function processCommissions(buyer, amountPaid) {
             type: 'COMMISSION'
         });
 
-        // F2 - 2%
+        // F2 - f2Percent%
         if (f1.referredBy) {
             const f2 = await User.findById(f1.referredBy);
             if (f2) {
@@ -69,7 +81,7 @@ export async function processCommissions(buyer, amountPaid) {
                     fromUserId: buyer._id,
                     amountUsdt: amountF2,
                     level: 2,
-                    percentage: 2,
+                    percentage: f2Percent,
                     salesAmount: amountPaid
                 });
 
@@ -82,7 +94,7 @@ export async function processCommissions(buyer, amountPaid) {
                     isOfficial: true,
                     balanceBefore: balanceBeforeF2,
                     balanceAfter: f2.usdtBalance,
-                    description: `Commission Level 2 from ${buyer.username}`
+                    description: `Commission Level 2 (${f2Percent}%) from ${buyer.username}`
                 });
 
                 // Notify F2
@@ -134,8 +146,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             phase = 'LIVE';
         }
 
-        // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
-        const price = 1.0;
+        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
+        const price = 1.02;
 
         const isPostMay = nowVN > may31VN;
         const isLivePhase = nowVN >= julyFirstVN;
@@ -162,35 +174,44 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 throw saveError;
             }
 
-            const juneStart = new Date('2026-06-01T00:00:00');
-            const juneEnd = new Date('2026-06-30T23:59:59');
-            const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+            const isPackage = !!transaction.metadata?.packageId;
+            let finalTokensCalculated = tokensCalculated;
+            let finalBonusPercent = 0;
 
-            let bonusPercent = 0;
-            if (isJune) {
-                bonusPercent = 0.05;
+            if (isPackage) {
+                finalTokensCalculated = transaction.metadata.aqeAmount || tokensCalculated;
+                finalBonusPercent = transaction.metadata.bonusPercent || 0;
+            } else {
+                const juneStart = new Date('2026-06-01T00:00:00');
+                const juneEnd = new Date('2026-06-30T23:59:59');
+                const isJune = nowVN >= juneStart && nowVN <= juneEnd;
+                if (isJune) {
+                    finalBonusPercent = 5; // 5%
+                }
             }
-            const bonusTokens = tokensCalculated * bonusPercent;
+
+            const bonusTokens = finalTokensCalculated * (finalBonusPercent / 100);
 
             const balanceBefore = user.aqeBalance;
-            // Direct purchase credits directly to aqeBalance (always official)
-            user.aqeBalance += tokensCalculated;
+            user.aqeBalance += finalTokensCalculated;
 
             // Log purchase receipt
             await BalanceHistory.create({
                 userId: user._id,
-                amount: tokensCalculated,
+                amount: finalTokensCalculated,
                 symbol: 'AQE',
                 type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
                 balanceBefore,
                 balanceAfter: user.aqeBalance,
-                description: `Purchased AQE digital units via Blockchain`
+                description: isPackage 
+                    ? `Purchased Investment Package: ${transaction.metadata.packageTitle} via Blockchain`
+                    : `Purchased AQE digital units via Blockchain`
             });
 
-            // Log bonus reward if in June
-            if (isJune && bonusTokens > 0) {
+            // Log bonus reward
+            if (bonusTokens > 0) {
                 const balanceBeforeBonus = user.aqeBalance;
                 user.aqeBalance += bonusTokens;
                 await BalanceHistory.create({
@@ -202,7 +223,21 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     isOfficial: true,
                     balanceBefore: balanceBeforeBonus,
                     balanceAfter: user.aqeBalance,
-                    description: `June Promotion: 5% Bonus for purchasing AQE digital units`
+                    description: isPackage
+                        ? `Package Bonus: ${finalBonusPercent}% for ${transaction.metadata.packageTitle}`
+                        : `June Promotion: 5% Bonus for purchasing AQE digital units`
+                });
+            }
+
+            // Record purchased package on User
+            if (isPackage) {
+                user.purchasedPackages.push({
+                    packageId: transaction.metadata.packageId,
+                    title: transaction.metadata.packageTitle,
+                    price: processingAmount,
+                    aqeAmount: finalTokensCalculated,
+                    bonusPercent: finalBonusPercent,
+                    purchasedAt: new Date()
                 });
             }
 
@@ -229,13 +264,18 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
 
             // Process commissions
-            await processCommissions(user, processingAmount);
+            await processCommissions(user, processingAmount, transaction);
 
             // Notify user
+            const title = isPackage ? 'Investment Package Confirmed' : 'Token Purchase Successful';
+            const message = isPackage
+                ? `Your purchase of ${transaction.metadata.packageTitle} for ${processingAmount} USDT has been confirmed. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
+                : `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
+
             await Notification.create({
                 userId: user._id,
-                title: 'Token Purchase Successful',
-                message: `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens${isJune ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+                title,
+                message,
                 type: 'PAYMENT'
             });
 
@@ -356,7 +396,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
 
             // Process commissions
-            await processCommissions(user, actualAmount);
+            await processCommissions(user, actualAmount, transaction);
 
             // Notify user
             const title = isLivePhase ? 'Token Purchase Successful' : 'Pre-registration Payment Received';
@@ -400,8 +440,8 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     const may31VN = new Date('2026-05-31T23:59:59');
     const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-    // Pegged rate: 1 AQE = 1 USDT (not related to pool price yet)
-    const price = 1.0;
+    // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
+    const price = 1.02;
 
     const tokensCalculated = paidAmount / price;
     const isLivePhase = nowVN >= julyFirstVN;
@@ -517,7 +557,7 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     await user.save();
 
     // 6. Process Commissions
-    await processCommissions(user, paidAmount);
+    await processCommissions(user, paidAmount, transaction);
 
     // 7. Notify User
     const title = 'Deposit Confirmed';

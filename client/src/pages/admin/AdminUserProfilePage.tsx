@@ -264,6 +264,7 @@ export default function AdminUserProfilePage() {
 
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [aqeTypeFilter, setAqeTypeFilter] = useState<string>("ALL")
 
   useEffect(() => {
     fetchUserDetails()
@@ -1005,8 +1006,15 @@ export default function AdminUserProfilePage() {
                               {tx.amount?.toLocaleString()}{" "}
                               {tx.symbol || "USDT"}
                             </TableCell>
-                            <TableCell className="max-w-[200px] truncate text-sm text-gray-600">
-                              {tx.description}
+                            <TableCell className="max-w-[200px] text-sm text-gray-600">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="truncate">{tx.description}</span>
+                                {tx.metadata?.packageTitle && (
+                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-bold w-fit uppercase select-none leading-none mt-0.5">
+                                    Pkg: {tx.metadata.packageTitle}
+                                  </span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="pr-6 text-right">
                               {tx.hash ? (
@@ -1296,11 +1304,28 @@ export default function AdminUserProfilePage() {
               </div>
 
               <Card className="overflow-hidden rounded-[24px] border-gray-100 shadow-sm">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
                     <Building2 size={20} className="text-amber-600" />
                     AQE Distribution History
                   </CardTitle>
+                  <div className="w-[180px]">
+                    <Select value={aqeTypeFilter} onValueChange={setAqeTypeFilter}>
+                      <SelectTrigger className="h-9 rounded-full border-gray-200 bg-white px-4 text-xs font-bold text-gray-700">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-gray-100 shadow-xl">
+                        <SelectItem value="ALL">All Types</SelectItem>
+                        <SelectItem value="RECEIVE">RECEIVE</SelectItem>
+                        <SelectItem value="SWAP">SWAP</SelectItem>
+                        <SelectItem value="REWARD">REWARD</SelectItem>
+                        <SelectItem value="WITHDRAW">WITHDRAW</SelectItem>
+                        <SelectItem value="COMMISSION">COMMISSION</SelectItem>
+                        <SelectItem value="BONUS">BONUS</SelectItem>
+                        <SelectItem value="CLAIM_BONUS">CLAIM_BONUS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
@@ -1319,10 +1344,10 @@ export default function AdminUserProfilePage() {
                     </TableHeader>
                     <TableBody>
                       {data.tokenHistory?.filter(
-                        (bh: any) => bh.symbol === "AQE"
+                        (bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter)
                       ).length > 0 ? (
                         data.tokenHistory
-                          .filter((bh: any) => bh.symbol === "AQE")
+                          .filter((bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter))
                           .map((bh: any) => (
                             <TableRow key={bh._id}>
                               <TableCell className="pl-6 text-xs text-gray-500">

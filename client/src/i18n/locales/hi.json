@@ -428,7 +428,10 @@
       "zelle_name_label": "खाता नाम",
       "zelle_name_placeholder": "खाता नाम दर्ज करें (जैसे जॉन डो)",
       "zelle_info_label": "ज़ेले ईमेल या फ़ोन",
-      "zelle_info_placeholder": "ईमेल या फ़ोन नंबर दर्ज करें"
+      "zelle_info_placeholder": "ईमेल या फ़ोन नंबर दर्ज करें",
+      "kyc_warning_title": "चेहरा सत्यापन आवश्यक है",
+      "kyc_warning_desc": "रूपांतरण या निकासी करने के लिए, आपको चेहरा सत्यापन (FaceID) पूरा करना होगा।",
+      "kyc_warning_btn": "अभी सत्यापित करें"
     },
     "empty_history": "अभी तक कोई निकासी इतिहास नहीं",
     "status": {

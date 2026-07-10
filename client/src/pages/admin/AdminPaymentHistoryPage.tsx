@@ -216,8 +216,23 @@ export default function AdminPaymentHistoryPage() {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="font-mono text-[13px] text-gray-500">
-                  {tx.paymentId || "N/A"}
+                <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-[13px] text-gray-600 font-bold">{tx.paymentId || "N/A"}</span>
+                    {tx.metadata?.packageTitle ? (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-bold w-fit uppercase select-none leading-none mt-0.5">
+                        Pkg: {tx.metadata.packageTitle}
+                      </span>
+                    ) : tx.metadata?.isDirectPurchase ? (
+                      <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 font-bold w-fit uppercase select-none leading-none mt-0.5">
+                        Direct AQE Buy
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 font-medium select-none mt-0.5">
+                        Pre-Register Pledge
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">

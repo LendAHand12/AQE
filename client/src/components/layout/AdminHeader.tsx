@@ -72,6 +72,11 @@ export default function AdminHeader({ title, description }: AdminHeaderProps) {
           title: "Support Tickets", 
           description: "Manage user support requests" 
         };
+        case "/admin/packages":
+        return { 
+          title: "Manage Partnership Packages", 
+          description: "Create and configure AQE partnership packages for users." 
+        };
       default:
         return { 
           title: "Management System", 

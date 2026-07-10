@@ -30,6 +30,7 @@ interface PaymentModalProps {
   status: 'idle' | 'success';
   countryCode?: string;
   isDirectPurchase?: boolean;
+  packageId?: string;
 }
 
 interface PaymentData {
@@ -46,7 +47,8 @@ export function BlockchainPaymentModal({
   pledgeAmount,
   status: externalStatus, // 'idle' | 'success'
   countryCode,
-  isDirectPurchase = false
+  isDirectPurchase = false,
+  packageId
 }: PaymentModalProps) {
   const { t } = useTranslation();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
@@ -67,7 +69,8 @@ export function BlockchainPaymentModal({
         amount,
         pledgeAmount,
         method,
-        isDirectPurchase
+        isDirectPurchase: isDirectPurchase || !!packageId,
+        packageId
       });
       setPaymentData(res.data);
       return res.data;

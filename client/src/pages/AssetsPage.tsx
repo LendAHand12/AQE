@@ -6,7 +6,8 @@ import {
   ShieldCheck,
   CreditCard,
   Receipt,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -63,6 +64,7 @@ export default function AssetsPage() {
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [isConvertOpen, setIsConvertOpen] = useState(false)
+  const [isKycWarningOpen, setIsKycWarningOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET')
   const [zelleInfo, setZelleInfo] = useState('')
@@ -225,7 +227,13 @@ export default function AssetsPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button
-            onClick={() => setIsConvertOpen(true)}
+            onClick={() => {
+              if (user?.kycStatus !== 'verified' || !user?.faceTecTid) {
+                setIsKycWarningOpen(true);
+              } else {
+                setIsConvertOpen(true);
+              }
+            }}
             className="h-[52px] px-8 bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-amber-600/20"
           >
             <ArrowUpRight size={20} />
@@ -233,8 +241,12 @@ export default function AssetsPage() {
           </Button>
           <Button
             onClick={() => {
-              setPaymentMethod(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET');
-              setIsWithdrawOpen(true);
+              if (user?.kycStatus !== 'verified' || !user?.faceTecTid) {
+                setIsKycWarningOpen(true);
+              } else {
+                setPaymentMethod(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET');
+                setIsWithdrawOpen(true);
+              }
             }}
             className="h-[52px] px-8 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold gap-2 shadow-lg shadow-[#276152]/20"
           >
@@ -832,6 +844,35 @@ export default function AssetsPage() {
                 {t("assets.bonus.claim_btn")}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* KYC Face Verification Warning Dialog */}
+      <Dialog open={isKycWarningOpen} onOpenChange={setIsKycWarningOpen}>
+        <DialogContent className="max-w-md rounded-[24px] p-8 border-none shadow-2xl bg-white/95 backdrop-blur-md">
+          <div className="space-y-6 text-center flex flex-col items-center">
+            <div className="size-16 rounded-full bg-amber-50/80 flex items-center justify-center text-amber-500 animate-pulse border border-amber-100">
+              <ShieldAlert size={36} className="drop-shadow-sm" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-[22px] font-bold text-gray-900 tracking-tight">
+                {t("assets.withdraw_dialog.kyc_warning_title", "Face Verification Required")}
+              </h3>
+              <p className="text-[14px] text-gray-500 leading-relaxed px-4">
+                {t("assets.withdraw_dialog.kyc_warning_desc", "To perform conversion or withdrawal, you must complete face verification (FaceID).")}
+              </p>
+            </div>
+
+            <Button
+              onClick={() => {
+                setIsKycWarningOpen(false);
+                navigate("/settings?tab=kyc");
+              }}
+              className="w-full h-[52px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold text-[15px] shadow-lg shadow-[#276152]/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {t("assets.withdraw_dialog.kyc_warning_btn", "Verify Now")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
