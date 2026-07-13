@@ -16,6 +16,8 @@ import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor
 import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
 import { processCommissions } from '../services/paymentService.js';
+import PlinkoSettings from '../models/PlinkoSettings.js';
+
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -1122,6 +1124,34 @@ export const manualDepositUser = async (req, res) => {
                 description: `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
             });
         }
+
+        // Credit Plinko plays: 1 play per 10 USDT
+        const playsToAdd = Math.floor(amountNum / 10);
+        if (playsToAdd > 0) {
+            user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+            
+            await Notification.create({
+                userId: user._id,
+                title: 'Plinko Plays Credited',
+                message: `You have been credited with ${playsToAdd} Plinko plays for your manual deposit of ${amountNum} USDT. Go to the Plinko page to play and win AQE!`,
+                type: 'SYSTEM'
+            });
+            
+            emitNotification(user._id, {
+                title: 'Plinko Plays Credited',
+                message: `+${playsToAdd} Plinko plays!`,
+                type: 'SYSTEM'
+            });
+        }
+
+        // Jackpot contribution: 1% of USDT amount
+        const jackpotContribution = amountNum * 0.01;
+        let plinkoSettings = await PlinkoSettings.findOne();
+        if (!plinkoSettings) {
+            plinkoSettings = await PlinkoSettings.create({});
+        }
+        plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+        await plinkoSettings.save();
 
         await user.save();
 

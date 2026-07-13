@@ -12,6 +12,8 @@ import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
+import PlinkoSettings from '../models/PlinkoSettings.js';
+
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -522,6 +524,34 @@ export const approveManualPayment = async (req, res) => {
                 });
             }
 
+            // Credit Plinko plays: 1 play per 10 USDT
+            const playsToAdd = Math.floor(transaction.amount / 10);
+            if (playsToAdd > 0) {
+                user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+                
+                await Notification.create({
+                    userId: user._id,
+                    title: 'Plinko Plays Credited',
+                    message: `You have been credited with ${playsToAdd} Plinko plays for your purchase of ${transaction.amount} USDT. Go to the Plinko page to play and win AQE!`,
+                    type: 'SYSTEM'
+                });
+                
+                emitNotification(user._id, {
+                    title: 'Plinko Plays Credited',
+                    message: `+${playsToAdd} Plinko plays!`,
+                    type: 'SYSTEM'
+                });
+            }
+
+            // Jackpot contribution: 1% of USDT amount
+            const jackpotContribution = transaction.amount * 0.01;
+            let plinkoSettings = await PlinkoSettings.findOne();
+            if (!plinkoSettings) {
+                plinkoSettings = await PlinkoSettings.create({});
+            }
+            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+            await plinkoSettings.save();
+
             await user.save();
 
             // Process commissions
@@ -623,6 +653,34 @@ export const approveManualPayment = async (req, res) => {
                 { isOfficial: true }
             );
         }
+        // Credit Plinko plays: 1 play per 10 USDT
+        const playsToAdd = Math.floor(transaction.amount / 10);
+        if (playsToAdd > 0) {
+            user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+            
+            await Notification.create({
+                userId: user._id,
+                title: 'Plinko Plays Credited',
+                message: `You have been credited with ${playsToAdd} Plinko plays for your payment of ${transaction.amount} USDT. Go to the Plinko page to play and win AQE!`,
+                type: 'SYSTEM'
+            });
+            
+            emitNotification(user._id, {
+                title: 'Plinko Plays Credited',
+                message: `+${playsToAdd} Plinko plays!`,
+                type: 'SYSTEM'
+            });
+        }
+
+        // Jackpot contribution: 1% of USDT amount
+        const jackpotContribution = transaction.amount * 0.01;
+        let plinkoSettings = await PlinkoSettings.findOne();
+        if (!plinkoSettings) {
+            plinkoSettings = await PlinkoSettings.create({});
+        }
+        plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+        await plinkoSettings.save();
+
         await user.save();
 
         // Process Commissions
