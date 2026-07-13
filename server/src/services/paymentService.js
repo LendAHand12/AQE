@@ -6,6 +6,7 @@ import Notification from '../models/Notification.js';
 import { TokenState } from '../models/Blockchain.js';
 import { emitNotification } from '../utils/socket.js';
 import { getSystemTime } from '../utils/time.js';
+import PlinkoSettings from '../models/PlinkoSettings.js';
 /**
  * Shared logic to process commissions
  */
@@ -241,8 +242,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 });
             }
 
-            // Credit Plinko plays: 10 plays per 100 USDT
-            const playsToAdd = Math.floor(processingAmount / 100) * 10;
+            // Credit Plinko plays: 1 play per 10 USDT
+            const playsToAdd = Math.floor(processingAmount / 10);
             if (playsToAdd > 0) {
                 user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
                 
@@ -259,6 +260,15 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     type: 'SYSTEM'
                 });
             }
+
+            // Jackpot contribution: 1% of USDT amount
+            const jackpotContribution = processingAmount * 0.01;
+            let plinkoSettings = await PlinkoSettings.findOne();
+            if (!plinkoSettings) {
+                plinkoSettings = await PlinkoSettings.create({});
+            }
+            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+            await plinkoSettings.save();
 
             await user.save();
             console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
@@ -373,8 +383,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 user.aqeBalance += tokensCalculated;
             }
 
-            // Credit Plinko plays: 10 plays per 100 USDT
-            const playsToAdd = Math.floor(processingAmount / 100) * 10;
+            // Credit Plinko plays: 1 play per 10 USDT
+            const playsToAdd = Math.floor(processingAmount / 10);
             if (playsToAdd > 0) {
                 user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
                 
@@ -391,6 +401,15 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     type: 'SYSTEM'
                 });
             }
+
+            // Jackpot contribution: 1% of USDT amount
+            const jackpotContribution = processingAmount * 0.01;
+            let plinkoSettings = await PlinkoSettings.findOne();
+            if (!plinkoSettings) {
+                plinkoSettings = await PlinkoSettings.create({});
+            }
+            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+            await plinkoSettings.save();
 
             await user.save();
             console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
@@ -535,8 +554,8 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
         user.aqeBalance += tokensCalculated;
     }
 
-    // Credit Plinko plays: 10 plays per 100 USDT
-    const playsToAdd = Math.floor(paidAmount / 100) * 10;
+    // Credit Plinko plays: 1 play per 10 USDT
+    const playsToAdd = Math.floor(paidAmount / 10);
     if (playsToAdd > 0) {
         user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
         
@@ -553,6 +572,15 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
             type: 'SYSTEM'
         });
     }
+
+    // Jackpot contribution: 1% of USDT amount
+    const jackpotContribution = paidAmount * 0.01;
+    let plinkoSettings = await PlinkoSettings.findOne();
+    if (!plinkoSettings) {
+        plinkoSettings = await PlinkoSettings.create({});
+    }
+    plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
+    await plinkoSettings.save();
 
     await user.save();
 

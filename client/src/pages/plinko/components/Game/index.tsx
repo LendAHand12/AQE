@@ -29,12 +29,13 @@ import {
 
 // Helper to determine background colors for multiplier boxes
 function getMultiplierColor(val: number): string {
-  if (val >= 25) return '#ef4444' // Red
-  if (val >= 10) return '#f97316' // Orange
-  if (val >= 5) return '#f59e0b' // Yellow-orange
-  if (val >= 2) return '#eab308' // Yellow
-  if (val >= 1.5) return '#84cc16' // Lime
-  if (val >= 1.0) return '#22c55e' // Green
+  if (val === 110) return '#ef4444' // Red (Jackpot)
+  if (val === 41) return '#f97316' // Orange
+  if (val === 10) return '#f59e0b' // Amber
+  if (val === 5) return '#eab308' // Yellow
+  if (val === 3) return '#a3e635' // Lime
+  if (val === 1.5) return '#84cc16' // Greenish-Yellow
+  if (val === 1.0) return '#22c55e' // Green
   return '#10b981' // Emerald
 }
 
@@ -112,6 +113,29 @@ export function mapRewardToSlot(rewardAmount: number, lines: LinesType): number 
   }
 }
 
+export function mapSlotIndexToPhysicalSlot(slotIndex: number): number {
+  const left = Math.random() > 0.5
+  switch (slotIndex) {
+    case 6: // 1000
+      return left ? 0 : 16
+    case 5: // 750
+      return left ? 1 : 15
+    case 4: // 500 (left)
+    case 7: // 500 (right)
+      return left ? 2 : 14
+    case 3: // 300
+      return left ? 3 : 13
+    case 2: // 200 (left)
+    case 8: // 200 (right)
+      return left ? 4 : 12
+    case 1: // 150
+      return left ? 5 : 11
+    case 0: // 100
+    default:
+      return left ? 6 : (Math.random() > 0.5 ? 7 : (Math.random() > 0.5 ? 8 : (Math.random() > 0.5 ? 9 : 10)))
+  }
+}
+
 export function Game() {
   const { t } = useTranslation()
   const { user, syncProfile } = useAuth()
@@ -122,7 +146,38 @@ export function Game() {
   const lines: LinesType = 16
   const [ballsToDrop, setBallsToDrop] = useState(1)
   const inGameBallsCount = useGameStore((state: any) => state.gamesRunning)
-  const playsRemaining = user?.plinkoPlays || 0
+
+  const [jackpotAmount, setJackpotAmount] = useState(1000)
+  const [targetJackpot, setTargetJackpot] = useState(5000)
+
+  const [localPlays, setLocalPlays] = useState<number | null>(null)
+  const [localBalance, setLocalBalance] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (user && inGameBallsCount === 0) {
+      setLocalPlays(user.plinkoPlays)
+      setLocalBalance(user.aqeBalance)
+    }
+  }, [user, inGameBallsCount])
+
+  const playsRemaining = localPlays !== null ? localPlays : (user?.plinkoPlays || 0)
+  const balanceDisplay = localBalance !== null ? localBalance : (user?.aqeBalance || 0)
+
+  const fetchJackpotInfo = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/plinko/info')
+      if (res.data && res.data.settings) {
+        setJackpotAmount(res.data.settings.currentJackpot || res.data.settings.initialJackpot || 1000)
+        setTargetJackpot(res.data.settings.targetJackpot || 5000)
+      }
+    } catch (e) {
+      console.warn("Failed to fetch Plinko Jackpot info:", e)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchJackpotInfo()
+  }, [fetchJackpotInfo])
 
   const maxDropLimit = Math.max(1, Math.min(15 - inGameBallsCount, playsRemaining))
   useEffect(() => {
@@ -307,23 +362,6 @@ export function Game() {
         ctx.fill()
       })
 
-      // Draw Multiplier Value Text
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.font = '900 11px "SVN-Gilroy", Arial Black, sans-serif'
-
-      multipliersBodies.forEach(body => {
-        const val = body.label.split('-')[1]
-        const x = body.position.x
-        const y = body.position.y
-
-        ctx.strokeStyle = '#020617'
-        ctx.lineWidth = 2
-        ctx.strokeText(`${val}x`, x, y)
-
-        ctx.fillStyle = '#ffffff'
-        ctx.fillText(`${val}x`, x, y)
-      })
     }
 
     Events.on(render, 'afterRender', afterRenderHandler)
@@ -385,6 +423,11 @@ export function Game() {
     multiplierSong.volume = 0.2
     multiplierSong.play().catch(e => console.warn(e))
     setLastMultipliers(prev => [multiplierValue, prev[0], prev[1], prev[2]])
+
+    // Extract reward amount from ball label
+    const parts = ball.label.split('-')
+    const rewardAmount = parseFloat(parts[1]) || 0
+    setLocalBalance(prev => (prev !== null ? prev : (user?.aqeBalance || 0)) + rewardAmount)
 
     // Sync profile directly to get the updated database balance
     setTimeout(() => {
@@ -456,10 +499,24 @@ export function Game() {
       try {
         const res = await apiClient.post('/plinko/play')
         if (res.data.success) {
-          const { rewardAmount } = res.data
-          const targetSlot = mapRewardToSlot(rewardAmount, lines)
+          const { rewardAmount, slotIndex, currentJackpot, isJackpotWon, newPlays } = res.data
+          if (newPlays !== undefined) {
+            setLocalPlays(newPlays)
+          }
+          if (currentJackpot !== undefined) {
+            setJackpotAmount(currentJackpot)
+          }
+          if (isJackpotWon) {
+            toast.success(
+              t('plinko.jackpot_win_congrats', {
+                reward: rewardAmount,
+                defaultValue: `🎉 CONGRATULATIONS! You hit the Jackpot and received ${rewardAmount} AQE!`
+              })
+            );
+          }
+          const targetSlot = slotIndex !== undefined ? mapSlotIndexToPhysicalSlot(slotIndex) : mapRewardToSlot(rewardAmount, lines)
           setTimeout(() => {
-            addBall(1, targetSlot)
+            addBall(rewardAmount, targetSlot)
           }, index * 200)
         }
       } catch (e: any) {
@@ -470,7 +527,7 @@ export function Game() {
 
     try {
       await Promise.all(promises)
-      syncProfile()
+      // Profile sync is deferred until the ball hits the bottom
     } catch (e) {
       console.error(e)
     } finally {
@@ -479,14 +536,49 @@ export function Game() {
   }
 
   const hasNoPlays = playsRemaining <= 0
+  const jackpotProgress = targetJackpot > 0 ? (jackpotAmount / targetJackpot) * 100 : 0
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 p-6 bg-white text-gray-800 border border-gray-100 shadow-xl rounded-3xl max-w-4xl mx-auto w-full">
+      {/* Plinko Jackpot Widget */}
+      <div className="w-full bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 p-[2px] rounded-[24px] shadow-lg shadow-amber-500/10">
+        <div className="bg-slate-900 rounded-[22px] p-5 text-white flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
+          {/* Decorative glow background */}
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex items-center gap-3">
+            <span className="text-3xl animate-bounce">🏆</span>
+            <div>
+              <h2 className="text-xs uppercase tracking-wider text-amber-400 font-extrabold">{t('plinko.jackpot_pool')}</h2>
+              <p className="text-2xl font-black text-white">{jackpotAmount.toFixed(4)} AQE</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end w-full md:w-auto min-w-[220px]">
+            <div className="flex justify-between w-full text-xs font-semibold text-gray-300 mb-1">
+              <span>{t('plinko.progress_to_target')}</span>
+              <span>{jackpotProgress.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-slate-800 h-3.5 rounded-full overflow-hidden border border-slate-700 relative">
+              <div 
+                className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, jackpotProgress)}%` }}
+              />
+            </div>
+            {jackpotProgress >= 100 && (
+              <span className="mt-1.5 text-[9px] uppercase bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse tracking-wide text-center">
+                {t('plinko.jackpot_ready')}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Top Header: Balance and Plays */}
       <div className="flex justify-between items-center w-full px-5 py-3 bg-gray-50 border border-gray-100/80 rounded-2xl">
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm font-semibold">{t('plinko.wallet_balance')}</span>
-          <span className="text-emerald-700 font-extrabold text-lg">{user?.aqeBalance?.toFixed(2) || '0.00'} AQE</span>
+          <span className="text-emerald-700 font-extrabold text-lg">{balanceDisplay.toFixed(2)} AQE</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm font-semibold">{t('plinko.play_turns')}</span>
@@ -498,6 +590,46 @@ export function Game() {
         {/* Game Board Column */}
         <div className="flex flex-col items-center bg-white rounded-2xl border border-gray-100 shadow-sm p-4 relative min-h-[400px]">
           <PlinkoGameBody />
+          
+          {/* Legend Table */}
+          <div className="w-full mt-4 bg-gray-50 border border-gray-100 rounded-xl p-3 max-w-[390px]">
+            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-center mb-2.5">
+              {t('plinko.jackpot_legend_title')}
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center text-[10.5px]">
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#ef4444' }} />
+                <span className="font-extrabold text-gray-800">100% JP</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f97316' }} />
+                <span className="font-extrabold text-gray-800">0.01%</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
+                <span className="font-extrabold text-gray-800">0.008%</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#eab308' }} />
+                <span className="font-extrabold text-gray-800">0.006%</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#a3e635' }} />
+                <span className="font-extrabold text-gray-800">0.004%</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#84cc16' }} />
+                <span className="font-extrabold text-gray-800">0.002%</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm col-span-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#22c55e' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#10b981' }} />
+                </div>
+                <span className="font-extrabold text-gray-800">0.001%</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Action Panel Column */}

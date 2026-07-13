@@ -705,6 +705,11 @@
     "processing": "Procesando...",
     "no_plays_remaining": "SIN JUGADAS RESTANTES",
     "drop_ball": "SOLTAR BOLA",
-    "play_error": "Ocurrió un error al iniciar el juego"
+    "play_error": "Ocurrió un error al iniciar el juego",
+    "jackpot_pool": "Fondo del Jackpot de Plinko",
+    "progress_to_target": "Progreso al objetivo",
+    "jackpot_ready": "¡JACKPOT LISTO! ¡Golpea los extremos exteriores para ganar el 100% del Jackpot!",
+    "jackpot_win_congrats": "🎉 ¡FELICIDADES! ¡Ganaste el Jackpot y recibiste {{reward}} AQE!",
+    "jackpot_legend_title": "Leyenda de porcentaje de recompensa por color"
   }
 }

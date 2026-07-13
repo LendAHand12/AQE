@@ -20,6 +20,7 @@ import {
     manualDepositUser
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
+import { getPlinkoSettingsAdmin, updatePlinkoSettingsAdmin } from '../controllers/plinkoController.js';
 import { getAdminLogs } from '../controllers/logController.js';
 import { adminProtect } from '../middleware/auth.js';
 import { ipWhitelistAdmin } from '../middleware/ipWhitelist.js';
@@ -89,6 +90,10 @@ router.post('/users/:id/manual-deposit', adminProtect, manualDepositUser);
 router.route('/token-settings')
     .get(adminProtect, getExplorerStats)
     .put(adminProtect, updateTokenSettings);
+
+router.route('/plinko-settings')
+    .get(adminProtect, getPlinkoSettingsAdmin)
+    .put(adminProtect, updatePlinkoSettingsAdmin);
 
 router.get('/logs', adminProtect, getAdminLogs);
 router.get('/transactions', adminProtect, getAllTransactionsForAdmin);

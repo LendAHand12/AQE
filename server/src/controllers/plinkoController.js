@@ -26,7 +26,12 @@ export const getPlinkoInfo = async (req, res) => {
         res.json({
             plinkoPlays: user.plinkoPlays || 0,
             history,
-            settings
+            settings: {
+                ...settings.toObject(),
+                initialJackpot: settings.initialJackpot || 1000,
+                targetJackpot: settings.targetJackpot || 5000,
+                currentJackpot: settings.currentJackpot || settings.initialJackpot || 1000
+            }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -44,7 +49,7 @@ export const playPlinko = async (req, res) => {
         }
 
         if (!user.plinkoPlays || user.plinkoPlays <= 0) {
-            return res.status(400).json({ message: 'No Plinko plays remaining. Deposit 100 USDT to get 10 plays!' });
+            return res.status(400).json({ message: 'No Plinko plays remaining. Deposit 10 USDT to get 1 play!' });
         }
 
         // Fetch Plinko Settings
@@ -74,7 +79,53 @@ export const playPlinko = async (req, res) => {
             }
         }
         
-        const rewardAmount = slots[slotIndex].amount;
+        const currentJackpot = settings.currentJackpot || settings.initialJackpot || 1000;
+        const targetJackpot = settings.targetJackpot || 5000;
+        let rewardAmount = 0;
+        let isJackpotWon = false;
+
+        // If rolled slotIndex === 6 (Jackpot) but currentJackpot < targetJackpot, fall back to slotIndex = 0 (normal slot)
+        if (slotIndex === 6 && currentJackpot < targetJackpot) {
+            slotIndex = 0;
+        }
+
+        if (slotIndex === 6 && currentJackpot >= targetJackpot) {
+            // Jackpot won
+            rewardAmount = currentJackpot;
+            isJackpotWon = true;
+            
+            // Reset jackpot
+            settings.currentJackpot = settings.initialJackpot || 1000;
+            await settings.save();
+        } else {
+            // Normal reward: random percentage between 0.001% and 0.01% of current jackpot
+            // We divide this range into sub-ranges matching the slot multipliers visually
+            let minPercent = 0.001 / 100;
+            let maxPercent = 0.01 / 100;
+
+            if (slotIndex === 0) {
+                minPercent = 0.001 / 100;
+                maxPercent = 0.002 / 100;
+            } else if (slotIndex === 1) {
+                minPercent = 0.002 / 100;
+                maxPercent = 0.0035 / 100;
+            } else if (slotIndex === 2 || slotIndex === 8) {
+                minPercent = 0.0035 / 100;
+                maxPercent = 0.0055 / 100;
+            } else if (slotIndex === 3) {
+                minPercent = 0.0055 / 100;
+                maxPercent = 0.007 / 100;
+            } else if (slotIndex === 4 || slotIndex === 7) {
+                minPercent = 0.007 / 100;
+                maxPercent = 0.0085 / 100;
+            } else if (slotIndex === 5) {
+                minPercent = 0.0085 / 100;
+                maxPercent = 0.01 / 100;
+            }
+
+            const randomPercent = minPercent + Math.random() * (maxPercent - minPercent);
+            rewardAmount = Math.round(currentJackpot * randomPercent * 10000) / 10000;
+        }
 
         // 3. Update user balance (AQE)
         const balanceBefore = user.aqeBalance || 0;
@@ -91,7 +142,9 @@ export const playPlinko = async (req, res) => {
             isOfficial: true,
             balanceBefore,
             balanceAfter: user.aqeBalance,
-            description: `Plinko Game reward: +${rewardAmount} AQE`
+            description: isJackpotWon 
+                ? `Plinko Game JACKPOT reward: +${rewardAmount} AQE`
+                : `Plinko Game reward: +${rewardAmount} AQE`
         });
 
         // 5. Create PlinkoHistory log
@@ -106,7 +159,9 @@ export const playPlinko = async (req, res) => {
             slotIndex,
             newPlays: user.plinkoPlays,
             newBalance: user.aqeBalance,
-            playedAt: plinkoLog.playedAt
+            playedAt: plinkoLog.playedAt,
+            isJackpotWon,
+            currentJackpot: settings.currentJackpot
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -128,23 +183,23 @@ export const getPlinkoSettingsAdmin = async (req, res) => {
     }
 };
 
-// @desc    Update Plinko settings (Admin)
-// @route   PUT /api/admin/plinko-settings
-// @access  Private
 export const updatePlinkoSettingsAdmin = async (req, res) => {
-    const { engineGravity, frictionAir, vxMultiplier, slots } = req.body;
+    const { initialJackpot, targetJackpot } = req.body;
     try {
         let settings = await PlinkoSettings.findOne();
         if (!settings) {
             settings = new PlinkoSettings();
         }
 
-        settings.engineGravity = engineGravity !== undefined ? Number(engineGravity) : settings.engineGravity;
-        settings.frictionAir = frictionAir !== undefined ? Number(frictionAir) : settings.frictionAir;
-        settings.vxMultiplier = vxMultiplier !== undefined ? Number(vxMultiplier) : settings.vxMultiplier;
-        
-        if (slots && Array.isArray(slots)) {
-            settings.slots = slots;
+        if (initialJackpot !== undefined) {
+            settings.initialJackpot = Number(initialJackpot);
+            // If current jackpot is not set or is less than the new initial, set it to the new initial
+            if (settings.currentJackpot === undefined || settings.currentJackpot < settings.initialJackpot) {
+                settings.currentJackpot = settings.initialJackpot;
+            }
+        }
+        if (targetJackpot !== undefined) {
+            settings.targetJackpot = Number(targetJackpot);
         }
 
         const updatedSettings = await settings.save();

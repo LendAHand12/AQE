@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Wallet,
   Headset,
+  Gamepad2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
@@ -77,6 +78,12 @@ const mainNavItems: NavItem[] = [
     title: "Pool Settings",
     href: "/admin/token-settings",
     icon: Settings,
+    requiredPermission: "SETTINGS_VIEW"
+  },
+  {
+    title: "Plinko Settings",
+    href: "/admin/plinko-settings",
+    icon: Gamepad2,
     requiredPermission: "SETTINGS_VIEW"
   },
   {

@@ -797,6 +797,11 @@
     "processing": "Đang xử lý...",
     "no_plays_remaining": "HẾT LƯỢT CHƠI",
     "drop_ball": "THẢ BÓNG",
-    "play_error": "Có lỗi xảy ra khi bắt đầu chơi"
+    "play_error": "Có lỗi xảy ra khi bắt đầu chơi",
+    "jackpot_pool": "Quỹ Jackpot Plinko",
+    "progress_to_target": "Tiến trình đến mục tiêu",
+    "jackpot_ready": "JACKPOT ĐÃ SẴN SÀNG! Đạt hai góc rìa để thắng 100% Jackpot!",
+    "jackpot_win_congrats": "🎉 CHÚC MỪNG! Bạn đã trúng Jackpot và nhận được {{reward}} AQE!",
+    "jackpot_legend_title": "Chú thích tỷ lệ thưởng theo màu ô dưới đáy"
   }
 }

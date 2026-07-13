@@ -1,9 +1,6 @@
 import mongoose from 'mongoose';
 
 const plinkoSettingsSchema = mongoose.Schema({
-    engineGravity: { type: Number, default: 0.45 },
-    frictionAir: { type: Number, default: 0.03 },
-    vxMultiplier: { type: Number, default: 0.8 },
     slots: {
         type: [
             {
@@ -22,6 +19,18 @@ const plinkoSettingsSchema = mongoose.Schema({
             { amount: 500, weight: 8 },
             { amount: 200, weight: 15 }
         ]
+    },
+    initialJackpot: {
+        type: Number,
+        default: 1000
+    },
+    targetJackpot: {
+        type: Number,
+        default: 5000
+    },
+    currentJackpot: {
+        type: Number,
+        default: 1000
     }
 }, { timestamps: true });
 

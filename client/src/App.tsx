@@ -9,6 +9,7 @@ import AdminLayout from "@/components/layout/AdminLayout"
 import AdminLoginPage from "@/pages/admin/AdminLoginPage"
 import UserManagementPage from "@/pages/admin/UserManagementPage"
 import TokenSettingsPage from "@/pages/admin/TokenSettingsPage"
+import PlinkoSettingsPage from "@/pages/admin/PlinkoSettingsPage"
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage"
 import AdminPaymentHistoryPage from "@/pages/admin/AdminPaymentHistoryPage"
 import AdminCommissionHistoryPage from "@/pages/admin/AdminCommissionHistoryPage"
@@ -126,6 +127,7 @@ export function App() {
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
               <Route path="/admin/token-settings" element={<TokenSettingsPage />} />
+              <Route path="/admin/plinko-settings" element={<PlinkoSettingsPage />} />
               <Route path="/admin/packages" element={<AdminPackagesPage />} />
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />

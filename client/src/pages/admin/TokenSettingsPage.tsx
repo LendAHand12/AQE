@@ -83,8 +83,6 @@ export default function TokenSettingsPage() {
 
   return (
     <div className="max-w-[1000px] mx-auto space-y-8">
-
-
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-none shadow-sm rounded-[24px]">

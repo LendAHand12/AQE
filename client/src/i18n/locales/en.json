@@ -798,6 +798,11 @@
     "processing": "Processing...",
     "no_plays_remaining": "NO PLAYS REMAINING",
     "drop_ball": "DROP BALL",
-    "play_error": "An error occurred while starting the game"
+    "play_error": "An error occurred while starting the game",
+    "jackpot_pool": "Plinko Jackpot Pool",
+    "progress_to_target": "Progress to target",
+    "jackpot_ready": "JACKPOT READY! Hit the outer ends to win 100% Jackpot!",
+    "jackpot_win_congrats": "🎉 CONGRATULATIONS! You hit the Jackpot and received {{reward}} AQE!",
+    "jackpot_legend_title": "Reward percentage legend by bucket color"
   }
 }
