@@ -20,7 +20,6 @@ import { toast } from 'sonner'
 
 import type { LinesType, MultiplierValues } from './@types'
 import { PlinkoGameBody } from './components/GameBody'
-import { MultiplierHistory } from './components/MultiplierHistory'
 import { config } from './config'
 import {
   getMultiplierByLinesQnt,
@@ -192,7 +191,6 @@ export function Game() {
   const decrementInGameBallsCount = useGameStore(
     (state: any) => state.decrementGamesRunning
   )
-  const [lastMultipliers, setLastMultipliers] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const {
@@ -422,7 +420,6 @@ export function Game() {
     multiplierSong.currentTime = 0
     multiplierSong.volume = 0.2
     multiplierSong.play().catch(e => console.warn(e))
-    setLastMultipliers(prev => [multiplierValue, prev[0], prev[1], prev[2]])
 
     // Extract reward amount from ball label
     const parts = ball.label.split('-')
