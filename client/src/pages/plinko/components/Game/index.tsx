@@ -532,7 +532,9 @@ export function Game() {
           playBeep(320 + r * 20, 0.05, "sine")
           pulsesRef.current.push({ row: r, col: c, intensity: 1.0 })
 
-          const vx = (direction === 1 ? 1 : -1) * (0.8 + Math.random() * 0.2)
+          const isUrgent = reqRights >= remRows || reqRights <= 0
+          const speed = isUrgent ? 1.8 : (0.8 + Math.random() * 0.2)
+          const vx = (direction === 1 ? 1 : -1) * speed
           Body.setVelocity(ballBody, { x: vx, y: ballBody.velocity.y })
         }
       }

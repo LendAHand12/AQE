@@ -43,12 +43,19 @@ export const getPlinkoInfo = async (req, res) => {
 // @access  Private
 export const playPlinko = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+        // 1. Deduct 1 play atomically and verify user exists with plays remaining
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: req.user._id, plinkoPlays: { $gt: 0 } },
+            { $inc: { plinkoPlays: -1 } },
+            { new: true }
+        );
 
-        if (!user.plinkoPlays || user.plinkoPlays <= 0) {
+        if (!updatedUser) {
+            // Check if user exists or just has no plays remaining
+            const userExists = await User.findById(req.user._id);
+            if (!userExists) {
+                return res.status(404).json({ message: 'User not found' });
+            }
             return res.status(400).json({ message: 'No Plinko plays remaining. Deposit 10 USDT to get 1 play!' });
         }
 
@@ -62,9 +69,6 @@ export const playPlinko = async (req, res) => {
         if (!slots || slots.length === 0) {
             return res.status(500).json({ message: 'Plinko slots configuration is empty' });
         }
-
-        // 1. Deduct 1 play
-        user.plinkoPlays -= 1;
 
         // 2. Select slot and reward based on weights
         const totalWeight = slots.reduce((sum, slot) => sum + slot.weight, 0);
@@ -137,21 +141,28 @@ export const playPlinko = async (req, res) => {
             }
         }
 
-        // 3. Update user balance (AQE)
-        const balanceBefore = user.aqeBalance || 0;
-        user.aqeBalance = balanceBefore + rewardAmount;
-        await user.save();
+        // 3. Update user balance (AQE) atomically
+        const balanceBefore = updatedUser.aqeBalance || 0;
+        const finalUser = await User.findOneAndUpdate(
+            { _id: updatedUser._id },
+            { $inc: { aqeBalance: rewardAmount } },
+            { new: true }
+        );
+
+        if (!finalUser) {
+            return res.status(404).json({ message: 'User not found during balance update' });
+        }
 
         // 4. Create BalanceHistory log
         await BalanceHistory.create({
-            userId: user._id,
+            userId: finalUser._id,
             amount: rewardAmount,
             symbol: 'AQE',
             type: 'REWARD',
             status: 'SUCCESS',
             isOfficial: true,
             balanceBefore,
-            balanceAfter: user.aqeBalance,
+            balanceAfter: finalUser.aqeBalance,
             description: isJackpotWon 
                 ? `Plinko Game JACKPOT reward: +${rewardAmount} AQE`
                 : `Plinko Game reward: +${rewardAmount} AQE`
@@ -159,7 +170,7 @@ export const playPlinko = async (req, res) => {
 
         // 5. Create PlinkoHistory log
         const plinkoLog = await PlinkoHistory.create({
-            userId: user._id,
+            userId: finalUser._id,
             rewardAmount
         });
 
@@ -167,8 +178,8 @@ export const playPlinko = async (req, res) => {
             success: true,
             rewardAmount,
             slotIndex,
-            newPlays: user.plinkoPlays,
-            newBalance: user.aqeBalance,
+            newPlays: finalUser.plinkoPlays,
+            newBalance: finalUser.aqeBalance,
             playedAt: plinkoLog.playedAt,
             isJackpotWon,
             currentJackpot: settings.currentJackpot
