@@ -146,3 +146,22 @@
     background: #d1d5db;
   }
 }
+
+@keyframes fade-out-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-out-3s {
+  animation: fade-out-up 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}

@@ -135,12 +135,31 @@ export function mapSlotIndexToPhysicalSlot(slotIndex: number): number {
   }
 }
 
+export function formatDropTime(date: Date, t: any): string {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  
+  const diffTime = today.getTime() - itemDate.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays <= 0) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  } else if (diffDays === 1) {
+    return t('plinko.yesterday', '1 day ago')
+  } else {
+    return t('plinko.days_ago', { count: diffDays, defaultValue: `${diffDays} days ago` })
+  }
+}
+
 export function Game() {
   const { t } = useTranslation()
   const { user, syncProfile } = useAuth()
   const engineRef = useRef<Engine>(Engine.create())
   const audioContextRef = useRef<AudioContext | null>(null)
   const pulsesRef = useRef<{ row: number; col: number; intensity: number }[]>([])
+  const jackpotQueueRef = useRef<number[]>([])
+  const jackpotWonQueueRef = useRef<boolean[]>([])
 
   const lines: LinesType = 16
   const [ballsToDrop, setBallsToDrop] = useState(1)
@@ -151,6 +170,8 @@ export function Game() {
 
   const [localPlays, setLocalPlays] = useState<number | null>(null)
   const [localBalance, setLocalBalance] = useState<number | null>(null)
+  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; multiplier: number; timestamp: Date }[]>([])
+  const [latestReward, setLatestReward] = useState<{ amount: number; key: number } | null>(null)
 
   useEffect(() => {
     if (user && inGameBallsCount === 0) {
@@ -165,9 +186,20 @@ export function Game() {
   const fetchJackpotInfo = useCallback(async () => {
     try {
       const res = await apiClient.get('/plinko/info')
-      if (res.data && res.data.settings) {
-        setJackpotAmount(res.data.settings.currentJackpot || res.data.settings.initialJackpot || 1000)
-        setTargetJackpot(res.data.settings.targetJackpot || 5000)
+      if (res.data) {
+        if (res.data.settings) {
+          setJackpotAmount(res.data.settings.currentJackpot || res.data.settings.initialJackpot || 1000)
+          setTargetJackpot(res.data.settings.targetJackpot || 5000)
+        }
+        if (res.data.history) {
+          const historyMapped = res.data.history.map((item: any) => ({
+            id: item._id,
+            reward: item.rewardAmount,
+            multiplier: 1,
+            timestamp: new Date(item.playedAt || item.createdAt)
+          }))
+          setDropHistory(historyMapped)
+        }
       }
     } catch (e) {
       console.warn("Failed to fetch Plinko Jackpot info:", e)
@@ -426,6 +458,40 @@ export function Game() {
     const rewardAmount = parseFloat(parts[1]) || 0
     setLocalBalance(prev => (prev !== null ? prev : (user?.aqeBalance || 0)) + rewardAmount)
 
+    console.log("Ball collision debug:", ball.label)
+
+    setDropHistory(prev => [
+      {
+        id: Math.random().toString(),
+        reward: rewardAmount,
+        multiplier: multiplierValue,
+        timestamp: new Date()
+      },
+      ...prev
+    ].slice(0, 10))
+
+    setLatestReward({
+      amount: rewardAmount,
+      key: Math.random()
+    })
+
+    // Process jackpot queue
+    const nextJackpot = jackpotQueueRef.current.shift()
+    if (nextJackpot !== undefined) {
+      setJackpotAmount(nextJackpot)
+    }
+
+    // Process jackpot won queue
+    const nextJackpotWon = jackpotWonQueueRef.current.shift()
+    if (nextJackpotWon) {
+      toast.success(
+        t('plinko.jackpot_win_congrats', {
+          reward: rewardAmount,
+          defaultValue: `🎉 CONGRATULATIONS! You hit the Jackpot and received ${rewardAmount} AQE!`
+        })
+      )
+    }
+
     // Sync profile directly to get the updated database balance
     setTimeout(() => {
       syncProfile()
@@ -497,20 +563,16 @@ export function Game() {
         const res = await apiClient.post('/plinko/play')
         if (res.data.success) {
           const { rewardAmount, slotIndex, currentJackpot, isJackpotWon, newPlays } = res.data
+          console.log("Play Response debug:", res.data)
           if (newPlays !== undefined) {
             setLocalPlays(newPlays)
           }
+          
           if (currentJackpot !== undefined) {
-            setJackpotAmount(currentJackpot)
+            jackpotQueueRef.current.push(currentJackpot)
           }
-          if (isJackpotWon) {
-            toast.success(
-              t('plinko.jackpot_win_congrats', {
-                reward: rewardAmount,
-                defaultValue: `🎉 CONGRATULATIONS! You hit the Jackpot and received ${rewardAmount} AQE!`
-              })
-            );
-          }
+          jackpotWonQueueRef.current.push(!!isJackpotWon)
+
           const targetSlot = slotIndex !== undefined ? mapSlotIndexToPhysicalSlot(slotIndex) : mapRewardToSlot(rewardAmount, lines)
           setTimeout(() => {
             addBall(rewardAmount, targetSlot)
@@ -573,9 +635,17 @@ export function Game() {
 
       {/* Top Header: Balance and Plays */}
       <div className="flex justify-between items-center w-full px-5 py-3 bg-gray-50 border border-gray-100/80 rounded-2xl">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <span className="text-gray-500 text-sm font-semibold">{t('plinko.wallet_balance')}</span>
           <span className="text-emerald-700 font-extrabold text-lg">{balanceDisplay.toFixed(2)} AQE</span>
+          {latestReward && (
+            <span
+              key={latestReward.key}
+              className="absolute left-full ml-3 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-sm whitespace-nowrap animate-fade-out-3s"
+            >
+              +{latestReward.amount.toFixed(2)} AQE
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm font-semibold">{t('plinko.play_turns')}</span>
@@ -587,6 +657,16 @@ export function Game() {
         {/* Game Board Column */}
         <div className="flex flex-col items-center bg-white rounded-2xl border border-gray-100 shadow-sm p-4 relative min-h-[400px]">
           <PlinkoGameBody />
+          
+          {/* Floating Reward in the top-right blank space of the game node frame */}
+          {latestReward && (
+            <div
+              key={`board-${latestReward.key}`}
+              className="absolute top-6 right-6 text-emerald-500 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s"
+            >
+              +{latestReward.amount.toFixed(2)} AQE
+            </div>
+          )}
           
           {/* Legend Table */}
           <div className="w-full mt-4 bg-gray-50 border border-gray-100 rounded-xl p-3 max-w-[390px]">
@@ -681,6 +761,34 @@ export function Game() {
               t('plinko.drop_ball')
             )}
           </button>
+
+          {/* Drop History */}
+          <div className="mt-2 flex flex-col gap-2 border-t border-gray-200/60 pt-4">
+            <div className="text-[10.5px] font-extrabold text-gray-400 uppercase tracking-wider px-1">
+              {t('plinko.drop_history')}
+            </div>
+            <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-0.5 custom-scrollbar">
+              {dropHistory.length === 0 ? (
+                <div className="text-xs text-gray-400 text-center py-5 border border-dashed border-gray-200 rounded-xl bg-white/50">
+                  {t('plinko.no_history')}
+                </div>
+              ) : (
+                dropHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between px-3 py-2 bg-white border border-gray-100 rounded-xl shadow-xs hover:border-gray-200 transition-all"
+                  >
+                    <span className="text-xs text-gray-500 font-semibold">
+                      {formatDropTime(item.timestamp, t)}
+                    </span>
+                    <span className="text-xs font-black text-emerald-600">
+                      +{item.reward.toFixed(2)} AQE
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -125,6 +125,16 @@ export const playPlinko = async (req, res) => {
 
             const randomPercent = minPercent + Math.random() * (maxPercent - minPercent);
             rewardAmount = Math.round(currentJackpot * randomPercent * 10000) / 10000;
+
+            // Atomic update to decrement jackpot by rewardAmount
+            const updatedSettings = await PlinkoSettings.findOneAndUpdate(
+                { _id: settings._id },
+                { $inc: { currentJackpot: -rewardAmount } },
+                { new: true }
+            );
+            if (updatedSettings) {
+                settings.currentJackpot = updatedSettings.currentJackpot;
+            }
         }
 
         // 3. Update user balance (AQE)

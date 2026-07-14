@@ -803,6 +803,10 @@
     "progress_to_target": "Progress to target",
     "jackpot_ready": "JACKPOT READY! Hit the outer ends to win 100% Jackpot!",
     "jackpot_win_congrats": "🎉 CONGRATULATIONS! You hit the Jackpot and received {{reward}} AQE!",
-    "jackpot_legend_title": "Reward percentage legend by bucket color"
+    "jackpot_legend_title": "Reward percentage legend by bucket color",
+    "drop_history": "Drop History",
+    "no_history": "No drops yet",
+    "yesterday": "1 day ago",
+    "days_ago": "{{count}} days ago"
   }
 }

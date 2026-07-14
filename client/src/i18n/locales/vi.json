@@ -802,6 +802,10 @@
     "progress_to_target": "Tiến trình đến mục tiêu",
     "jackpot_ready": "JACKPOT ĐÃ SẴN SÀNG! Đạt hai góc rìa để thắng 100% Jackpot!",
     "jackpot_win_congrats": "🎉 CHÚC MỪNG! Bạn đã trúng Jackpot và nhận được {{reward}} AQE!",
-    "jackpot_legend_title": "Chú thích tỷ lệ thưởng theo màu ô dưới đáy"
+    "jackpot_legend_title": "Chú thích tỷ lệ thưởng theo màu ô dưới đáy",
+    "drop_history": "Lịch sử thả bóng",
+    "no_history": "Chưa có lượt thả nào",
+    "yesterday": "1 ngày trước",
+    "days_ago": "{{count}} ngày trước"
   }
 }
