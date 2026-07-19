@@ -44,12 +44,25 @@ export function formatDropTime(date: Date, t: any): string {
   }
 }
 
+interface FireworkParticle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  size: number
+  color: string
+  alpha: number
+  decay: number
+}
+
 export function Game() {
   const { t } = useTranslation()
   const { user, syncProfile } = useAuth()
+
   const engineRef = useRef<Engine>(Engine.create())
   const audioContextRef = useRef<AudioContext | null>(null)
   const pulsesRef = useRef<{ row: number; col: number; intensity: number }[]>([])
+  const particlesRef = useRef<FireworkParticle[]>([])
   const multipliersBodiesRef = useRef<Body[]>([])
 
   const lines: LinesType = 16
@@ -302,6 +315,28 @@ export function Game() {
         ctx.fillText(labelText, mb.position.x, mb.position.y)
         ctx.restore()
       })
+
+      // Draw firework particle explosion sparks when ball lands in a bucket
+      particlesRef.current.forEach(particle => {
+        particle.x += particle.vx
+        particle.y += particle.vy
+        particle.vy += 0.12 // gravity pull
+        particle.alpha -= particle.decay
+
+        if (particle.alpha > 0) {
+          ctx.save()
+          ctx.globalAlpha = Math.max(0, particle.alpha)
+          ctx.beginPath()
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+          ctx.fillStyle = particle.color
+          ctx.shadowColor = particle.color
+          ctx.shadowBlur = 10
+          ctx.fill()
+          ctx.restore()
+        }
+      })
+
+      particlesRef.current = particlesRef.current.filter(p => p.alpha > 0)
     }
 
     Events.on(render, 'afterRender', afterRenderHandler)
@@ -360,6 +395,26 @@ export function Game() {
     ball.collisionFilter.group = 2
     World.remove(engineRef.current.world, ball)
     decrementInGameBallsCount()
+
+    // Spawn firework particle explosion right at the landing bucket position
+    const sparkColors = ['#38bdf8', '#c084fc', '#f472b6', '#fbbf24', '#34d399', '#f43f5e']
+    const impactX = multiplier.position.x
+    const impactY = multiplier.position.y
+
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = 2.0 + Math.random() * 5.5
+      particlesRef.current.push({
+        x: impactX,
+        y: impactY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1.2,
+        size: 2.5 + Math.random() * 3.5,
+        color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+        alpha: 1.0,
+        decay: 0.02 + Math.random() * 0.02
+      })
+    }
 
     const parts = ball.label.split('-')
     const bet = parseFloat(parts[1]) || 1
