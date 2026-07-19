@@ -6,13 +6,21 @@ const plinkoHistorySchema = mongoose.Schema({
         ref: 'User', 
         required: true 
     },
+    betAmount: {
+        type: Number,
+        default: 1
+    },
+    multiplier: {
+        type: Number,
+        default: 1
+    },
     rewardAmount: { 
         type: Number, 
         required: true 
     },
     symbol: { 
         type: String, 
-        default: 'AQE' 
+        default: 'POINTS' 
     },
     playedAt: { 
         type: Date, 

@@ -83,6 +83,14 @@ const multipliers = {
   0.3: {
     label: 'block-0.3',
     img: ''
+  },
+  0.2: {
+    label: 'block-0.2',
+    img: ''
+  },
+  0.01: {
+    label: 'block-0.01',
+    img: ''
   }
 } as const
 
@@ -101,7 +109,7 @@ export const multiplyBlocks16Lines = [
   getMultiplier(1.5),
   getMultiplier(1),
   getMultiplier(0.5),
-  getMultiplier(0.3),
+  getMultiplier(0.2),
   getMultiplier(0.5),
   getMultiplier(1),
   getMultiplier(1.5),

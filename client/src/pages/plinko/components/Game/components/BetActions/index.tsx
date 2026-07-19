@@ -72,17 +72,17 @@ export function BetActions({
     if (!isAuth || isLoading) return
     if (inGameBallsCount >= 15) return
     
-    // Check if the user has enough play tokens
-    const plays = user?.plinkoPlays || 0
-    if (plays <= 0) {
+    // Check if the user has enough points
+    const points = user?.plinkoPoints || 0
+    if (points <= 0) {
       return
     }
 
     onRunBet()
   }
 
-  const playsRemaining = user?.plinkoPlays || 0
-  const hasNoPlays = playsRemaining <= 0
+  const pointsRemaining = user?.plinkoPoints || 0
+  const hasNoPoints = pointsRemaining <= 0
 
   return (
     <div className="relative h-1/2 w-full flex-1 py-8 px-4">

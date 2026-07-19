@@ -180,7 +180,7 @@ const userSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
-    plinkoPlays: {
+    plinkoPoints: {
         type: Number,
         default: 0
     },

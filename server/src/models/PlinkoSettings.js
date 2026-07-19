@@ -1,23 +1,35 @@
 import mongoose from 'mongoose';
 
 const plinkoSettingsSchema = mongoose.Schema({
+    pointsToAqeRate: {
+        type: Number,
+        default: 1 // 1 Plinko Point = 1 AQE by default
+    },
     slots: {
         type: [
             {
-                amount: { type: Number, required: true },
-                weight: { type: Number, required: true }
+                multiplier: { type: Number, required: true, default: 1 },
+                weight: { type: Number, required: true, default: 10 }
             }
         ],
         default: [
-            { amount: 100, weight: 25 },
-            { amount: 150, weight: 20 },
-            { amount: 200, weight: 15 },
-            { amount: 300, weight: 12 },
-            { amount: 500, weight: 8 },
-            { amount: 750, weight: 4 },
-            { amount: 1000, weight: 1 },
-            { amount: 500, weight: 8 },
-            { amount: 200, weight: 15 }
+            { multiplier: 110, weight: 1 },
+            { multiplier: 41, weight: 2 },
+            { multiplier: 10, weight: 5 },
+            { multiplier: 5, weight: 10 },
+            { multiplier: 3, weight: 15 },
+            { multiplier: 1.5, weight: 25 },
+            { multiplier: 1, weight: 40 },
+            { multiplier: 0.5, weight: 60 },
+            { multiplier: 0.2, weight: 80 },
+            { multiplier: 0.5, weight: 60 },
+            { multiplier: 1, weight: 40 },
+            { multiplier: 1.5, weight: 25 },
+            { multiplier: 3, weight: 15 },
+            { multiplier: 5, weight: 10 },
+            { multiplier: 10, weight: 5 },
+            { multiplier: 41, weight: 2 },
+            { multiplier: 110, weight: 1 }
         ]
     },
     initialJackpot: {

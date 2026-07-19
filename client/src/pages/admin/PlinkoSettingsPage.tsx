@@ -21,6 +21,7 @@ export default function PlinkoSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
+    pointsToAqeRate: 1,
     initialJackpot: 1000,
     targetJackpot: 5000,
     currentJackpot: 1000
@@ -31,6 +32,7 @@ export default function PlinkoSettingsPage() {
       const response = await apiClient.get("/admin/plinko-settings")
       if (response.data) {
         setSettings({
+          pointsToAqeRate: response.data.pointsToAqeRate !== undefined ? response.data.pointsToAqeRate : 1,
           initialJackpot: response.data.initialJackpot || 1000,
           targetJackpot: response.data.targetJackpot || 5000,
           currentJackpot: response.data.currentJackpot || response.data.initialJackpot || 1000
@@ -52,6 +54,7 @@ export default function PlinkoSettingsPage() {
     setSaving(true)
     try {
       await apiClient.put("/admin/plinko-settings", {
+        pointsToAqeRate: settings.pointsToAqeRate,
         initialJackpot: settings.initialJackpot,
         targetJackpot: settings.targetJackpot
       })
@@ -82,11 +85,35 @@ export default function PlinkoSettingsPage() {
         <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
           <Gamepad2 className="w-6 h-6 text-[#276152]" /> Plinko Game Settings
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Configure jackpot properties and track target progression</p>
+        <p className="text-gray-500 text-sm mt-1">Cấu hình tỷ lệ quy đổi điểm Plinko sang AQE và các thông số game</p>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+          <Card className="border-none shadow-sm rounded-[24px]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Coins className="w-5 h-5 text-[#276152]" /> Tỷ lệ quy đổi Điểm sang AQE
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-600">Tỷ lệ quy đổi (1 Plinko Point = X AQE)</label>
+                <Input 
+                  type="number"
+                  step="0.0001"
+                  min="0.0001"
+                  value={settings.pointsToAqeRate} 
+                  onChange={(e) => setSettings({ ...settings, pointsToAqeRate: Number(e.target.value) })} 
+                  className="h-12 rounded-[12px] bg-white border-gray-200"
+                  placeholder="e.g. 1 (1 Point = 1 AQE)"
+                  required
+                />
+                <p className="text-[11px] text-gray-400">Ví dụ: Nhập 1 nghĩa là 1 Điểm quy đổi thành 1 AQE. Nhập 0.5 nghĩa là 1 Điểm quy đổi thành 0.5 AQE.</p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-none shadow-sm rounded-[24px]">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">

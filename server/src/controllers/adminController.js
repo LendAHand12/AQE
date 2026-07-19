@@ -428,7 +428,7 @@ export const updateUserByAdmin = async (req, res) => {
             user.address = req.body.address ?? user.address;
             user.nation = req.body.nation ?? user.nation;
             user.walletAddress = req.body.walletAddress ?? user.walletAddress;
-            user.plinkoPlays = req.body.plinkoPlays !== undefined ? Number(req.body.plinkoPlays) : user.plinkoPlays;
+            user.plinkoPoints = req.body.plinkoPoints !== undefined ? Number(req.body.plinkoPoints) : (user.plinkoPoints || 0);
 
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
@@ -1125,21 +1125,21 @@ export const manualDepositUser = async (req, res) => {
             });
         }
 
-        // Credit Plinko plays: 1 play per 10 USDT
-        const playsToAdd = Math.floor(amountNum / 10);
-        if (playsToAdd > 0) {
-            user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+        // Credit Plinko Points: 1 USDT = 1 Point
+        const pointsToAdd = amountNum;
+        if (pointsToAdd > 0) {
+            user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
             
             await Notification.create({
                 userId: user._id,
-                title: 'Plinko Plays Credited',
-                message: `You have been credited with ${playsToAdd} Plinko plays for your manual deposit of ${amountNum} USDT. Go to the Plinko page to play and win AQE!`,
+                title: 'Plinko Points Credited',
+                message: `You have been credited with ${pointsToAdd} Plinko points for your manual deposit of ${amountNum} USDT. Go to the Plinko page to play and win rewards!`,
                 type: 'SYSTEM'
             });
             
             emitNotification(user._id, {
-                title: 'Plinko Plays Credited',
-                message: `+${playsToAdd} Plinko plays!`,
+                title: 'Plinko Points Credited',
+                message: `+${pointsToAdd} Plinko Points!`,
                 type: 'SYSTEM'
             });
         }

@@ -260,21 +260,21 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 });
             }
 
-            // Credit Plinko plays: 1 play per 10 USDT
-            const playsToAdd = Math.floor(processingAmount / 10);
-            if (playsToAdd > 0) {
-                user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+            // Credit Plinko Points: 1 point per 1 USDT
+            const pointsToAdd = processingAmount;
+            if (pointsToAdd > 0) {
+                user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
                 
                 await Notification.create({
                     userId: user._id,
-                    title: 'Plinko Plays Credited',
-                    message: `You have been credited with ${playsToAdd} Plinko plays for your purchase of ${processingAmount} USDT. Go to the Plinko page to play and win AQE!`,
+                    title: 'Plinko Points Credited',
+                    message: `You have been credited with ${pointsToAdd} Plinko points for your purchase of ${processingAmount} USDT. Go to the Plinko page to play and win rewards!`,
                     type: 'SYSTEM'
                 });
                 
                 emitNotification(user._id, {
-                    title: 'Plinko Plays Credited',
-                    message: `+${playsToAdd} Plinko plays!`,
+                    title: 'Plinko Points Credited',
+                    message: `+${pointsToAdd} Plinko Points!`,
                     type: 'SYSTEM'
                 });
             }
@@ -401,21 +401,21 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 user.aqeBalance += tokensCalculated;
             }
 
-            // Credit Plinko plays: 1 play per 10 USDT
-            const playsToAdd = Math.floor(processingAmount / 10);
-            if (playsToAdd > 0) {
-                user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+            // Credit Plinko Points: 1 point per 1 USDT
+            const pointsToAdd = processingAmount;
+            if (pointsToAdd > 0) {
+                user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
                 
                 await Notification.create({
                     userId: user._id,
-                    title: 'Plinko Plays Credited',
-                    message: `You have been credited with ${playsToAdd} Plinko plays for your payment of ${processingAmount} USDT. Go to the Plinko page to play and win AQE!`,
+                    title: 'Plinko Points Credited',
+                    message: `You have been credited with ${pointsToAdd} Plinko points for your payment of ${processingAmount} USDT. Go to the Plinko page to play and win rewards!`,
                     type: 'SYSTEM'
                 });
                 
                 emitNotification(user._id, {
-                    title: 'Plinko Plays Credited',
-                    message: `+${playsToAdd} Plinko plays!`,
+                    title: 'Plinko Points Credited',
+                    message: `+${pointsToAdd} Plinko Points!`,
                     type: 'SYSTEM'
                 });
             }
@@ -572,21 +572,21 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
         user.aqeBalance += tokensCalculated;
     }
 
-    // Credit Plinko plays: 1 play per 10 USDT
-    const playsToAdd = Math.floor(paidAmount / 10);
-    if (playsToAdd > 0) {
-        user.plinkoPlays = (user.plinkoPlays || 0) + playsToAdd;
+    // Credit Plinko Points: 1 point per 1 USDT
+    const pointsToAdd = paidAmount;
+    if (pointsToAdd > 0) {
+        user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
         
         await Notification.create({
             userId: user._id,
-            title: 'Plinko Plays Credited',
-            message: `You have been credited with ${playsToAdd} Plinko plays for your manual deposit of ${paidAmount} USDT. Go to the Plinko page to play and win AQE!`,
+            title: 'Plinko Points Credited',
+            message: `You have been credited with ${pointsToAdd} Plinko points for your manual deposit of ${paidAmount} USDT. Go to the Plinko page to play and win rewards!`,
             type: 'SYSTEM'
         });
         
         emitNotification(user._id, {
-            title: 'Plinko Plays Credited',
-            message: `+${playsToAdd} Plinko plays!`,
+            title: 'Plinko Points Credited',
+            message: `+${pointsToAdd} Plinko Points!`,
             type: 'SYSTEM'
         });
     }

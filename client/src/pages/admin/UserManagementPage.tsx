@@ -540,8 +540,8 @@ export default function UserManagementPage() {
                   <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Plinko Plays</label>
-                  <Input type="number" value={editingUser?.plinkoPlays ?? 0} onChange={(e) => setEditingUser({...editingUser, plinkoPlays: parseInt(e.target.value) || 0})} className="h-11 rounded-[8px] border-gray-200" />
+                  <label className="text-sm font-bold text-gray-500">Plinko Points</label>
+                  <Input type="number" value={editingUser?.plinkoPoints ?? 0} onChange={(e) => setEditingUser({...editingUser, plinkoPoints: parseFloat(e.target.value) || 0})} className="h-11 rounded-[8px] border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">Active Status</label>

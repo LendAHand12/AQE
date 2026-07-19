@@ -17,6 +17,7 @@ import { useGameStore } from '../../store/game'
 import { random } from '../../utils/random'
 import apiClient from '@/lib/axios'
 import { toast } from 'sonner'
+import { Coins, ArrowRightLeft, Sparkles, RefreshCw, X, CircleDollarSign } from 'lucide-react'
 
 import type { LinesType, MultiplierValues } from './@types'
 import { PlinkoGameBody } from './components/GameBody'
@@ -25,115 +26,6 @@ import {
   getMultiplierByLinesQnt,
   getMultiplierSound
 } from './config/multipliers'
-
-// Helper to determine background colors for multiplier boxes
-function getMultiplierColor(val: number): string {
-  if (val === 110) return '#ef4444' // Red (Jackpot)
-  if (val === 41) return '#f97316' // Orange
-  if (val === 10) return '#f59e0b' // Amber
-  if (val === 5) return '#eab308' // Yellow
-  if (val === 3) return '#a3e635' // Lime
-  if (val === 1.5) return '#84cc16' // Greenish-Yellow
-  if (val === 1.0) return '#22c55e' // Green
-  return '#10b981' // Emerald
-}
-
-// Map backend reward amounts to a target slot index symmetrically
-export function mapRewardToSlot(rewardAmount: number, lines: LinesType): number {
-  const left = Math.random() > 0.5
-  switch (lines) {
-    case 16:
-      if (rewardAmount >= 1000) return left ? 0 : 16
-      if (rewardAmount >= 750) return left ? 1 : 15
-      if (rewardAmount >= 500) return left ? 2 : 14
-      if (rewardAmount >= 300) return left ? 3 : 13
-      if (rewardAmount >= 200) return left ? 4 : 12
-      if (rewardAmount >= 150) return left ? 5 : 11
-      return left ? 6 : (Math.random() > 0.5 ? 7 : (Math.random() > 0.5 ? 8 : (Math.random() > 0.5 ? 9 : 10)))
-    case 15:
-      if (rewardAmount >= 1000) return left ? 0 : 15
-      if (rewardAmount >= 750) return left ? 1 : 14
-      if (rewardAmount >= 500) return left ? 2 : 13
-      if (rewardAmount >= 300) return left ? 3 : 12
-      if (rewardAmount >= 200) return left ? 4 : 11
-      if (rewardAmount >= 150) return left ? 5 : 10
-      return left ? 6 : (Math.random() > 0.5 ? 7 : (Math.random() > 0.5 ? 8 : 9))
-    case 14:
-      if (rewardAmount >= 1000) return left ? 0 : 14
-      if (rewardAmount >= 750) return left ? 1 : 13
-      if (rewardAmount >= 500) return left ? 2 : 12
-      if (rewardAmount >= 300) return left ? 3 : 11
-      if (rewardAmount >= 200) return left ? 4 : 10
-      if (rewardAmount >= 150) return left ? 5 : 9
-      return left ? 6 : (Math.random() > 0.5 ? 7 : 8)
-    case 13:
-      if (rewardAmount >= 1000) return left ? 0 : 13
-      if (rewardAmount >= 750) return left ? 1 : 12
-      if (rewardAmount >= 500) return left ? 2 : 11
-      if (rewardAmount >= 300) return left ? 3 : 10
-      if (rewardAmount >= 200) return left ? 4 : 9
-      if (rewardAmount >= 150) return left ? 5 : 8
-      return left ? 6 : 7
-    case 12:
-      if (rewardAmount >= 1000) return left ? 0 : 12
-      if (rewardAmount >= 750) return left ? 1 : 11
-      if (rewardAmount >= 500) return left ? 2 : 10
-      if (rewardAmount >= 300) return left ? 3 : 9
-      if (rewardAmount >= 200) return left ? 4 : 8
-      if (rewardAmount >= 150) return left ? 5 : 7
-      return 6
-    case 11:
-      if (rewardAmount >= 1000) return left ? 0 : 11
-      if (rewardAmount >= 750) return left ? 1 : 10
-      if (rewardAmount >= 500) return left ? 2 : 9
-      if (rewardAmount >= 300) return left ? 3 : 8
-      if (rewardAmount >= 200) return left ? 4 : 7
-      return left ? 5 : 6
-    case 10:
-      if (rewardAmount >= 1000) return left ? 0 : 10
-      if (rewardAmount >= 750) return left ? 1 : 9
-      if (rewardAmount >= 500) return left ? 2 : 8
-      if (rewardAmount >= 300) return left ? 3 : 7
-      if (rewardAmount >= 150) return left ? 4 : 6
-      return 5
-    case 9:
-      if (rewardAmount >= 1000) return left ? 0 : 9
-      if (rewardAmount >= 750) return left ? 1 : 8
-      if (rewardAmount >= 500) return left ? 2 : 7
-      if (rewardAmount >= 300) return left ? 3 : 6
-      return left ? 4 : 5
-    case 8:
-    default:
-      if (rewardAmount >= 1000) return left ? 0 : 8
-      if (rewardAmount >= 750) return left ? 1 : 7
-      if (rewardAmount >= 500) return left ? 2 : 6
-      if (rewardAmount >= 300) return left ? 3 : 5
-      return 4
-  }
-}
-
-export function mapSlotIndexToPhysicalSlot(slotIndex: number): number {
-  const left = Math.random() > 0.5
-  switch (slotIndex) {
-    case 6: // 1000
-      return left ? 0 : 16
-    case 5: // 750
-      return left ? 1 : 15
-    case 4: // 500 (left)
-    case 7: // 500 (right)
-      return left ? 2 : 14
-    case 3: // 300
-      return left ? 3 : 13
-    case 2: // 200 (left)
-    case 8: // 200 (right)
-      return left ? 4 : 12
-    case 1: // 150
-      return left ? 5 : 11
-    case 0: // 100
-    default:
-      return left ? 6 : (Math.random() > 0.5 ? 7 : (Math.random() > 0.5 ? 8 : (Math.random() > 0.5 ? 9 : 10)))
-  }
-}
 
 export function formatDropTime(date: Date, t: any): string {
   const now = new Date()
@@ -158,64 +50,64 @@ export function Game() {
   const engineRef = useRef<Engine>(Engine.create())
   const audioContextRef = useRef<AudioContext | null>(null)
   const pulsesRef = useRef<{ row: number; col: number; intensity: number }[]>([])
-  const jackpotQueueRef = useRef<number[]>([])
-  const jackpotWonQueueRef = useRef<boolean[]>([])
+  const multipliersBodiesRef = useRef<Body[]>([])
 
   const lines: LinesType = 16
-  const [ballsToDrop, setBallsToDrop] = useState(1)
   const inGameBallsCount = useGameStore((state: any) => state.gamesRunning)
 
-  const [jackpotAmount, setJackpotAmount] = useState(1000)
-  const [targetJackpot, setTargetJackpot] = useState(5000)
+  const [betAmount, setBetAmount] = useState<number>(1)
+  const [ballCount, setBallCount] = useState<number>(1)
+  const [pointsToAqeRate, setPointsToAqeRate] = useState<number>(1)
 
-  const [localPlays, setLocalPlays] = useState<number | null>(null)
+  const [localPoints, setLocalPoints] = useState<number | null>(null)
   const [localBalance, setLocalBalance] = useState<number | null>(null)
-  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; multiplier: number; timestamp: Date }[]>([])
-  const [latestReward, setLatestReward] = useState<{ amount: number; key: number } | null>(null)
+  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; bet: number; multiplier: number; timestamp: Date }[]>([])
+  const [latestReward, setLatestReward] = useState<{ amount: number; multiplier: number; key: number } | null>(null)
+
+  // Conversion modal state
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false)
+  const [convertAmount, setConvertAmount] = useState<string>('')
+  const [isConverting, setIsConverting] = useState(false)
 
   useEffect(() => {
-    if (user && inGameBallsCount === 0) {
-      setLocalPlays(user.plinkoPlays)
-      setLocalBalance(user.aqeBalance)
+    if (user && localPoints === null) {
+      setLocalPoints(user.plinkoPoints || 0)
+      setLocalBalance(user.aqeBalance || 0)
     }
-  }, [user, inGameBallsCount])
+  }, [user, localPoints])
 
-  const playsRemaining = localPlays !== null ? localPlays : (user?.plinkoPlays || 0)
+  const pointsDisplay = localPoints !== null ? localPoints : (user?.plinkoPoints || 0)
   const balanceDisplay = localBalance !== null ? localBalance : (user?.aqeBalance || 0)
 
-  const fetchJackpotInfo = useCallback(async () => {
+  const fetchPlinkoInfo = useCallback(async () => {
     try {
       const res = await apiClient.get('/plinko/info')
       if (res.data) {
+        if (res.data.plinkoPoints !== undefined) {
+          setLocalPoints(res.data.plinkoPoints)
+        }
         if (res.data.settings) {
-          setJackpotAmount(res.data.settings.currentJackpot || res.data.settings.initialJackpot || 1000)
-          setTargetJackpot(res.data.settings.targetJackpot || 5000)
+          setPointsToAqeRate(res.data.settings.pointsToAqeRate !== undefined ? res.data.settings.pointsToAqeRate : 1)
         }
         if (res.data.history) {
           const historyMapped = res.data.history.map((item: any) => ({
             id: item._id,
             reward: item.rewardAmount,
-            multiplier: 1,
+            bet: item.betAmount || 1,
+            multiplier: item.multiplier || 1,
             timestamp: new Date(item.playedAt || item.createdAt)
           }))
           setDropHistory(historyMapped)
         }
       }
     } catch (e) {
-      console.warn("Failed to fetch Plinko Jackpot info:", e)
+      console.warn("Failed to fetch Plinko info:", e)
     }
   }, [])
 
   useEffect(() => {
-    fetchJackpotInfo()
-  }, [fetchJackpotInfo])
-
-  const maxDropLimit = Math.max(1, Math.min(15 - inGameBallsCount, playsRemaining))
-  useEffect(() => {
-    if (ballsToDrop > maxDropLimit) {
-      setBallsToDrop(maxDropLimit)
-    }
-  }, [maxDropLimit, ballsToDrop])
+    fetchPlinkoInfo()
+  }, [fetchPlinkoInfo])
 
   const incrementInGameBallsCount = useGameStore(
     (state: any) => state.incrementGamesRunning
@@ -271,14 +163,13 @@ export function Game() {
     const element = document.getElementById('plinko')
     
     const render = Render.create({
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       element: element!,
       bounds: {
         max: { y: worldHeight, x: worldWidth },
         min: { y: 0, x: 0 }
       },
       options: {
-        background: '#ffffff',
+        background: '#090d16', // Deep space dark navy background
         hasBounds: true,
         width: worldWidth,
         height: worldHeight,
@@ -291,7 +182,7 @@ export function Game() {
     Runner.run(runner, engine)
     Render.run(render)
 
-    // Generate static pins
+    // Generate static pins (Glowing Indigo Pins)
     const pins: Body[] = []
     for (let l = 0; l < lines; l++) {
       const linePins = pinsConfig.startPins + l
@@ -303,7 +194,7 @@ export function Game() {
         const pin = Bodies.circle(pinX, pinY, pinsConfig.pinSize, {
           label: `pin-${l}-${i}`,
           render: {
-            fillStyle: '#000000'
+            fillStyle: '#a5b4fc' // Glowing Indigo
           },
           isStatic: true
         })
@@ -327,34 +218,37 @@ export function Game() {
       { angle: -90, render: { visible: false }, isStatic: true }
     )
     const floor = Bodies.rectangle(0, worldWidth + 10, worldWidth * 10, 40, {
-      label: 'block-1',
+      label: 'floor',
       render: { visible: false },
       isStatic: true
     })
 
-    // Multipliers buckets
+    // Multipliers buckets (Cosmic glass boxes)
     const multipliers = getMultiplierByLinesQnt(lines)
     const multipliersBodies: Body[] = []
     let lastMultiplierX = worldWidth / 2 - (pinsConfig.pinGap / 2) * lines - pinsConfig.pinGap
 
-    multipliers.forEach(multiplier => {
+    multipliers.forEach((multiplier, index) => {
       const valNum = +multiplier.label.split('-')[1]
       const multiplierBody = Bodies.rectangle(
         lastMultiplierX + pinsConfig.pinGap,
         worldWidth / lines + lines * pinsConfig.pinGap + pinsConfig.pinGap + 1,
         pinsConfig.pinGap - 1.5,
-        20,
+        22,
         {
-          label: multiplier.label,
+          label: `block-${index}-${valNum}`,
           isStatic: true,
           render: {
-            fillStyle: getMultiplierColor(valNum)
+            fillStyle: 'rgba(15, 23, 42, 0.8)',
+            strokeStyle: 'rgba(99, 102, 241, 0.4)',
+            lineWidth: 1
           }
         }
       )
       lastMultiplierX = multiplierBody.position.x
       multipliersBodies.push(multiplierBody)
     })
+    multipliersBodiesRef.current = multipliersBodies
 
     Composite.add(engine.world, [
       ...pins,
@@ -364,12 +258,11 @@ export function Game() {
       floor
     ])
 
-    // Draw multipliers text & collision pulses on canvas
+    // Draw cosmic collision pulses & glowing neon multiplier text under board
     const afterRenderHandler = () => {
       const ctx = render.context
       if (!ctx) return
 
-      // Update & Draw Pulses
       pulsesRef.current = pulsesRef.current
         .map(p => ({ ...p, intensity: p.intensity - 0.05 }))
         .filter(p => p.intensity > 0)
@@ -381,17 +274,34 @@ export function Game() {
         const px = worldWidth / 2 - lineWidth / 2 + col * pinsConfig.pinGap + pinsConfig.pinGap / 2
         const py = worldWidth / lines + row * pinsConfig.pinGap + pinsConfig.pinGap
 
+        // Cosmic indigo aura
         ctx.beginPath()
-        ctx.arc(px, py, pinsConfig.pinSize + intensity * 7, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 0, 0, ${intensity * 0.15})`
+        ctx.arc(px, py, pinsConfig.pinSize + intensity * 8, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(99, 102, 241, ${intensity * 0.45})`
         ctx.fill()
 
+        // Bright star core
         ctx.beginPath()
-        ctx.arc(px, py, pinsConfig.pinSize + intensity * 1.5, 0, Math.PI * 2)
-        ctx.fillStyle = '#000000'
+        ctx.arc(px, py, pinsConfig.pinSize + intensity * 2, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(224, 231, 255, ${intensity * 0.95})`
         ctx.fill()
       })
 
+      // Draw glowing neon text numbers (e.g. 110x, 41x, 10x, 5x, 3x, 2x, 1x, 0.5x, 0.2x)
+      multipliersBodies.forEach(mb => {
+        const parts = mb.label.split('-')
+        const valNum = parseFloat(parts[2]) || parseFloat(parts[1]) || 1
+        const labelText = `${valNum}x`
+        ctx.save()
+        ctx.font = 'bold 9px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.shadowColor = '#818cf8'
+        ctx.shadowBlur = 5
+        ctx.fillStyle = '#38bdf8' // Glowing Cyan
+        ctx.fillText(labelText, mb.position.x, mb.position.y)
+        ctx.restore()
+      })
     }
 
     Events.on(render, 'afterRender', afterRenderHandler)
@@ -406,7 +316,7 @@ export function Game() {
   }, [lines])
 
   const addBall = useCallback(
-    (ballValue: number, targetSlot: number) => {
+    (bet: number, targetSlot?: number) => {
       incrementInGameBallsCount()
       const ballSound = new Audio(ballAudio)
       ballSound.volume = 0.2
@@ -416,13 +326,13 @@ export function Game() {
       const minBallX = worldWidth / 2 - pinsConfig.pinSize * 3 + pinsConfig.pinGap
       const maxBallX = worldWidth / 2 - pinsConfig.pinSize * 3 - pinsConfig.pinGap + pinsConfig.pinGap / 2
       const ballX = random(minBallX, maxBallX)
-      const ballColor = colors.purple
+      const ballColor = '#ec4899' // Bright Pink Cosmic Energy Orb
 
       const ball = Bodies.circle(ballX, 20, ballConfig.ballSize, {
-        restitution: 1, // bouncy
+        restitution: 1,
         friction: 0.6,
-        label: `ball-${ballValue}`,
-        id: new Date().getTime(),
+        label: `ball-${bet}`,
+        id: new Date().getTime() + Math.random(),
         frictionAir: 0.03,
         collisionFilter: {
           group: -1
@@ -433,8 +343,10 @@ export function Game() {
         isStatic: false
       }) as any
 
-      ball.targetSlot = targetSlot
+      const chosenSlot = targetSlot !== undefined ? targetSlot : Math.floor(Math.random() * 17)
+      ball.targetSlot = chosenSlot
       ball.lastGuidedRow = -1
+      ball.isHandled = false
 
       Composite.add(engineRef.current.world, ball)
     },
@@ -442,60 +354,64 @@ export function Game() {
   )
 
   async function onCollideWithMultiplier(ball: any, multiplier: Body) {
+    if (ball.isHandled) return
+    ball.isHandled = true
+
     ball.collisionFilter.group = 2
     World.remove(engineRef.current.world, ball)
     decrementInGameBallsCount()
-    
-    const multiplierValue = +multiplier.label.split('-')[1] as MultiplierValues
 
-    const multiplierSong = new Audio(getMultiplierSound(multiplierValue))
-    multiplierSong.currentTime = 0
-    multiplierSong.volume = 0.2
-    multiplierSong.play().catch(e => console.warn(e))
-
-    // Extract reward amount from ball label
     const parts = ball.label.split('-')
-    const rewardAmount = parseFloat(parts[1]) || 0
-    setLocalBalance(prev => (prev !== null ? prev : (user?.aqeBalance || 0)) + rewardAmount)
+    const bet = parseFloat(parts[1]) || 1
 
-    console.log("Ball collision debug:", ball.label)
+    const blockParts = multiplier.label.split('-')
+    const parsedSlot = parseInt(blockParts[1], 10)
+    const slotIndex = !isNaN(parsedSlot) && parsedSlot >= 0 ? parsedSlot : multipliersBodiesRef.current.indexOf(multiplier)
+    const fallbackSlot = slotIndex >= 0 ? slotIndex : 8
 
-    setDropHistory(prev => [
-      {
-        id: Math.random().toString(),
-        reward: rewardAmount,
-        multiplier: multiplierValue,
-        timestamp: new Date()
-      },
-      ...prev
-    ].slice(0, 10))
+    try {
+      const res = await apiClient.post('/plinko/play', {
+        betAmount: bet,
+        slotIndex: fallbackSlot
+      })
 
-    setLatestReward({
-      amount: rewardAmount,
-      key: Math.random()
-    })
+      if (res.data.success) {
+        const { rewardAmount, multiplier: multiplierVal, newPoints } = res.data
 
-    // Process jackpot queue
-    const nextJackpot = jackpotQueueRef.current.shift()
-    if (nextJackpot !== undefined) {
-      setJackpotAmount(nextJackpot)
-    }
+        const multiplierSong = new Audio(getMultiplierSound(multiplierVal as MultiplierValues))
+        multiplierSong.currentTime = 0
+        multiplierSong.volume = 0.2
+        multiplierSong.play().catch(e => console.warn(e))
 
-    // Process jackpot won queue
-    const nextJackpotWon = jackpotWonQueueRef.current.shift()
-    if (nextJackpotWon) {
-      toast.success(
-        t('plinko.jackpot_win_congrats', {
-          reward: rewardAmount,
-          defaultValue: `🎉 CONGRATULATIONS! You hit the Jackpot and received ${rewardAmount} AQE!`
+        if (newPoints !== undefined) {
+          setLocalPoints(newPoints)
+        } else {
+          setLocalPoints(prev => (prev !== null ? prev : (user?.plinkoPoints || 0)) + rewardAmount)
+        }
+
+        setDropHistory(prev => [
+          {
+            id: Math.random().toString(),
+            reward: rewardAmount,
+            bet,
+            multiplier: multiplierVal,
+            timestamp: new Date()
+          },
+          ...prev
+        ].slice(0, 30))
+
+        setLatestReward({
+          amount: rewardAmount,
+          multiplier: multiplierVal,
+          key: Math.random()
         })
-      )
-    }
-
-    // Sync profile directly to get the updated database balance
-    setTimeout(() => {
+      }
+    } catch (e: any) {
+      console.warn("Error finalizing Plinko drop:", e)
+      const errMsg = e.response?.data?.message || t('plinko.play_error', 'Lỗi khi xử lý thưởng Plinko')
+      toast.error(errMsg)
       syncProfile()
-    }, 600)
+    }
   }
 
   async function onBodyCollision(event: IEventCollision<Engine>) {
@@ -506,7 +422,6 @@ export function Game() {
       const pin = bodyA.label.includes('pin') ? bodyA : (bodyB.label.includes('pin') ? bodyB : null)
       const block = bodyA.label.includes('block') ? bodyA : (bodyB.label.includes('block') ? bodyB : null)
 
-      // Apply dynamic steering on pin collisions to direct the physical ball to the server target slot
       if (ball && pin) {
         const parts = pin.label.split('-')
         const r = parseInt(parts[1], 10)
@@ -554,245 +469,368 @@ export function Game() {
   }, [lines])
 
   const handleBet = async () => {
-    const maxDrop = Math.min(15 - inGameBallsCount, playsRemaining)
-    const countToDrop = Math.min(ballsToDrop, maxDrop)
+    const totalBet = betAmount * ballCount
+    if (isLoading || inGameBallsCount + ballCount > 15) return
+    if (totalBet <= 0 || pointsDisplay < totalBet) {
+      toast.error(t('plinko.insufficient_points', 'Số điểm của bạn không đủ để đặt cược'))
+      return
+    }
 
-    if (isLoading || countToDrop <= 0) return
     setIsLoading(true)
 
-    const promises = Array.from({ length: countToDrop }).map(async (_, index) => {
-      try {
-        const res = await apiClient.post('/plinko/play')
-        if (res.data.success) {
-          const { rewardAmount, slotIndex, currentJackpot, isJackpotWon, newPlays } = res.data
-          console.log("Play Response debug:", res.data)
-          if (newPlays !== undefined) {
-            setLocalPlays(newPlays)
-          }
-          
-          if (currentJackpot !== undefined) {
-            jackpotQueueRef.current.push(currentJackpot)
-          }
-          jackpotWonQueueRef.current.push(!!isJackpotWon)
-
-          const targetSlot = slotIndex !== undefined ? mapSlotIndexToPhysicalSlot(slotIndex) : mapRewardToSlot(rewardAmount, lines)
-          setTimeout(() => {
-            addBall(rewardAmount, targetSlot)
-          }, index * 200)
-        }
-      } catch (e: any) {
-        const errMsg = e.response?.data?.message || t('plinko.play_error')
-        toast.error(errMsg)
-      }
-    })
+    // Deduct total bet points immediately on client UI
+    setLocalPoints(prev => Math.max(0, (prev !== null ? prev : (user?.plinkoPoints || 0)) - totalBet))
 
     try {
-      await Promise.all(promises)
-      // Profile sync is deferred until the ball hits the bottom
-    } catch (e) {
-      console.error(e)
+      for (let i = 0; i < ballCount; i++) {
+        setTimeout(() => {
+          addBall(betAmount)
+        }, i * 150)
+      }
+    } catch (e: any) {
+      console.warn("Error launching balls:", e)
+      toast.error(t('plinko.play_error', 'Lỗi khi thả banh'))
+      setLocalPoints(user?.plinkoPoints || 0)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const hasNoPlays = playsRemaining <= 0
-  const jackpotProgress = targetJackpot > 0 ? (jackpotAmount / targetJackpot) * 100 : 0
+  const handleConvertPoints = async () => {
+    const pointsNum = parseFloat(convertAmount)
+    if (isNaN(pointsNum) || pointsNum <= 0) {
+      toast.error(t('plinko.invalid_convert_amount', 'Vui lòng nhập số điểm hợp lệ'))
+      return
+    }
+    if (pointsNum > pointsDisplay) {
+      toast.error(t('plinko.convert_exceeds_points', 'Số điểm quy đổi vượt quá số điểm hiện có'))
+      return
+    }
+
+    setIsConverting(true)
+    try {
+      const res = await apiClient.post('/plinko/convert', { points: pointsNum })
+      if (res.data.success) {
+        toast.success(
+          t('plinko.convert_success', {
+            points: res.data.convertedPoints,
+            aqe: res.data.aqeReceived,
+            defaultValue: `Thành công quy đổi ${res.data.convertedPoints} điểm sang ${res.data.aqeReceived} AQE!`
+          })
+        )
+        setLocalPoints(res.data.newPoints)
+        setLocalBalance(res.data.newAqeBalance)
+        setIsConvertModalOpen(false)
+        setConvertAmount('')
+        syncProfile()
+      }
+    } catch (e: any) {
+      const errMsg = e.response?.data?.message || t('plinko.convert_error', 'Quy đổi thất bại')
+      toast.error(errMsg)
+    } finally {
+      setIsConverting(false)
+    }
+  }
+
+  const hasNoPoints = pointsDisplay < betAmount
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-6 bg-white text-gray-800 border border-gray-100 shadow-xl rounded-3xl max-w-4xl mx-auto w-full">
-      {/* Plinko Jackpot Widget */}
-      <div className="w-full bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 p-[2px] rounded-[24px] shadow-lg shadow-amber-500/10">
-        <div className="bg-slate-900 rounded-[22px] p-5 text-white flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
-          {/* Decorative glow background */}
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
-          
-          <div className="flex items-center gap-3">
-            <span className="text-3xl animate-bounce">🏆</span>
-            <div>
-              <h2 className="text-xs uppercase tracking-wider text-amber-400 font-extrabold">{t('plinko.jackpot_pool')}</h2>
-              <p className="text-2xl font-black text-white">{jackpotAmount.toFixed(4)} AQE</p>
-            </div>
+    <div className="flex flex-col items-center justify-center gap-6 p-6 bg-slate-950/90 text-slate-100 border border-indigo-500/20 shadow-[0_0_60px_rgba(79,70,229,0.15)] rounded-3xl max-w-4xl mx-auto w-full relative overflow-hidden backdrop-blur-xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+      {/* Background stardust glow accents */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Top Header Bar: Plinko Points & AQE Balance */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full px-6 py-4 bg-slate-900/80 border border-indigo-500/30 text-white rounded-2xl gap-4 shadow-[0_0_25px_rgba(99,102,241,0.12)] backdrop-blur-md z-10">
+        
+        {/* Plinko Points Balance */}
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-full bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+            <Sparkles size={20} />
           </div>
-          
-          <div className="flex flex-col items-end w-full md:w-auto min-w-[220px]">
-            <div className="flex justify-between w-full text-xs font-semibold text-gray-300 mb-1">
-              <span>{t('plinko.progress_to_target')}</span>
-              <span>{jackpotProgress.toFixed(1)}%</span>
-            </div>
-            <div className="w-full bg-slate-800 h-3.5 rounded-full overflow-hidden border border-slate-700 relative">
-              <div 
-                className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, jackpotProgress)}%` }}
-              />
-            </div>
-            {jackpotProgress >= 100 && (
-              <span className="mt-1.5 text-[9px] uppercase bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse tracking-wide text-center">
-                {t('plinko.jackpot_ready')}
-              </span>
-            )}
+          <div>
+            <span className="text-emerald-300/80 text-xs font-semibold uppercase tracking-wider block">{t('plinko.plinko_points', 'Plinko Points')}</span>
+            <span className="text-emerald-400 font-black text-2xl tracking-tight drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">{pointsDisplay.toFixed(2)} pts</span>
+          </div>
+        </div>
+
+        {/* Action Button: Convert Points to AQE */}
+        <button
+          onClick={() => setIsConvertModalOpen(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white font-bold text-sm transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] active:scale-95"
+        >
+          <ArrowRightLeft size={16} />
+          <span>{t('plinko.convert_to_aqe', 'Quy đổi sang AQE')}</span>
+        </button>
+
+        {/* AQE Wallet Balance */}
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-full bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+            <Coins size={20} />
+          </div>
+          <div className="text-right">
+            <span className="text-amber-300/80 text-xs font-semibold uppercase tracking-wider block">{t('plinko.aqe_balance', 'AQE Balance')}</span>
+            <span className="text-amber-400 font-black text-xl tracking-tight drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">{balanceDisplay.toFixed(2)} AQE</span>
           </div>
         </div>
       </div>
 
-      {/* Top Header: Balance and Plays */}
-      <div className="flex justify-between items-center w-full px-5 py-3 bg-gray-50 border border-gray-100/80 rounded-2xl">
-        <div className="flex items-center gap-2 relative">
-          <span className="text-gray-500 text-sm font-semibold">{t('plinko.wallet_balance')}</span>
-          <span className="text-emerald-700 font-extrabold text-lg">{balanceDisplay.toFixed(2)} AQE</span>
-          {latestReward && (
-            <span
-              key={latestReward.key}
-              className="absolute left-full ml-3 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-sm whitespace-nowrap animate-fade-out-3s"
-            >
-              +{latestReward.amount.toFixed(2)} AQE
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-sm font-semibold">{t('plinko.play_turns')}</span>
-          <span className="text-purple-700 font-extrabold text-lg">{playsRemaining} {t('plinko.turn')}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full">
+      <div className="flex flex-col md:flex-row items-start justify-center gap-6 w-full z-10">
         {/* Game Board Column */}
-        <div className="flex flex-col items-center bg-white rounded-2xl border border-gray-100 shadow-sm p-4 relative min-h-[400px]">
+        <div className="flex flex-col items-center bg-slate-900/80 border border-indigo-500/30 shadow-[0_0_30px_rgba(15,23,42,0.8)] p-4 rounded-2xl relative min-h-[400px] w-full md:w-auto flex-1 backdrop-blur-md overflow-hidden">
           <PlinkoGameBody />
           
-          {/* Floating Reward in the top-right blank space of the game node frame */}
+          {/* Floating Reward in top-right */}
           {latestReward && (
             <div
               key={`board-${latestReward.key}`}
-              className="absolute top-6 right-6 text-emerald-500 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s"
+              className="absolute top-6 right-6 text-cyan-400 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s flex flex-col items-end drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]"
             >
-              +{latestReward.amount.toFixed(2)} AQE
+              <span>+{latestReward.amount.toFixed(2)} pts</span>
+              <span className="text-xs bg-indigo-950/80 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">x{latestReward.multiplier}</span>
             </div>
           )}
-          
-          {/* Legend Table */}
-          <div className="w-full mt-4 bg-gray-50 border border-gray-100 rounded-xl p-3 max-w-[390px]">
-            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-center mb-2.5">
-              {t('plinko.jackpot_legend_title')}
-            </div>
-            <div className="grid grid-cols-4 gap-2 text-center text-[10.5px]">
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#ef4444' }} />
-                <span className="font-extrabold text-gray-800">100% JP</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f97316' }} />
-                <span className="font-extrabold text-gray-800">0.01%</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
-                <span className="font-extrabold text-gray-800">0.008%</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#eab308' }} />
-                <span className="font-extrabold text-gray-800">0.006%</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#a3e635' }} />
-                <span className="font-extrabold text-gray-800">0.004%</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#84cc16' }} />
-                <span className="font-extrabold text-gray-800">0.002%</span>
-              </div>
-              <div className="flex flex-col items-center gap-1 p-1 bg-white border border-gray-100 rounded-lg shadow-sm col-span-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#22c55e' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#10b981' }} />
-                </div>
-                <span className="font-extrabold text-gray-800">0.001%</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Action Panel Column */}
-        <div className="flex flex-col items-stretch gap-4 w-full md:w-64 bg-gray-50 p-5 rounded-2xl border border-gray-100/80">
-          {/* Balls Slider Option */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center px-1">
-              <label htmlFor="balls-slider" className="text-xs font-semibold text-gray-500">
-                {t('plinko.balls_to_drop')}
-              </label>
-              <span className="text-sm font-extrabold text-[#276152] bg-[#276152]/10 px-2.5 py-0.5 rounded-full">
-                {ballsToDrop} {t('plinko.balls')}
+        {/* Betting Panel Column */}
+        <div className="flex flex-col items-stretch gap-5 w-full md:w-80 bg-slate-900/60 p-5 rounded-2xl border border-indigo-500/20 backdrop-blur-md shadow-lg">
+          
+          {/* Bet Amount Input */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">{t('plinko.bet_amount', 'Số điểm cược')}</label>
+              <span className="text-xs font-semibold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
+                {t('plinko.rate_info', '1 USDT = 1 Điểm')}
               </span>
             </div>
-            <input
-              id="balls-slider"
-              type="range"
-              min={1}
-              max={Math.max(1, Math.min(15 - inGameBallsCount, playsRemaining))}
-              value={ballsToDrop}
-              onChange={(e) => setBallsToDrop(Number(e.target.value))}
-              disabled={isLoading || hasNoPlays || inGameBallsCount >= 15}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#276152] disabled:opacity-50"
-            />
-            <div className="flex justify-between text-[10px] text-gray-400 px-1 font-semibold">
-              <span>1</span>
-              <span>{Math.max(1, Math.min(15 - inGameBallsCount, playsRemaining))}</span>
+
+            <div className="flex items-center gap-1 bg-slate-950 border-2 border-indigo-500/30 rounded-xl p-1.5 focus-within:border-cyan-400 transition-colors shadow-inner">
+              <input
+                type="number"
+                min={1}
+                max={pointsDisplay}
+                value={betAmount}
+                onChange={(e) => setBetAmount(Math.max(1, parseFloat(e.target.value) || 1))}
+                className="w-full bg-transparent px-3 py-1 font-black text-lg text-cyan-300 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setBetAmount(Math.max(1, Math.floor(betAmount / 2)))}
+                className="px-2.5 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
+              >
+                ½
+              </button>
+              <button
+                type="button"
+                onClick={() => setBetAmount(Math.min(pointsDisplay, betAmount * 2))}
+                className="px-2.5 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
+              >
+                2x
+              </button>
+              <button
+                type="button"
+                onClick={() => setBetAmount(Math.max(1, pointsDisplay))}
+                className="px-2.5 py-1 text-xs font-bold bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-800/80 rounded-lg transition-colors"
+              >
+                Max
+              </button>
             </div>
           </div>
 
-          <span className="text-xs text-gray-400 text-center font-medium mt-1">
-            {t('plinko.balls_in_board', { count: inGameBallsCount })}
-          </span>
+          {/* Quick Bet Buttons */}
+          <div className="grid grid-cols-4 gap-2">
+            {[1, 5, 10, 50].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setBetAmount(preset)}
+                className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
+                  betAmount === preset 
+                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.4)]' 
+                    : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                {preset} pts
+              </button>
+            ))}
+          </div>
 
-          {/* The Big Drop Button */}
+          {/* Balls to Drop Selection */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                {t('plinko.balls_to_drop', 'Số bóng thả:')}
+              </label>
+              <span className="text-xs font-bold text-indigo-300">
+                {t('plinko.total_bet', { totalBet: betAmount * ballCount, defaultValue: `Tổng: ${betAmount * ballCount} pts` })}
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 3, 5, 10].map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  onClick={() => setBallCount(count)}
+                  className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
+                    ballCount === count 
+                      ? 'bg-cyan-600 text-white border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' 
+                      : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  {count} {t('plinko.balls', 'bóng')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Drop Ball Button */}
           <button
             onClick={handleBet}
-            disabled={isLoading || hasNoPlays || inGameBallsCount >= 15}
-            className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#276152] to-emerald-600 hover:from-[#1e4d41] hover:to-emerald-700 active:scale-[0.98] text-white font-extrabold text-lg shadow-lg hover:shadow-emerald-600/10 transition-all focus:outline-none disabled:from-gray-100 disabled:to-gray-100 disabled:text-gray-300 disabled:shadow-none disabled:border disabled:border-gray-200"
+            disabled={isLoading || pointsDisplay < betAmount * ballCount || inGameBallsCount + ballCount > 15}
+            className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 active:scale-[0.98] text-white font-black text-lg shadow-[0_0_25px_rgba(129,140,248,0.35)] transition-all focus:outline-none disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:border disabled:border-slate-700"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                {t('plinko.processing')}
+                <RefreshCw className="animate-spin h-5 w-5" />
+                {t('plinko.processing', 'Đang thả banh...')}
               </span>
-            ) : hasNoPlays ? (
-              t('plinko.no_plays_remaining')
+            ) : pointsDisplay < betAmount * ballCount ? (
+              t('plinko.no_points', 'Không đủ điểm Plinko')
             ) : (
-              t('plinko.drop_ball')
+              t('plinko.drop_balls_btn', {
+                count: ballCount,
+                totalBet: betAmount * ballCount,
+                defaultValue: `Thả ${ballCount} Banh (${betAmount * ballCount} Điểm)`
+              })
             )}
           </button>
 
           {/* Drop History */}
-          <div className="mt-2 flex flex-col gap-2 border-t border-gray-200/60 pt-4">
-            <div className="text-[10.5px] font-extrabold text-gray-400 uppercase tracking-wider px-1">
-              {t('plinko.drop_history')}
+          <div className="mt-1 flex flex-col gap-2 border-t border-slate-800/80 pt-4">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1">
+              {t('plinko.drop_history', 'Lịch sử thả banh')}
             </div>
-            <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-0.5 custom-scrollbar">
+            <div className="flex flex-col gap-1.5 max-h-[190px] overflow-y-auto pr-1 custom-scrollbar-dark">
               {dropHistory.length === 0 ? (
-                <div className="text-xs text-gray-400 text-center py-5 border border-dashed border-gray-200 rounded-xl bg-white/50">
-                  {t('plinko.no_history')}
+                <div className="text-xs text-slate-400 text-center py-5 border border-dashed border-slate-800 rounded-xl bg-slate-950/40">
+                  {t('plinko.no_history', 'Chưa có lịch sử')}
                 </div>
               ) : (
                 dropHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between px-3 py-2 bg-white border border-gray-100 rounded-xl shadow-xs hover:border-gray-200 transition-all"
+                    className="flex items-center justify-between px-3 py-2 bg-slate-950/60 border border-slate-800/80 rounded-xl shadow-xs hover:border-indigo-500/30 transition-all"
                   >
-                    <span className="text-xs text-gray-500 font-semibold">
-                      {formatDropTime(item.timestamp, t)}
-                    </span>
-                    <span className="text-xs font-black text-emerald-600">
-                      +{item.reward.toFixed(2)} AQE
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-slate-400 font-semibold">
+                        {formatDropTime(item.timestamp, t)}
+                      </span>
+                      <span className="text-xs font-bold text-slate-300">
+                        {t('plinko.bet_history_bet', { bet: item.bet, defaultValue: `Cược ${item.bet} pts` })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] bg-slate-800 font-black text-cyan-400 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                        x{item.multiplier}
+                      </span>
+                      <span className="text-xs font-black text-emerald-400">
+                        +{item.reward.toFixed(2)} pts
+                      </span>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
+
         </div>
       </div>
+
+      {/* Convert Points Modal */}
+      {isConvertModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[0_0_50px_rgba(79,70,229,0.25)] text-white space-y-6 relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setIsConvertModalOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                <CircleDollarSign className="w-6 h-6 text-emerald-400" />
+                {t('plinko.convert_modal_title', 'Quy đổi điểm sang AQE')}
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                {t('plinko.convert_modal_desc', 'Chuyển đổi điểm Plinko tích lũy từ trò chơi thành Token AQE chính thức.')}
+              </p>
+            </div>
+
+            <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-2">
+              <div className="flex justify-between text-xs text-indigo-300 font-bold">
+                <span>{t('plinko.convert_rate', 'Tỷ lệ quy đổi:')}</span>
+                <span>1 Plinko Point = {pointsToAqeRate} AQE</span>
+              </div>
+              <div className="flex justify-between text-xs text-emerald-400 font-medium">
+                <span>{t('plinko.available_points', 'Điểm Plinko khả dụng:')}</span>
+                <span className="font-bold">{pointsDisplay.toFixed(2)} pts</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-extrabold text-slate-300 uppercase tracking-wider block">
+                {t('plinko.enter_points_to_convert', 'Nhập số điểm cần quy đổi')}
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="e.g. 100"
+                  value={convertAmount}
+                  onChange={(e) => setConvertAmount(e.target.value)}
+                  className="w-full h-12 rounded-xl bg-slate-950 border-2 border-slate-800 px-4 font-black text-lg text-cyan-300 focus:border-indigo-500 focus:outline-none pr-16"
+                />
+                <button
+                  type="button"
+                  onClick={() => setConvertAmount(pointsDisplay.toString())}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-300 hover:text-white px-2 py-1 rounded-md bg-indigo-900/60 border border-indigo-500/30"
+                >
+                  {t('plinko.all', 'Tất cả')}
+                </button>
+              </div>
+
+              {/* AQE Preview */}
+              {parseFloat(convertAmount) > 0 && (
+                <div className="pt-2 flex justify-between items-center text-sm font-bold text-slate-200">
+                  <span className="text-slate-400">{t('plinko.aqe_received', 'Số AQE nhận được:')}</span>
+                  <span className="text-amber-400 font-black text-lg">
+                    {(parseFloat(convertAmount) * pointsToAqeRate).toFixed(4)} AQE
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsConvertModalOpen(false)}
+                className="flex-1 py-3.5 rounded-xl border border-slate-800 text-slate-300 font-bold hover:bg-slate-800 transition-colors text-sm"
+              >
+                {t('plinko.cancel', 'Hủy bỏ')}
+              </button>
+              <button
+                type="button"
+                onClick={handleConvertPoints}
+                disabled={isConverting || !parseFloat(convertAmount) || parseFloat(convertAmount) <= 0}
+                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-extrabold text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
+              >
+                {isConverting ? <RefreshCw className="animate-spin w-4 h-4" /> : null}
+                {t('plinko.convert_now', 'Quy đổi ngay')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

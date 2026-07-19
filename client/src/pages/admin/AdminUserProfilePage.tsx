@@ -703,10 +703,10 @@ export default function AdminUserProfilePage() {
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase">
-                        Plinko Plays
+                        Plinko Points
                       </p>
                       <p className="text-[14px] font-bold text-emerald-600">
-                        {user.plinkoPlays ?? 0} plays
+                        {user.plinkoPoints ?? 0} pts
                       </p>
                     </div>
                     <div>
@@ -1651,15 +1651,15 @@ export default function AdminUserProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">
-                    Plinko Plays
+                    Plinko Points
                   </label>
                   <Input
                     type="number"
-                    value={editingUser?.plinkoPlays ?? 0}
+                    value={editingUser?.plinkoPoints ?? 0}
                     onChange={(e) =>
                       setEditingUser({
                         ...editingUser,
-                        plinkoPlays: parseInt(e.target.value) || 0,
+                        plinkoPoints: parseFloat(e.target.value) || 0,
                       })
                     }
                     className="h-11 rounded-[8px] border-gray-200"
