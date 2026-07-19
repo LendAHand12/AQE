@@ -16,13 +16,31 @@ export async function processCommissions(buyer, amountPaid, transaction) {
     let f1Percent = 8;
     let f2Percent = 2;
 
-    if (transaction && transaction.metadata) {
+    const isPackage = !!(transaction && transaction.metadata && (transaction.metadata.packageId || typeof transaction.metadata.f1CommissionPercent === 'number'));
+
+    if (isPackage) {
         if (typeof transaction.metadata.f1CommissionPercent === 'number') {
             f1Percent = transaction.metadata.f1CommissionPercent;
         }
         if (typeof transaction.metadata.f2CommissionPercent === 'number') {
             f2Percent = transaction.metadata.f2CommissionPercent;
         }
+    } else {
+        const amt = Number(amountPaid) || 0;
+        if (amt >= 100000) {
+            f1Percent = 16;
+        } else if (amt >= 50000) {
+            f1Percent = 15;
+        } else if (amt >= 10000) {
+            f1Percent = 14;
+        } else if (amt >= 5000) {
+            f1Percent = 13;
+        } else if (amt >= 1000) {
+            f1Percent = 12;
+        } else {
+            f1Percent = 8;
+        }
+        f2Percent = 2;
     }
 
     const amountF1 = amountPaid * (f1Percent / 100);
