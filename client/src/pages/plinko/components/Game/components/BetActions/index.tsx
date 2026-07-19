@@ -135,10 +135,10 @@ export function BetActions({
 
             <button
               onClick={handleRunBet}
-              disabled={isLoading || hasNoPlays}
+              disabled={isLoading || hasNoPoints}
               className="block rounded-md bg-purple px-2 py-4 text-sm font-bold leading-none text-background transition-colors hover:bg-purpleDark focus:outline-none focus:ring-1 focus:ring-purple focus:ring-offset-1 focus:ring-offset-primary disabled:bg-gray-500 md:hidden"
             >
-              Apostar ({playsRemaining} Lượt)
+              Apostar ({pointsRemaining} Điểm)
             </button>
           </div>
           <select
@@ -157,10 +157,10 @@ export function BetActions({
         </div>
         <button
           onClick={handleRunBet}
-          disabled={isLoading || hasNoPlays}
+          disabled={isLoading || hasNoPoints}
           className="hidden rounded-md bg-purple px-6 py-5 font-bold leading-none text-background transition-colors hover:bg-purpleDark focus:outline-none focus:ring-1 focus:ring-purple focus:ring-offset-1 focus:ring-offset-primary disabled:bg-gray-500 md:visible md:block"
         >
-          Apostar ({playsRemaining} Lượt)
+          Apostar ({pointsRemaining} Điểm)
         </button>
         <div className="flex flex-col items-center gap-4 text-sm font-bold text-text md:items-start lg:absolute lg:-bottom-20 lg:left-4">
           <span>

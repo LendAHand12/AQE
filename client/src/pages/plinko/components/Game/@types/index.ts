@@ -16,6 +16,8 @@ export type MultiplierValuesType =
   | 1
   | 0.5
   | 0.3
+  | 0.2
+  | 0.01
 
 export const MultiplierColors = {
   RED_DARKER: '#ff003f',
@@ -47,6 +49,8 @@ export type MultiplierValues =
   | 1
   | 0.5
   | 0.3
+  | 0.2
+  | 0.01
 
 type MultiplierLabelType = `block-${MultiplierValues}`
 

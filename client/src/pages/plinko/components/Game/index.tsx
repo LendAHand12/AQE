@@ -132,7 +132,6 @@ export function Game() {
 
   const {
     pins: pinsConfig,
-    colors,
     ball: ballConfig,
     engine: engineConfig,
     world: worldConfig
@@ -586,8 +585,6 @@ export function Game() {
       setIsConverting(false)
     }
   }
-
-  const hasNoPoints = pointsDisplay < betAmount
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 p-6 bg-slate-950/90 text-slate-100 border border-indigo-500/20 shadow-[0_0_60px_rgba(79,70,229,0.15)] rounded-3xl max-w-4xl mx-auto w-full relative overflow-hidden backdrop-blur-xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">

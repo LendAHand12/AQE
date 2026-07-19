@@ -20,7 +20,9 @@ const multiplierSounds = {
   1.5: multiplierRegular,
   1: multiplierRegular,
   0.5: multiplierLow,
-  0.3: multiplierLow
+  0.3: multiplierLow,
+  0.2: multiplierLow,
+  0.01: multiplierLow
 } as const
 
 const multipliers = {
