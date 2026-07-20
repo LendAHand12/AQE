@@ -356,7 +356,7 @@ export function Game() {
   }, [lines])
 
   const addBall = useCallback(
-    (bet: number, targetSlot?: number) => {
+    (bet: number) => {
       incrementInGameBallsCount()
       const ballSound = new Audio(ballAudio)
       ballSound.volume = 0.2
@@ -383,11 +383,9 @@ export function Game() {
         isStatic: false
       }) as any
 
-      const chosenSlot = targetSlot !== undefined ? targetSlot : Math.floor(Math.random() * 17)
-      ball.targetSlot = chosenSlot
-      ball.lastGuidedRow = -1
       ball.isHandled = false
       ball.spawnTime = Date.now()
+      ball.lastHitRow = -1
 
       Composite.add(engineRef.current.world, ball)
     },
@@ -434,16 +432,15 @@ export function Game() {
 
     const blockParts = multiplier.label.split('-')
     const parsedSlot = parseInt(blockParts[1], 10)
-    const slotIndex = !isNaN(parsedSlot) && parsedSlot >= 0 ? parsedSlot : multipliersBodiesRef.current.indexOf(multiplier)
-    const fallbackSlot = slotIndex >= 0 ? slotIndex : 8
+    const slotIndex = !isNaN(parsedSlot) && parsedSlot >= 0 ? parsedSlot : 8
 
     try {
       const res = await apiClient.post('/plinko/play', {
         betAmount: bet,
-        slotIndex: fallbackSlot
+        slotIndex
       })
 
-      if (res.data.success) {
+      if (res.data && res.data.success) {
         const { rewardAmount, multiplier: multiplierVal, newPoints } = res.data
 
         const multiplierSong = new Audio(getMultiplierSound(multiplierVal as MultiplierValues))
@@ -476,8 +473,6 @@ export function Game() {
       }
     } catch (e: any) {
       console.warn("Error finalizing Plinko drop:", e)
-      const errMsg = e.response?.data?.message || t('plinko.play_error', 'Lỗi khi xử lý thưởng Plinko')
-      toast.error(errMsg)
       syncProfile()
     }
   }
@@ -496,29 +491,10 @@ export function Game() {
         const c = parseInt(parts[2], 10)
 
         const ballBody = ball as any
-        if (r > ballBody.lastGuidedRow) {
-          ballBody.lastGuidedRow = r
-
-          const remRows = lines - r
-          const reqRights = ballBody.targetSlot - c
-          const probRight = remRows > 0 ? reqRights / remRows : 0
-
-          let direction = 0
-          if (reqRights >= remRows) {
-            direction = 1
-          } else if (reqRights <= 0) {
-            direction = 0
-          } else {
-            direction = Math.random() < probRight ? 1 : 0
-          }
-
+        if (r > (ballBody.lastHitRow || -1)) {
+          ballBody.lastHitRow = r
           playBeep(320 + r * 20, 0.05, "sine")
           pulsesRef.current.push({ row: r, col: c, intensity: 1.0 })
-
-          const isUrgent = reqRights >= remRows || reqRights <= 0
-          const speed = isUrgent ? 1.8 : (0.8 + Math.random() * 0.2)
-          const vx = (direction === 1 ? 1 : -1) * speed
-          Body.setVelocity(ballBody, { x: vx, y: ballBody.velocity.y })
         }
       }
 

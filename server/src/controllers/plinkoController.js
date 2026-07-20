@@ -66,21 +66,21 @@ export const playPlinko = async (req, res) => {
 
         const defaultSlots = [
             { multiplier: 110, weight: 1 },
-            { multiplier: 41, weight: 2 },
-            { multiplier: 10, weight: 5 },
-            { multiplier: 5, weight: 10 },
-            { multiplier: 3, weight: 15 },
-            { multiplier: 1.5, weight: 25 },
-            { multiplier: 1, weight: 40 },
-            { multiplier: 0.5, weight: 60 },
-            { multiplier: 0.2, weight: 80 },
-            { multiplier: 0.5, weight: 60 },
-            { multiplier: 1, weight: 40 },
-            { multiplier: 1.5, weight: 25 },
-            { multiplier: 3, weight: 15 },
-            { multiplier: 5, weight: 10 },
-            { multiplier: 10, weight: 5 },
-            { multiplier: 41, weight: 2 },
+            { multiplier: 41, weight: 16 },
+            { multiplier: 10, weight: 120 },
+            { multiplier: 5, weight: 560 },
+            { multiplier: 2, weight: 1820 },
+            { multiplier: 1, weight: 4368 },
+            { multiplier: 0.5, weight: 8008 },
+            { multiplier: 0.2, weight: 11440 },
+            { multiplier: 0.2, weight: 20000 },
+            { multiplier: 0.2, weight: 11440 },
+            { multiplier: 0.5, weight: 8008 },
+            { multiplier: 1, weight: 4368 },
+            { multiplier: 2, weight: 1820 },
+            { multiplier: 5, weight: 560 },
+            { multiplier: 10, weight: 120 },
+            { multiplier: 41, weight: 16 },
             { multiplier: 110, weight: 1 }
         ];
 
@@ -88,15 +88,15 @@ export const playPlinko = async (req, res) => {
         let settings = await PlinkoSettings.findOne();
         if (!settings) {
             settings = await PlinkoSettings.create({ slots: defaultSlots });
-        } else if (!settings.slots || settings.slots.length !== 17 || settings.slots[0].multiplier !== 110) {
+        } else if (!settings.slots || settings.slots.length !== 17 || settings.slots[0].multiplier !== 110 || settings.slots[4].multiplier !== 2) {
             settings.slots = defaultSlots;
             await settings.save();
         }
 
         const slots = settings.slots;
 
-        // Determine slotIndex: if valid clientSlotIndex is provided (0..16), use it; otherwise pick weighted random
-        let slotIndex = 0;
+        // Use client-provided physical landed slotIndex or weighted fallback
+        let slotIndex = 8;
         const { slotIndex: clientSlotIndex } = req.body;
         if (typeof clientSlotIndex === 'number' && clientSlotIndex >= 0 && clientSlotIndex < slots.length) {
             slotIndex = clientSlotIndex;
