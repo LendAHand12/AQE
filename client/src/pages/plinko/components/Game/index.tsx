@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { Coins, ArrowRightLeft, Sparkles, RefreshCw, X, CircleDollarSign } from 'lucide-react'
 
 import type { LinesType, MultiplierValues } from './@types'
+import confetti from 'canvas-confetti'
 import { PlinkoGameBody } from './components/GameBody'
 import { config } from './config'
 import {
@@ -44,26 +45,18 @@ export function formatDropTime(date: Date, t: any): string {
   }
 }
 
-interface FireworkParticle {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  size: number
-  color: string
-  alpha: number
-  decay: number
-}
+
 
 export function Game() {
   const { t } = useTranslation()
   const { user, syncProfile } = useAuth()
 
   const engineRef = useRef<Engine>(Engine.create())
+  const renderRef = useRef<Render | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const pulsesRef = useRef<{ row: number; col: number; intensity: number }[]>([])
-  const particlesRef = useRef<FireworkParticle[]>([])
   const multipliersBodiesRef = useRef<Body[]>([])
+  const isLaunchingRef = useRef(false)
 
   const lines: LinesType = 16
   const inGameBallsCount = useGameStore((state: any) => state.gamesRunning)
@@ -189,6 +182,7 @@ export function Game() {
       },
       engine
     })
+    renderRef.current = render
 
     const runner = Runner.create()
     Runner.run(runner, engine)
@@ -246,10 +240,11 @@ export function Game() {
         lastMultiplierX + pinsConfig.pinGap,
         worldWidth / lines + lines * pinsConfig.pinGap + pinsConfig.pinGap + 1,
         pinsConfig.pinGap - 1.5,
-        22,
+        26,
         {
           label: `block-${index}-${valNum}`,
           isStatic: true,
+          isSensor: true,
           render: {
             fillStyle: 'rgba(15, 23, 42, 0.8)',
             strokeStyle: 'rgba(99, 102, 241, 0.4)',
@@ -315,27 +310,38 @@ export function Game() {
         ctx.restore()
       })
 
-      // Draw firework particle explosion sparks when ball lands in a bucket
-      particlesRef.current.forEach(particle => {
-        particle.x += particle.vx
-        particle.y += particle.vy
-        particle.vy += 0.12 // gravity pull
-        particle.alpha -= particle.decay
+      // Anti-stuck watchdog: Auto-resolve balls stuck for more than 15 seconds or completely stopped at bottom
+      const now = Date.now()
+      const allBodies = Composite.allBodies(engine.world)
+      const bottomBucketY = worldWidth / lines + lines * pinsConfig.pinGap
 
-        if (particle.alpha > 0) {
-          ctx.save()
-          ctx.globalAlpha = Math.max(0, particle.alpha)
-          ctx.beginPath()
-          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
-          ctx.fillStyle = particle.color
-          ctx.shadowColor = particle.color
-          ctx.shadowBlur = 10
-          ctx.fill()
-          ctx.restore()
+      allBodies.forEach(b => {
+        const ballBody = b as any
+        if (ballBody.label && ballBody.label.includes('ball') && !ballBody.isHandled) {
+          const spawnTime = ballBody.spawnTime || now
+          const elapsed = now - spawnTime
+          
+          // Only trigger if ball is physically AT the bottom bucket Y AND stopped, OR if stuck for > 15s
+          const isAtBottomAndStopped = ballBody.position.y >= (bottomBucketY - 10) && 
+            Math.abs(ballBody.velocity.y) < 0.05 && 
+            Math.abs(ballBody.velocity.x) < 0.05
+
+          if (elapsed > 15000 || isAtBottomAndStopped) {
+            let closestBucket = multipliersBodiesRef.current[8]
+            let minDistance = Infinity
+            multipliersBodiesRef.current.forEach(mb => {
+              const dist = Math.abs(ballBody.position.x - mb.position.x)
+              if (dist < minDistance) {
+                minDistance = dist
+                closestBucket = mb
+              }
+            })
+            if (closestBucket) {
+              onCollideWithMultiplier(ballBody, closestBucket)
+            }
+          }
         }
       })
-
-      particlesRef.current = particlesRef.current.filter(p => p.alpha > 0)
     }
 
     Events.on(render, 'afterRender', afterRenderHandler)
@@ -381,6 +387,7 @@ export function Game() {
       ball.targetSlot = chosenSlot
       ball.lastGuidedRow = -1
       ball.isHandled = false
+      ball.spawnTime = Date.now()
 
       Composite.add(engineRef.current.world, ball)
     },
@@ -395,24 +402,31 @@ export function Game() {
     World.remove(engineRef.current.world, ball)
     decrementInGameBallsCount()
 
-    // Spawn firework particle explosion right at the landing bucket position
-    const sparkColors = ['#38bdf8', '#c084fc', '#f472b6', '#fbbf24', '#34d399', '#f43f5e']
-    const impactX = multiplier.position.x
-    const impactY = multiplier.position.y
+    // Trigger canvas-confetti fireworks right at the bucket collision coordinates
+    if (renderRef.current && renderRef.current.canvas) {
+      try {
+        const canvasEl = renderRef.current.canvas
+        const rect = canvasEl.getBoundingClientRect()
+        const hitX = rect.left + (multiplier.position.x / worldWidth) * rect.width
+        const hitY = rect.top + (multiplier.position.y / worldHeight) * rect.height
 
-    for (let i = 0; i < 30; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const speed = 2.0 + Math.random() * 5.5
-      particlesRef.current.push({
-        x: impactX,
-        y: impactY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1.2,
-        size: 2.5 + Math.random() * 3.5,
-        color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
-        alpha: 1.0,
-        decay: 0.02 + Math.random() * 0.02
-      })
+        const originX = Math.min(1, Math.max(0, hitX / window.innerWidth))
+        const originY = Math.min(1, Math.max(0, hitY / window.innerHeight))
+
+        confetti({
+          particleCount: 30,
+          spread: 65,
+          startVelocity: 20,
+          origin: { x: originX, y: originY },
+          colors: ['#38bdf8', '#c084fc', '#f472b6', '#fbbf24', '#34d399', '#f43f5e'],
+          ticks: 80,
+          gravity: 1.2,
+          scalar: 0.7,
+          zIndex: 9999
+        })
+      } catch (e) {
+        console.warn("Confetti error:", e)
+      }
     }
 
     const parts = ball.label.split('-')
@@ -524,12 +538,13 @@ export function Game() {
 
   const handleBet = async () => {
     const totalBet = betAmount * ballCount
-    if (isLoading || inGameBallsCount + ballCount > 15) return
+    if (isLaunchingRef.current || isLoading || inGameBallsCount + ballCount > 15) return
     if (totalBet <= 0 || pointsDisplay < totalBet) {
       toast.error(t('plinko.insufficient_points', 'Số điểm của bạn không đủ để đặt cược'))
       return
     }
 
+    isLaunchingRef.current = true
     setIsLoading(true)
 
     // Deduct total bet points immediately on client UI
@@ -545,9 +560,13 @@ export function Game() {
       console.warn("Error launching balls:", e)
       toast.error(t('plinko.play_error', 'Lỗi khi thả banh'))
       setLocalPoints(user?.plinkoPoints || 0)
-    } finally {
-      setIsLoading(false)
     }
+
+    const lockDuration = Math.max(500, (ballCount - 1) * 150 + 500)
+    setTimeout(() => {
+      isLaunchingRef.current = false
+      setIsLoading(false)
+    }, lockDuration)
   }
 
   const handleConvertPoints = async () => {
@@ -738,8 +757,8 @@ export function Game() {
           {/* Drop Ball Button */}
           <button
             onClick={handleBet}
-            disabled={isLoading || pointsDisplay < betAmount * ballCount || inGameBallsCount + ballCount > 15}
-            className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 active:scale-[0.98] text-white font-black text-lg shadow-[0_0_25px_rgba(129,140,248,0.35)] transition-all focus:outline-none disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:border disabled:border-slate-700"
+            disabled={isLoading || isLaunchingRef.current || pointsDisplay < betAmount * ballCount || inGameBallsCount + ballCount > 15}
+            className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 active:scale-[0.98] text-white font-black text-lg shadow-[0_0_25px_rgba(129,140,248,0.35)] transition-all focus:outline-none disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:border disabled:border-slate-700 pointer-events-auto disabled:pointer-events-none"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
