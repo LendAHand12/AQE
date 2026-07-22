@@ -6,7 +6,6 @@ import {
   Engine,
   Events,
   Render,
-  Runner,
   World
 } from 'matter-js'
 import type { IEventCollision } from 'matter-js'
@@ -184,9 +183,31 @@ export function Game() {
     })
     renderRef.current = render
 
-    const runner = Runner.create()
-    Runner.run(runner, engine)
+    let animationFrameId: number
+    let lastTime = performance.now()
+    const timeStep = 1000 / 60 // 16.666ms
+    let accumulator = 0
+
+    const gameLoop = (time: number) => {
+      let deltaTime = time - lastTime
+      lastTime = time
+
+      if (deltaTime > 100) {
+        deltaTime = 100
+      }
+
+      accumulator += deltaTime
+
+      while (accumulator >= timeStep) {
+        Engine.update(engine, timeStep)
+        accumulator -= timeStep
+      }
+
+      animationFrameId = requestAnimationFrame(gameLoop)
+    }
+
     Render.run(render)
+    animationFrameId = requestAnimationFrame(gameLoop)
 
     // Generate static pins (Glowing Indigo Pins)
     const pins: Body[] = []
@@ -348,7 +369,7 @@ export function Game() {
 
     return () => {
       Events.off(render, 'afterRender', afterRenderHandler)
-      Runner.stop(runner)
+      cancelAnimationFrame(animationFrameId)
       World.clear(engine.world, true)
       Engine.clear(engine)
       render.canvas.remove()
