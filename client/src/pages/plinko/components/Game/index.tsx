@@ -390,12 +390,20 @@ export function Game() {
       const ballX = random(minBallX, maxBallX)
       const ballColor = '#ec4899' // Bright Pink Cosmic Energy Orb
 
+      const restitutionEnv = import.meta.env.VITE_PLINKO_RESTITUTION
+      const frictionEnv = import.meta.env.VITE_PLINKO_FRICTION
+      const frictionAirEnv = import.meta.env.VITE_PLINKO_FRICTION_AIR
+
+      const ballRestitution = restitutionEnv !== undefined && restitutionEnv !== '' ? parseFloat(restitutionEnv) : 1.0
+      const ballFriction = frictionEnv !== undefined && frictionEnv !== '' ? parseFloat(frictionEnv) : 0.6
+      const ballFrictionAir = frictionAirEnv !== undefined && frictionAirEnv !== '' ? parseFloat(frictionAirEnv) : 0.03
+
       const ball = Bodies.circle(ballX, 20, ballConfig.ballSize, {
-        restitution: 1,
-        friction: 0.6,
+        restitution: ballRestitution,
+        friction: ballFriction,
         label: `ball-${bet}`,
         id: new Date().getTime() + Math.random(),
-        frictionAir: 0.03,
+        frictionAir: ballFrictionAir,
         collisionFilter: {
           group: -1
         },

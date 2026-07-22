@@ -9,8 +9,11 @@ const ball = {
   ballSize: 5.7
 }
 
+const gravityEnv = import.meta.env.VITE_PLINKO_GRAVITY
+const engineGravity = gravityEnv !== undefined && gravityEnv !== '' ? parseFloat(gravityEnv) : 0.45
+
 const engine = {
-  engineGravity: 0.45
+  engineGravity
 }
 
 const world = {
