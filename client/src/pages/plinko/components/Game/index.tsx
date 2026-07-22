@@ -348,6 +348,7 @@ export function Game() {
 
     return () => {
       Events.off(render, 'afterRender', afterRenderHandler)
+      Runner.stop(runner)
       World.clear(engine.world, true)
       Engine.clear(engine)
       render.canvas.remove()
