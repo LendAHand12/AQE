@@ -380,7 +380,7 @@ export const rejectWithdrawal = async (req, res) => {
 
         // Refund user balance
         const user = await User.findById(withdrawal.userId);
-        const fee = 1.0;
+        const fee = withdrawal.paymentMethod === 'AQE' ? 0.0 : (withdrawal.fee !== undefined ? withdrawal.fee : 1.0);
         const totalRefund = withdrawal.amount + fee;
         
         const balanceBefore = user.usdtBalance;

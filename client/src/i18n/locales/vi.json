@@ -417,7 +417,7 @@
       "amount_label": "Số dư hiện tại",
       "available": "Tổng cộng",
       "min_amount": "Tối thiểu 10 USDT để rút",
-      "fee_note": "Phí rút: 1 USDT",
+      "fee_note": "Phí rút:",
       "total_deduct": "Số tiền thực nhận",
       "wallet_label": "Địa chỉ ví nhận (BEP20)",
       "wallet_placeholder": "0x...",

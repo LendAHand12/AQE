@@ -294,7 +294,9 @@ export default function AdminWithdrawalsPage() {
                     <TableCell className="text-right">
                       <div className="flex flex-col">
                         <span className="font-black text-[#111827]">{item.amount.toLocaleString()} USDT</span>
-                        <span className="text-[10px] text-gray-400 font-bold">Fee: {item.fee || 1} USDT</span>
+                        <span className="text-[10px] text-gray-400 font-bold">
+                          Fee: {item.paymentMethod === 'AQE' ? 0 : (item.fee ?? 1)} USDT
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -446,7 +448,12 @@ export default function AdminWithdrawalsPage() {
               </div>
               <div className="flex justify-between text-sm text-red-700">
                 <span>Refund Amount:</span>
-                <span className="font-black">{(selectedWithdrawal?.amount + (selectedWithdrawal?.fee || 1)).toLocaleString()} USDT</span>
+                <span className="font-black">
+                  {(
+                    selectedWithdrawal?.amount + 
+                    (selectedWithdrawal?.paymentMethod === 'AQE' ? 0 : (selectedWithdrawal?.fee ?? 1))
+                  ).toLocaleString()} USDT
+                </span>
               </div>
             </div>
             <div className="space-y-2 mt-4">

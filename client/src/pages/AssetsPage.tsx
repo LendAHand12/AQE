@@ -625,7 +625,7 @@ export default function AssetsPage() {
               <DialogDescription className="text-[14px] text-gray-500">
                 {user?.language === 'vi' 
                   ? "Quy đổi số dư USDT hiện tại của bạn sang số dư AQE để hưởng lãi suất."
-                  : "Convert your current USDT balance to AQE balance to earn daily yield."}
+                  : "Convert your current USDT balance to AQE balance to earn daily bonus."}
               </DialogDescription>
             </DialogHeader>
 
@@ -662,7 +662,7 @@ export default function AssetsPage() {
                 <p className="text-[12px] text-amber-800 leading-relaxed">
                   {user?.language === 'vi' 
                     ? "Lưu ý: Số AQE được quy đổi sẽ được chuyển ngay lập tức vào số dư AQE của bạn và bắt đầu tính lãi 6% APR hàng ngày."
-                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily yield."}
+                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily bonus."}
                 </p>
               </div>
             </div>
