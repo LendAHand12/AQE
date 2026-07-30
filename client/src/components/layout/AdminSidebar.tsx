@@ -95,7 +95,7 @@ const mainNavItems: NavItem[] = [
 
 const bottomNavItems = [
   {
-    title: "Personal Settings",
+    title: "Settings",
     href: "/admin/settings",
     icon: Settings,
   },

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { useAdminPermissions } from "@/hooks/useAdminPermissions"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
 
 interface Package {
   _id: string
@@ -63,6 +64,7 @@ export default function AdminPackagesPage() {
   const { hasPermission } = useAdminPermissions()
   const canEdit = hasPermission("PACKAGES_EDIT")
   const canDelete = hasPermission("PACKAGES_DELETE")
+  const { rate: aqeRate } = useExchangeRate()
 
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,7 +103,7 @@ export default function AdminPackagesPage() {
   useEffect(() => {
     const priceNum = parseFloat(price) || 0
     const bonusNum = parseFloat(bonusPercent) || 0
-    const baseAqe = priceNum / 1.02
+    const baseAqe = priceNum / aqeRate
     const totalAqe = baseAqe * (1 + bonusNum / 100)
     setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
   }, [price, bonusPercent])
@@ -169,7 +171,7 @@ export default function AdminPackagesPage() {
     setConcierge(!!pkg.concierge)
     
     // Explicitly update calculated AQE Amount for editing modal
-    const baseAqe = pkg.aqeAmount || (pkg.price / 1.02)
+    const baseAqe = pkg.aqeAmount || (pkg.price / aqeRate)
     const totalAqe = baseAqe * (1 + pkg.bonusPercent / 100)
     setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
     
@@ -187,7 +189,7 @@ export default function AdminPackagesPage() {
     const payload = {
       title,
       price: Number(price),
-      aqeAmount: Number(price) / 1.02, // auto calculated base amount saved to DB
+      aqeAmount: Number(price) / aqeRate, // auto calculated base amount saved to DB
       bonusPercent: Number(bonusPercent || 0),
       f1CommissionPercent: Number(f1CommissionPercent || 0),
       f2CommissionPercent: Number(f2CommissionPercent || 0),

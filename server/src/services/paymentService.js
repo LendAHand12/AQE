@@ -6,6 +6,7 @@ import Notification from '../models/Notification.js';
 import { TokenState } from '../models/Blockchain.js';
 import { emitNotification } from '../utils/socket.js';
 import { getSystemTime } from '../utils/time.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 /**
  * Shared logic to process commissions
  */
@@ -164,8 +165,9 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             phase = 'LIVE';
         }
 
-        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-        const price = 1.02;
+        // Pegged rate: lấy từ admin config (default 1 AQE = 1.02 USDT)
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
 
         const isPostMay = nowVN > may31VN;
         const isLivePhase = nowVN >= julyFirstVN;
@@ -420,8 +422,9 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     const may31VN = new Date('2026-05-31T23:59:59');
     const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-    // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-    const price = 1.02;
+    // Pegged rate: lấy từ admin config (default 1 AQE = 1.02 USDT)
+    const systemConfig = await getSystemConfig();
+    const price = systemConfig.aqeToUsdtRate;
 
     const tokensCalculated = paidAmount / price;
     const isLivePhase = nowVN >= julyFirstVN;

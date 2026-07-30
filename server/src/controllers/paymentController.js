@@ -12,6 +12,7 @@ import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -94,8 +95,9 @@ export const submitPreRegisterPayment = async (req, res) => {
             user.pledgeUsdt = pledgeAmountNum;
         }
 
-        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-        const price = 1.02;
+        // Pegged rate: lấy từ admin config
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
 
         const tokensCalculated = amountNum / price;
 
@@ -450,7 +452,8 @@ export const approveManualPayment = async (req, res) => {
             const nowVN = getSystemTime();
             
             const isPackage = !!transaction.metadata?.packageId;
-            let finalTokensCalculated = transaction.amount / 1.02; // fallback price = 1.02
+            const systemConfig = await getSystemConfig();
+            let finalTokensCalculated = transaction.amount / systemConfig.aqeToUsdtRate; // fallback from config
             let finalBonusPercent = 0;
 
             if (isPackage) {
@@ -566,7 +569,8 @@ export const approveManualPayment = async (req, res) => {
         const may31VN = new Date('2026-05-31T23:59:59');
         const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-        let price = 1.02;
+        const systemConfig = await getSystemConfig();
+        let price = systemConfig.aqeToUsdtRate;
         const tokensCalculated = transaction.amount / price;
 
         // Update Transaction

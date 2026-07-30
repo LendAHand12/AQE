@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
 import { useSocket } from "@/providers/SocketProvider"
 import { useTranslation } from "react-i18next"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
 
 interface Package {
   _id: string
@@ -146,6 +147,7 @@ const getPackageBenefits = (price: number, t: any) => {
 export default function InvestmentPackagesPage() {
   const { t } = useTranslation()
   const { socket } = useSocket()
+  const { rate: aqeRate } = useExchangeRate()
   
   const [packages, setPackages] = useState<Package[]>([])
   const [userProfile, setUserProfile] = useState<any>(null)
@@ -725,7 +727,7 @@ export default function InvestmentPackagesPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="size-1.5 rounded-full bg-[#276152] mt-1.5 shrink-0" />
-            <span>{t("packages.notes.item_2", { defaultValue: "Tỷ lệ niêm yết từ ngày 01/07/2026 là 1 AQE = 1.02 USDT." })}</span>
+            <span>{t("packages.notes.item_2", { defaultValue: `Tỷ lệ niêm yết từ ngày 01/07/2026 là 1 AQE = ${aqeRate} USDT.` })}</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="size-1.5 rounded-full bg-[#276152] mt-1.5 shrink-0" />

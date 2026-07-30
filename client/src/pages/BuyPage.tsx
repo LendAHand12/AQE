@@ -16,10 +16,12 @@ import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
 import { useSocket } from "@/providers/SocketProvider"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
 
 export default function BuyPage() {
   const { t } = useTranslation()
   const { socket } = useSocket()
+  const { rate: aqeRate } = useExchangeRate()
   const [purchaseAmount, setPurchaseAmount] = useState<number>(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
@@ -106,7 +108,7 @@ export default function BuyPage() {
   const now = new Date(nowChicagoStr)
   const isJune = now.getMonth() === 5 && now.getFullYear() === 2026 // 5 = June in JS Date
 
-  const expectedAqe = purchaseAmount / 1.02
+  const expectedAqe = aqeRate > 0 ? purchaseAmount / aqeRate : 0
   const bonusAqe = isJune ? expectedAqe * 0.05 : 0
   const totalReceived = expectedAqe + bonusAqe
 

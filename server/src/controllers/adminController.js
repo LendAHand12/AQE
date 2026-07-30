@@ -16,6 +16,8 @@ import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor
 import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
 import { processCommissions } from '../services/paymentService.js';
+import Config from '../models/Config.js';
+import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -1063,7 +1065,8 @@ export const manualDepositUser = async (req, res) => {
         }
 
         const amountNum = parseFloat(paidAmount);
-        const price = 1.02;
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
         const tokensCalculated = amountNum / price;
 
         // 5% bonus only in June 2026
@@ -1152,4 +1155,65 @@ export const manualDepositUser = async (req, res) => {
     }
 };
 
+// @desc    Get all system config (admin)
+// @route   GET /api/admin/config
+// @access  Admin
+export const getAdminSystemConfig = async (req, res) => {
+    try {
+        const docs = await Config.find({}).sort({ key: 1 });
+        res.json(docs);
+    } catch (error) {
+        console.error('[GetAdminSystemConfig] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
+// @desc    Update a system config value by key
+// @route   PUT /api/admin/config/:key
+// @access  Admin
+export const updateAdminSystemConfig = async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { value, label } = req.body;
+
+        if (value === undefined || value === null || value === '') {
+            return res.status(400).json({ message: 'Value is required' });
+        }
+
+        // Only aqeToUsdtRate is configurable
+        if (key !== 'aqeToUsdtRate') {
+            return res.status(400).json({ message: `Config key "${key}" is not configurable` });
+        }
+
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+            return res.status(400).json({ message: 'Exchange rate must be greater than 0' });
+        }
+
+        const updateData = { value: parseFloat(value) || value };
+        if (label) updateData.label = label;
+
+        const doc = await Config.findOneAndUpdate(
+            { key },
+            { $set: updateData },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        // Invalidate cache so next request fetches fresh value
+        invalidateConfigCache();
+
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'UPDATE_CONFIG',
+            target: key,
+            details: `Updated config "${key}" to value: ${value}`,
+            ipAddress: req.ip
+        });
+
+        res.json({ message: 'Config updated successfully', doc });
+    } catch (error) {
+        console.error('[UpdateAdminSystemConfig] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};

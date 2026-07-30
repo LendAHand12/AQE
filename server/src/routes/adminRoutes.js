@@ -17,7 +17,9 @@ import {
     updateSubadmin,
     deleteAdminAccount,
     getWalletConnections,
-    manualDepositUser
+    manualDepositUser,
+    getAdminSystemConfig,
+    updateAdminSystemConfig
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getAdminLogs } from '../controllers/logController.js';
@@ -129,5 +131,9 @@ router.route('/accounts')
 router.route('/accounts/:id')
     .put(adminProtect, updateSubadmin)
     .delete(adminProtect, deleteAdminAccount);
+
+// System Config Management
+router.get('/config', adminProtect, getAdminSystemConfig);
+router.put('/config/:key', adminProtect, updateAdminSystemConfig);
 
 export default router;
