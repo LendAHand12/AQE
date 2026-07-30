@@ -432,7 +432,7 @@
       "method_wallet": "Ví USDT (BEP20)",
       "method_zelle": "Zelle",
       "method_aqe": "Chuyển sang số dư AQE",
-      "method_aqe_desc": "Quy đổi USDT sang AQE (Tỷ lệ 1:1), miễn phí giao dịch và nhận lãi 6% APR hàng ngày.",
+      "method_aqe_desc": "Quy đổi USDT sang AQE theo tỷ giá hiện tại, miễn phí giao dịch và nhận lãi 6% APR hàng ngày.",
       "zelle_name_label": "Tên tài khoản (Account Name)",
       "zelle_name_placeholder": "Nhập tên tài khoản (VD: John Doe)",
       "zelle_info_label": "Email hoặc Số điện thoại Zelle",

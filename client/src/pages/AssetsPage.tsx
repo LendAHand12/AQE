@@ -28,10 +28,12 @@ import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn, formatTruncated } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
 
 export default function AssetsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { rate: aqeRate } = useExchangeRate()
   const { user, syncProfile } = useAuth()
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -652,7 +654,7 @@ export default function AssetsPage() {
                     {t("assets.bonus.claim_option_aqe")}
                   </span>
                   <span className="text-[20px] font-black text-[#276152]">
-                    {currentBalance.toLocaleString()} AQE
+                    {(currentBalance / (aqeRate || 1)).toLocaleString(undefined, { maximumFractionDigits: 2 })} AQE
                   </span>
                 </div>
               </div>

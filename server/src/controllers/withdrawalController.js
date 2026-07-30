@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { emitNotification } from '../utils/socket.js';
 import Notification from '../models/Notification.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 
 /**
  * @desc    Get Withdrawal Verification URL (FaceID)
@@ -112,9 +113,16 @@ export const completeWithdrawal = async (req, res) => {
         const balanceBefore = user.usdtBalance;
         user.usdtBalance -= totalDeduction;
 
+        let receivedAqe = withdrawalAmount;
+        let rate = 1;
+
         if (paymentMethod === 'AQE') {
+            const systemConfig = await getSystemConfig();
+            rate = systemConfig.aqeToUsdtRate;
+            receivedAqe = withdrawalAmount / rate;
+            
             const aqeBefore = user.aqeBalance || 0;
-            user.aqeBalance = aqeBefore + withdrawalAmount;
+            user.aqeBalance = aqeBefore + receivedAqe;
         }
         await user.save();
 
@@ -136,14 +144,14 @@ export const completeWithdrawal = async (req, res) => {
         if (paymentMethod === 'AQE') {
             await BalanceHistory.create({
                 userId: user._id,
-                amount: withdrawalAmount,
+                amount: receivedAqe,
                 symbol: 'AQE',
                 type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
-                balanceBefore: user.aqeBalance - withdrawalAmount,
+                balanceBefore: user.aqeBalance - receivedAqe,
                 balanceAfter: user.aqeBalance,
-                description: `Converted from USDT withdrawal`
+                description: `Converted from ${withdrawalAmount} USDT withdrawal (Rate 1:${rate})`
             });
         }
 
