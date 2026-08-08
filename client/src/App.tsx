@@ -45,7 +45,7 @@ import TicketsPage from "@/pages/TicketsPage"
 import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
-import BuyPage from "@/pages/BuyPage"
+
 import InvestmentPackagesPage from "@/pages/InvestmentPackagesPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage"

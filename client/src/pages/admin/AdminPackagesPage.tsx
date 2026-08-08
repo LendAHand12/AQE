@@ -25,15 +25,6 @@ const getImageUrl = (url?: string) => {
   return url.startsWith('/uploads') ? import.meta.env.VITE_API_URL.replace('/api', '') + url : url
 }
 
-interface PackageCard {
-  _id?: string
-  name: string
-  description: string
-  imageUrl: string
-  aqeRequired: number
-  benefits: string[]
-}
-
 interface Package {
   _id: string
   title: string

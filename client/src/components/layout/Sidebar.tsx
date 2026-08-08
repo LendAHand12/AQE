@@ -11,7 +11,6 @@ import {
   X,
   Wallet,
   Headset,
-  Coins,
   HandCoins
 } from "lucide-react"
 import { cn } from "@/lib/utils"

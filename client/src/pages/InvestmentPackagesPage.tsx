@@ -12,8 +12,7 @@ import {
   UserCheck,
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
-  CreditCard
+  ChevronUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
