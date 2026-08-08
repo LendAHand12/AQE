@@ -226,7 +226,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 balanceBefore,
                 balanceAfter: user.aqeBalance,
                 description: isPackage 
-                    ? `Purchased Investment Package: ${transaction.metadata.packageTitle} via Blockchain`
+                    ? `Purchased Partnership Package: ${transaction.metadata.packageTitle} via Blockchain`
                     : `Purchased AQE digital units via Blockchain`
             });
 
@@ -268,7 +268,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             await processCommissions(user, processingAmount, transaction);
 
             // Notify user
-            const title = isPackage ? 'Investment Package Confirmed' : 'Token Purchase Successful';
+            const title = isPackage ? 'Partnership Package Confirmed' : 'Token Purchase Successful';
             const message = isPackage
                 ? `Your purchase of ${transaction.metadata.packageTitle} for ${processingAmount} USDT has been confirmed. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
                 : `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;

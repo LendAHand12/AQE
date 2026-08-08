@@ -5,14 +5,18 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   Calendar,
   Layers,
   Sparkles,
   UserCheck,
+  CheckCircle2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CreditCard
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { Link } from "react-router-dom"
@@ -22,6 +26,13 @@ import { useSocket } from "@/providers/SocketProvider"
 import { useTranslation } from "react-i18next"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
 
+const getImageUrl = (url?: string) => {
+  if (!url) return ''
+  return url.startsWith('/uploads') ? import.meta.env.VITE_API_URL.replace('/api', '') + url : url
+}
+
+
+
 interface Package {
   _id: string
   title: string
@@ -30,6 +41,7 @@ interface Package {
   bonusPercent: number
   segment: "Cơ bản" | "Nâng cao" | "Cao cấp"
   aqeAmount: number
+  aqeRequired: number
   f1CommissionPercent: number
   f2CommissionPercent: number
   isActive: boolean
@@ -45,6 +57,8 @@ interface Package {
   wellness?: boolean
   priority?: boolean
   concierge?: boolean
+  // Package Image
+  imageUrl?: string
 }
 
 const getPackageColors = (hexColor?: string) => {
@@ -163,6 +177,12 @@ export default function InvestmentPackagesPage() {
   // Detail Modal States
   const [detailPackage, setDetailPackage] = useState<Package | null>(null)
 
+  // Buy AQE (lẻ) states
+  const [purchaseAmount, setPurchaseAmount] = useState<number>(0)
+  const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false)
+  const [buyModalStatus, setBuyModalStatus] = useState<'idle' | 'success'>('idle')
+
   useEffect(() => {
     fetchInitialData()
   }, [])
@@ -187,12 +207,14 @@ export default function InvestmentPackagesPage() {
   const fetchInitialData = async () => {
     setLoading(true)
     try {
-      const [profileRes, packagesRes] = await Promise.all([
+      const [profileRes, packagesRes, pledgeRes] = await Promise.all([
         apiClient.get("/auth/profile"),
-        apiClient.get("/payments/packages")
+        apiClient.get("/payments/packages"),
+        apiClient.get("/payments/pledge")
       ])
       setUserProfile(profileRes.data)
       setPackages(packagesRes.data)
+      setAwaitingPayment(pledgeRes.data)
     } catch (err) {
       console.error("Fetch Partnership Packages error:", err)
       toast.error(t("packages.fetch_error", { defaultValue: "Không thể tải thông tin gói đầu tư" }))
@@ -210,6 +232,24 @@ export default function InvestmentPackagesPage() {
     setSelectedPackage(pkg)
     setModalStatus('idle')
     setIsPaymentModalOpen(true)
+  }
+
+  const handleBuyAqe = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (awaitingPayment?.awaitingApprovalAmount > 0) {
+      toast.error(t("buy.pending_warning"))
+      return
+    }
+    if (userProfile?.kycStatus !== 'verified' && userProfile?.kycStatus !== 'pending') {
+      toast.error(t("pre_register.kyc_verified_required"))
+      return
+    }
+    if (purchaseAmount < 10) {
+      toast.error(t("buy.min_warning"))
+      return
+    }
+    setIsBuyModalOpen(true)
   }
 
   const segments = ["Tất cả", "Cơ bản", "Nâng cao", "Cao cấp"]
@@ -243,22 +283,190 @@ export default function InvestmentPackagesPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-20 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
 
       {/* Main Header Card with Figma styling */}
-      <div className="flex justify-between items-start pt-2">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black text-[#0d1f1d] leading-none tracking-tight">
-            {t("packages.title")}
-          </h1>
-          <p className="text-sm text-gray-500 font-medium max-w-xl">
-            {t("packages.subtitle")}
-          </p>
-        </div>
-        <Link to="/payment-history">
-          <Button variant="outline" className="border-[#276152] text-[#276152] hover:bg-[#d9ede8]/20 font-bold rounded-xl text-xs gap-1.5 h-9">
-            <Clock size={14} />
-            <span>{t("packages.view_history")}</span>
-          </Button>
-        </Link>
+      <div className="pt-2">
+        <h1 className="text-3xl font-black text-[#0d1f1d] leading-none tracking-tight">
+          {t("packages.title")}
+        </h1>
+        <p className="text-sm text-gray-500 font-medium max-w-xl mt-1">
+          {t("packages.subtitle")}
+        </p>
       </div>
+
+      {/* ===== BUY AQE SECTION ===== */}
+      {(() => {
+        const nowChicagoStr = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
+        const now = new Date(nowChicagoStr)
+        const isJune = now.getMonth() === 5 && now.getFullYear() === 2026
+        const expectedAqe = aqeRate > 0 ? purchaseAmount / aqeRate : 0
+        const bonusAqe = isJune ? expectedAqe * 0.05 : 0
+        const totalReceived = expectedAqe + bonusAqe
+        const isKycVerified = userProfile?.kycStatus === 'verified' || userProfile?.kycStatus === 'pending'
+
+        return (
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Header strip */}
+            <div className="px-6 pt-6 pb-4 border-b border-gray-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-9 bg-[#d9ede8] rounded-xl flex items-center justify-center text-[#276152]">
+                  <Coins size={18} />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-[#0d1f1d]">{t("buy.title")}</h2>
+                  <p className="text-xs text-gray-400 font-medium">{t("buy.subtitle")}</p>
+                </div>
+              </div>
+              <Link to="/payment-history">
+                <Button variant="outline" className="border-[#276152] text-[#276152] hover:bg-[#d9ede8]/20 font-bold rounded-xl text-xs gap-1.5 h-8">
+                  <Clock size={13} />
+                  <span>{t("packages.view_history")}</span>
+                </Button>
+              </Link>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left: Input form */}
+              <div className="space-y-4">
+                {/* June promo */}
+                {isJune && (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-start gap-2.5">
+                    <div className="size-7 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0">
+                      <CheckCircle2 size={14} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-emerald-800">{t("buy.june_promo_banner")}</p>
+                      <p className="text-xs text-emerald-600 mt-0.5">{t("buy.june_promo_desc")}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Amount input */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("buy.amount_label")}</p>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={10}
+                      value={purchaseAmount === 0 ? "" : purchaseAmount}
+                      placeholder={t("buy.amount_placeholder")}
+                      onChange={(e) => setPurchaseAmount(e.target.value === "" ? 0 : Number(e.target.value))}
+                      className="h-11 pl-4 pr-16 border-gray-200 rounded-xl focus:ring-1 focus:ring-[#276152] focus:border-[#276152] font-semibold text-sm text-[#0d1f1d] placeholder:text-gray-300"
+                    />
+                    <div className="absolute right-3 top-2.5 px-2 py-0.5 bg-gray-100 rounded-md text-[11px] font-bold text-gray-500">
+                      USDT
+                    </div>
+                  </div>
+                  {purchaseAmount > 0 && purchaseAmount < 10 && (
+                    <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1">
+                      <ShieldAlert size={12} />
+                      {t("buy.min_warning")}
+                    </p>
+                  )}
+                </div>
+
+                {/* Presets */}
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{t("buy.select_amount")}</p>
+                  <div className="flex gap-2">
+                    {[50, 100, 500, 1000].map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        onClick={() => setPurchaseAmount(amount)}
+                        className={cn(
+                          "flex-1 py-1.5 h-8 rounded-xl font-bold text-xs border transition-all active:scale-[0.97]",
+                          purchaseAmount === amount
+                            ? "bg-[#276152] border-[#276152] text-white"
+                            : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-300"
+                        )}
+                      >
+                        {amount.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Summary + CTA */}
+              <div className="space-y-4 flex flex-col justify-between">
+                {/* Calculation card */}
+                <div className="bg-gray-50 rounded-2xl p-4 space-y-3 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Summary</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center text-gray-500">
+                      <span>{t("buy.expected_label")}</span>
+                      <span className="font-bold text-gray-800">
+                        {purchaseAmount > 0
+                          ? expectedAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })
+                          : "—"} AQE
+                      </span>
+                    </div>
+                    {isJune && purchaseAmount > 0 && (
+                      <div className="flex justify-between items-center text-emerald-600">
+                        <span>{t("buy.bonus_label")}</span>
+                        <span className="font-bold">
+                          +{bonusAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })} AQE
+                        </span>
+                      </div>
+                    )}
+                    <div className="h-px bg-gray-200" />
+                    <div className="flex justify-between items-center font-extrabold text-[#0d1f1d]">
+                      <span>{t("buy.total_received")}</span>
+                      <span className="text-[#276152] text-base">
+                        {purchaseAmount > 0
+                          ? totalReceived.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 })
+                          : "—"} AQE
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Awaiting approval warning */}
+                {awaitingPayment?.awaitingApprovalAmount > 0 && (
+                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2">
+                    <Clock size={15} className="text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-amber-700 font-bold">Awaiting manual approval</p>
+                      <p className="text-[11px] text-amber-600 font-medium mt-0.5">{t("buy.pending_warning")}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA */}
+                {isKycVerified ? (
+                  <Button
+                    type="button"
+                    onClick={handleBuyAqe}
+                    disabled={purchaseAmount < 10 || awaitingPayment?.awaitingApprovalAmount > 0}
+                    className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
+                  >
+                    <span>{t("buy.buy_btn")}</span>
+                    <ArrowRight size={16} />
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2">
+                      <ShieldAlert size={15} className="text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                        {t("pre_register.kyc_verified_required")}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button className="flex-1 h-11 bg-gray-100 text-gray-400 rounded-xl" disabled>
+                        {t("buy.buy_btn")}
+                      </Button>
+                      <Link to="/settings?tab=kyc" className="shrink-0">
+                        <Button variant="outline" className="h-11 border-[#276152] text-[#276152] hover:bg-[#276152]/5 rounded-xl font-bold px-4 text-xs">
+                          KYC
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Special Promotional Banner (Figma Linear Gradient style) */}
       <div className="relative rounded-[24px] overflow-hidden p-8 text-white shadow-lg shadow-emerald-950/10 flex flex-col justify-between min-h-[200px]"
@@ -334,16 +542,16 @@ export default function InvestmentPackagesPage() {
       </div>
 
       {/* Segment filter pills */}
-      <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+      <div className="flex items-center gap-2 pb-2">
         {segments.map((seg) => (
           <button
             key={seg}
             onClick={() => setSelectedSegment(seg)}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+              "px-6 py-2 rounded-[12px] text-sm font-medium transition-all duration-300 border",
               selectedSegment === seg
-                ? "bg-[#276152] text-white shadow-sm"
-                : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-800 border border-gray-100"
+                ? "bg-[#276152] text-white border-[#276152] shadow-sm"
+                : "bg-white text-gray-500 border-gray-200 hover:text-[#276152] hover:border-[#276152]"
             )}
           >
             {getSegmentLabel(seg)}
@@ -352,9 +560,9 @@ export default function InvestmentPackagesPage() {
       </div>
 
       {/* Packages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex flex-nowrap overflow-x-auto gap-4 pb-8 pt-2 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {filteredPackages.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-gray-400 font-bold bg-white rounded-3xl border border-gray-150 shadow-sm">
+          <div className="w-full py-12 text-center text-gray-400 font-bold bg-white rounded-3xl border border-gray-150 shadow-sm">
             {t("packages.empty_packages")}
           </div>
         ) : (
@@ -362,59 +570,52 @@ export default function InvestmentPackagesPage() {
             const finalAqe = pkg.aqeAmount * (1 + pkg.bonusPercent / 100)
             const colors = getPackageColors(pkg.color)
             return (
-              <div key={pkg._id} className="rounded-3xl border border-gray-150 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between" style={{ backgroundColor: colors.bgCard }}>
-                <div className="p-6 space-y-6">
-                  {/* Category label & Title */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: colors.primary }}>
-                        {getSegmentLabel(pkg.segment)}
-                      </span>
-                      {pkg.bonusPercent > 0 && (
-                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full" style={{ color: colors.primary, backgroundColor: colors.badgeBg }}>
-                          +{pkg.bonusPercent}% Bonus
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-xl font-black text-[#0d1f1d]">{pkg.title}</h3>
-                  </div>
-
-                  {/* Pricing and AQE details */}
-                  <div className="p-5 rounded-2xl space-y-3 border" style={{ backgroundColor: colors.bgBox, borderColor: colors.border }}>
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{t("packages.invest_with")}</span>
-                      <p className="text-2xl font-black" style={{ color: colors.primary }}>${pkg.price.toLocaleString()} USDT</p>
-                    </div>
-                    <div className="h-[1px]" style={{ backgroundColor: colors.border }} />
-                    <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                      <span className="text-gray-500 font-medium">{t("packages.aqe_received")}</span>
-                      <span className="font-extrabold text-[#0d1f1d]">{finalAqe.toLocaleString()} AQE</span>
-                    </div>
-                  </div>
-
-                  {/* Brief description snippet */}
-                  <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-3">
-                    {pkg.description}
-                  </p>
+              <div key={pkg._id} className="snap-start shrink-0 w-[260px] rounded-[24px] border border-gray-150 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-xl transition-all duration-300 flex flex-col p-3 relative group">
+                
+                {/* Title */}
+                <div className="py-2 text-center">
+                  <h3 className="text-[11px] font-black text-[#111827] uppercase tracking-wider">{pkg.title}</h3>
                 </div>
 
-                {/* Bottom CTA Actions */}
-                <div className="p-6 pt-0 space-y-2.5">
+                {/* Cover Image */}
+                <div className="w-full aspect-[2/3.2] relative overflow-hidden rounded-[16px] shrink-0 mt-1">
+                  {pkg.imageUrl ? (
+                    <img src={getImageUrl(pkg.imageUrl)} alt={pkg.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <span className="text-sm font-bold opacity-50" style={{ color: colors.primary }}>{pkg.title}</span>
+                    </div>
+                  )}
+                  {pkg.bonusPercent > 0 && (
+                    <div className="absolute top-3 right-3">
+                      <span className="px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-full text-[9px] font-bold shadow-sm">
+                        +{pkg.bonusPercent}% Bonus
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pricing Details */}
+                <div className="pt-5 pb-4 text-center space-y-1">
+                  <p className="text-[11px] text-gray-500 font-medium">Participation Amount</p>
+                  <p className="text-xl font-black text-[#111827]">${pkg.price.toLocaleString()} USDT</p>
+                  <p className="text-[11px] text-gray-400 font-medium">Receive {finalAqe.toLocaleString()} AQE</p>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-auto space-y-2">
                   <Button
                     onClick={() => handlePurchaseClick(pkg)}
-                    className="w-full h-11 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
-                    style={{ backgroundColor: colors.primary }}
+                    className="w-full h-10 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[10px] font-bold text-[13px] transition-all"
                   >
-                    <span>{t("packages.participate_now")}</span>
-                    <ArrowRight size={14} />
+                    Join Now
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setDetailPackage(pkg)}
-                    className="w-full h-11 rounded-xl font-bold transition-all border"
-                    style={{ borderColor: colors.primary, color: colors.primary, backgroundColor: 'transparent' }}
+                    className="w-full h-10 rounded-[10px] font-bold transition-all border border-[#276152] text-[#276152] hover:bg-[#276152]/5 text-[13px]"
                   >
-                    {t("packages.view_details")}
+                    View Details
                   </Button>
                 </div>
               </div>
@@ -772,66 +973,101 @@ export default function InvestmentPackagesPage() {
         </div>
       )}
 
-      {/* Detail Privileges Modal */}
+      {/* Detail Privileges Modal — Figma 33-11350 style */}
       {detailPackage && (() => {
         const modalColors = getPackageColors(detailPackage.color)
+        const benefits = getPackageBenefits(detailPackage.price, t)
+        const displayStayDays = detailPackage.stayDays || benefits.stayDays
+        const displayRoomType = detailPackage.roomType || benefits.roomType
+        const displayGuests = detailPackage.guests || benefits.guests
+        const displaySavings = detailPackage.savings || benefits.savings
+        const hasWellness = detailPackage.wellness !== undefined ? detailPackage.wellness : benefits.wellness
         return (
-          <div className="fixed inset-0 bg-[#0d1f1d]/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-            <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200">
-              <div className="flex justify-between items-start mb-4">
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ color: modalColors.primary, backgroundColor: modalColors.badgeBg }}>
-                      {getSegmentLabel(detailPackage.segment)}
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-black text-[#0d1f1d]">{detailPackage.title}</h2>
+          <div className="fixed inset-0 bg-[#0d1f1d]/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+            onClick={() => setDetailPackage(null)}
+          >
+            <div
+              className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200 overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Package header */}
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ color: modalColors.primary, backgroundColor: modalColors.badgeBg }}>
+                    {getSegmentLabel(detailPackage.segment)}
+                  </span>
+                  <h2 className="text-xl font-black text-[#0d1f1d] mt-2">{detailPackage.title}</h2>
                 </div>
-                <span className="text-sm font-black px-3 py-1 rounded-full" style={{ color: modalColors.primary, backgroundColor: modalColors.badgeBg }}>
-                  ${detailPackage.price.toLocaleString()} USDT
-                </span>
+                <button onClick={() => setDetailPackage(null)} className="size-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
 
-              <div className="space-y-5">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-xs font-semibold text-gray-500 leading-relaxed whitespace-pre-line">
-                  {detailPackage.description}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs font-bold">
-                  <div className="p-4 rounded-xl border" style={{ backgroundColor: modalColors.bgBox, borderColor: modalColors.border }}>
-                    <p className="text-gray-400 uppercase tracking-wider text-[9px] mb-1">{t("packages.aqe_amount_label")}</p>
-                    <p className="text-lg font-black" style={{ color: modalColors.primary }}>{(detailPackage.aqeAmount * (1 + detailPackage.bonusPercent/100)).toLocaleString()} AQE</p>
+              <div className="overflow-y-auto max-h-[70vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {/* Package meta grid — Investment, AQE, Stay, Room */}
+                <div className="p-6 grid grid-cols-2 gap-3">
+                  <div className="bg-[#f8faf9] rounded-xl p-3">
+                    <p className="text-[11px] text-gray-400 font-semibold">Investment</p>
+                    <p className="text-[15px] font-black text-[#111827] mt-0.5">${detailPackage.price.toLocaleString()} USDT</p>
                   </div>
-                  {/* <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
-                    <p className="text-gray-400 uppercase tracking-wider text-[9px] mb-1">{t("packages.referral_commission")}</p>
-                    <p className="text-xs text-blue-800 font-extrabold mt-1">
-                      F1: {detailPackage.f1CommissionPercent}% | F2: {detailPackage.f2CommissionPercent}%
-                    </p>
-                  </div> */}
+                  <div className="bg-[#f8faf9] rounded-xl p-3">
+                    <p className="text-[11px] text-gray-400 font-semibold">AQE Received</p>
+                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{(detailPackage.aqeAmount * (1 + detailPackage.bonusPercent/100)).toLocaleString()} AQE</p>
+                  </div>
+                  <div className="bg-[#f8faf9] rounded-xl p-3">
+                    <p className="text-[11px] text-gray-400 font-semibold">Stay</p>
+                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{displayStayDays || '—'}</p>
+                  </div>
+                  <div className="bg-[#f8faf9] rounded-xl p-3">
+                    <p className="text-[11px] text-gray-400 font-semibold">Room Type</p>
+                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{displayRoomType || '—'}</p>
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                  <Button variant="outline" onClick={() => setDetailPackage(null)} className="rounded-xl font-bold">
-                    {t("packages.close_btn")}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const pkg = detailPackage
-                      setDetailPackage(null)
-                      handlePurchaseClick(pkg)
-                    }}
-                    className="text-white rounded-xl font-bold px-6"
-                    style={{ backgroundColor: modalColors.primary }}
-                  >
-                    {t("packages.invest_now")}
-                  </Button>
+                {/* Additional extras row */}
+                <div className="px-6 pb-4 grid grid-cols-3 gap-3">
+                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                    <p className="text-[11px] text-gray-400 font-semibold">Additional Guests</p>
+                    <p className="text-sm font-black text-[#111827] mt-0.5">{displayGuests || '—'}</p>
+                  </div>
+                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                    <p className="text-[11px] text-gray-400 font-semibold">Savings</p>
+                    <p className="text-sm font-black text-[#111827] mt-0.5">{displaySavings || '—'}</p>
+                  </div>
+                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                    <p className="text-[11px] text-gray-400 font-semibold">Wellness</p>
+                    <p className="text-sm font-black mt-0.5" style={{ color: hasWellness ? '#276152' : '#9ca3af' }}>
+                      {hasWellness ? 'Included' : 'Not Included'}
+                    </p>
+                  </div>
                 </div>
+
+              </div>
+
+              {/* Footer actions */}
+              <div className="p-6 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => setDetailPackage(null)}
+                  className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  {t('packages.close_btn', { defaultValue: 'Close' })}
+                </button>
+                <button
+                  onClick={() => {
+                    const pkg = detailPackage
+                    setDetailPackage(null)
+                    handlePurchaseClick(pkg)
+                  }}
+                  className="flex-1 h-11 rounded-xl text-sm font-bold text-white transition-colors hover:opacity-90"
+                  style={{ backgroundColor: modalColors.primary }}
+                >
+                  {t('packages.invest_now', { defaultValue: 'Invest Now' })}
+                </button>
               </div>
             </div>
           </div>
         )
       })()}
-
       {/* Integration with Payment checkout Modal */}
       {selectedPackage && (
         <BlockchainPaymentModal
@@ -849,6 +1085,20 @@ export default function InvestmentPackagesPage() {
           packageId={selectedPackage._id}
         />
       )}
+
+      {/* Buy AQE Modal (lẻ - không qua package) */}
+      <BlockchainPaymentModal
+        isOpen={isBuyModalOpen}
+        onClose={() => {
+          setIsBuyModalOpen(false)
+          setBuyModalStatus('idle')
+        }}
+        amount={purchaseAmount}
+        pledgeAmount={0}
+        status={buyModalStatus}
+        countryCode={userProfile?.countryCode}
+        isDirectPurchase={true}
+      />
 
     </div>
   )

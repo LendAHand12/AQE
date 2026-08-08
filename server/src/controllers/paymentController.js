@@ -280,7 +280,7 @@ export const createPayment = async (req, res) => {
         
         let description = "";
         if (packageData) {
-            description = `Purchase of Investment Package: ${packageData.title} (${methodText})`;
+            description = `Purchase of Partnership Package: ${packageData.title} (${methodText})`;
         } else if (isDirectPurchase) {
             description = `Direct purchase of AQE digital units (${methodText})`;
         } else {
@@ -531,7 +531,7 @@ export const approveManualPayment = async (req, res) => {
             await processCommissions(user, transaction.amount, transaction);
 
             // Notify user
-            const title = isPackage ? 'Investment Package Approved' : 'Token Purchase Approved';
+            const title = isPackage ? 'Partnership Package Approved' : 'Token Purchase Approved';
             const message = isPackage
                 ? `Your manual payment of ${transaction.amount} USDT for ${transaction.metadata.packageTitle} has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
                 : `Your manual payment of ${transaction.amount} USDT has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;

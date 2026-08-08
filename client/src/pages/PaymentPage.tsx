@@ -240,7 +240,7 @@ export default function PaymentPage() {
       <div className="w-full max-w-md space-y-8 mt-12">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-black text-[#0d1f1d]">{t("payments.page.title")}</h1>

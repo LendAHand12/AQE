@@ -94,8 +94,7 @@ export function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
-                <Route path="/buy" element={<BuyPage />} />
-                <Route path="/investment-packages" element={<InvestmentPackagesPage />} />
+                <Route path="/partnership-packages" element={<InvestmentPackagesPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
