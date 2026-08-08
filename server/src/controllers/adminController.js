@@ -17,6 +17,7 @@ import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
 import { processCommissions } from '../services/paymentService.js';
 import Config from '../models/Config.js';
+import InvestmentPackage from '../models/InvestmentPackage.js';
 import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
 
 // @desc    Auth admin & get token
@@ -1039,7 +1040,7 @@ export const getWalletConnections = async (req, res) => {
 export const manualDepositUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { pledgeAmount, paidAmount, hash } = req.body;
+        const { pledgeAmount, paidAmount, hash, depositType, packageId } = req.body;
 
         if (!paidAmount || !hash) {
             return res.status(400).json({ message: 'Missing paidAmount or hash' });
@@ -1054,6 +1055,16 @@ export const manualDepositUser = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if package
+        const isPackage = depositType === 'package' && !!packageId;
+        let packageData = null;
+        if (isPackage) {
+            packageData = await InvestmentPackage.findById(packageId);
+            if (!packageData) {
+                return res.status(404).json({ message: 'Package not found' });
+            }
         }
 
         // Update user's pledge amount if specified
@@ -1072,11 +1083,19 @@ export const manualDepositUser = async (req, res) => {
         // 5% bonus only in June 2026
         const nowVN = getSystemTime();
         const isJune = nowVN.getFullYear() === 2026 && nowVN.getMonth() === 5;
-        const bonusPercent = isJune ? 0.05 : 0;
-        const bonusTokens = tokensCalculated * bonusPercent;
+        
+        let finalTokensCalculated = tokensCalculated;
+        let finalBonusPercent = isJune ? 5 : 0;
+        
+        if (isPackage) {
+            finalTokensCalculated = packageData.aqeAmount;
+            finalBonusPercent = packageData.bonusPercent;
+        }
+
+        const bonusTokens = finalTokensCalculated * (finalBonusPercent / 100);
 
         // Create transaction of type PAYMENT, status SUCCESS
-        await Transaction.create({
+        const tx = await Transaction.create({
             hash,
             from: user._id,
             to: 'System',
@@ -1084,31 +1103,43 @@ export const manualDepositUser = async (req, res) => {
             symbol: 'USDT',
             type: 'PAYMENT',
             status: 'SUCCESS',
-            description: `Manual Deposit by Admin (${req.admin.username})`,
+            description: isPackage 
+                ? `Manual Deposit by Admin - Package: ${packageData.title} (${req.admin.username})`
+                : `Manual Deposit by Admin (${req.admin.username})`,
             metadata: {
                 isManual: true,
                 admin: req.admin.username,
-                isDirectPurchase: true
+                isDirectPurchase: true,
+                ...(isPackage && {
+                    packageId: packageData._id,
+                    packageTitle: packageData.title,
+                    aqeAmount: packageData.aqeAmount,
+                    bonusPercent: packageData.bonusPercent,
+                    f1CommissionPercent: packageData.f1CommissionPercent,
+                    f2CommissionPercent: packageData.f2CommissionPercent
+                })
             }
         });
 
         const balanceBefore = user.aqeBalance;
-        user.aqeBalance += tokensCalculated;
+        user.aqeBalance += finalTokensCalculated;
 
         // Log purchase receipt
         await BalanceHistory.create({
             userId: user._id,
-            amount: tokensCalculated,
+            amount: finalTokensCalculated,
             symbol: 'AQE',
             type: 'RECEIVE',
             status: 'SUCCESS',
             isOfficial: true,
             balanceBefore,
             balanceAfter: user.aqeBalance,
-            description: `Manual Deposit by Admin (${req.admin.username})`
+            description: isPackage 
+                ? `Manual Deposit (Package): ${packageData.title}`
+                : `Manual Deposit by Admin (${req.admin.username})`
         });
 
-        // Log bonus reward (5%)
+        // Log bonus reward
         if (bonusTokens > 0) {
             const balanceBeforeBonus = user.aqeBalance;
             user.aqeBalance += bonusTokens;
@@ -1121,20 +1152,38 @@ export const manualDepositUser = async (req, res) => {
                 isOfficial: true,
                 balanceBefore: balanceBeforeBonus,
                 balanceAfter: user.aqeBalance,
-                description: `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+                description: isPackage
+                    ? `Manual Deposit Bonus: ${finalBonusPercent}% for ${packageData.title}`
+                    : `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+            });
+        }
+
+        if (isPackage) {
+            user.purchasedPackages.push({
+                packageId: packageData._id,
+                title: packageData.title,
+                price: amountNum,
+                aqeAmount: finalTokensCalculated,
+                bonusPercent: finalBonusPercent,
+                purchasedAt: new Date()
             });
         }
 
         await user.save();
 
-        // Process commissions
-        await processCommissions(user, amountNum);
+        // Process commissions (Pass the transaction to calculate f1/f2 properly for packages)
+        await processCommissions(user, amountNum, tx);
 
         // Notify user
+        const titleMsg = isPackage ? 'Partnership Package Successful (Admin Deposit)' : 'Token Purchase Successful (Admin Deposit)';
+        const contentMsg = isPackage
+            ? `A manual deposit of ${amountNum} USDT for ${packageData.title} has been credited. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a ${finalBonusPercent}% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`
+            : `A manual deposit of ${amountNum} USDT has been credited to your account. You received ${tokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
+        
         await Notification.create({
             userId: user._id,
-            title: 'Token Purchase Successful (Admin Deposit)',
-            message: `A manual deposit of ${amountNum} USDT has been credited to your account. You received ${tokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+            title: titleMsg,
+            message: contentMsg,
             type: 'PAYMENT'
         });
 

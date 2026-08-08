@@ -259,8 +259,11 @@ export default function AdminUserProfilePage() {
   const [depositData, setDepositData] = useState<any>({
     paidAmount: "",
     hash: "",
+    depositType: "individual", // 'individual' or 'package'
+    packageId: "",
   })
   const [depositing, setDepositing] = useState(false)
+  const [packages, setPackages] = useState<any[]>([])
 
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -273,8 +276,12 @@ export default function AdminUserProfilePage() {
   const fetchUserDetails = async () => {
     setLoading(true)
     try {
-      const res = await apiClient.get(`/admin/users/${id}`)
+      const [res, pkgRes] = await Promise.all([
+        apiClient.get(`/admin/users/${id}`),
+        apiClient.get('/admin/packages')
+      ])
       setData(res.data)
+      setPackages(pkgRes.data)
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Could not load user info")
       navigate("/admin/users")
@@ -1694,6 +1701,56 @@ export default function AdminUserProfilePage() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-500">
+                Deposit Type
+              </label>
+              <Select
+                value={depositData.depositType}
+                onValueChange={(val) => {
+                  setDepositData({ ...depositData, depositType: val, packageId: "" })
+                }}
+              >
+                <SelectTrigger className="w-full h-11 rounded-[8px]">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Nạp Lẻ (AQE Only)</SelectItem>
+                  <SelectItem value="package">Nạp Theo Gói (Package)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {depositData.depositType === "package" && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-500">
+                  Select Package *
+                </label>
+                <Select
+                  value={depositData.packageId}
+                  onValueChange={(val) => {
+                    const pkg = packages.find(p => p._id === val)
+                    setDepositData({ 
+                      ...depositData, 
+                      packageId: val,
+                      paidAmount: pkg ? pkg.price.toString() : ""
+                    })
+                  }}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-[8px]">
+                    <SelectValue placeholder="Choose a package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map(pkg => (
+                      <SelectItem key={pkg._id} value={pkg._id}>
+                        {pkg.title} - ${pkg.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-500">
                 Payment Amount (USDT) *
