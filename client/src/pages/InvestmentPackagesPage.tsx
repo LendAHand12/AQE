@@ -486,11 +486,6 @@ export default function InvestmentPackagesPage() {
             <Calendar size={14} className="text-emerald-300" />
             <span>{t("packages.dates_label")}</span>
           </div>
-          <div className="h-4 w-px bg-white/20" />
-          <div className="flex items-center gap-1.5">
-            <Coins size={14} className="text-emerald-300" />
-            <span>{t("packages.rate_label")}</span>
-          </div>
         </div>
         
         {/* Subtle decorative background circle */}
