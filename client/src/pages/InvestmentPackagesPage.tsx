@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Coins,
   Loader2,
@@ -12,7 +12,9 @@ import {
   UserCheck,
   CheckCircle2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -181,6 +183,15 @@ export default function InvestmentPackagesPage() {
   const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false)
   const [buyModalStatus, setBuyModalStatus] = useState<'idle' | 'success'>('idle')
+
+  // Packages carousel scroll
+  const packagesScrollRef = useRef<HTMLDivElement>(null)
+  const scrollPackages = (direction: 'left' | 'right') => {
+    const container = packagesScrollRef.current
+    if (!container) return
+    const amount = container.clientWidth * 0.8
+    container.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     fetchInitialData()
@@ -554,7 +565,28 @@ export default function InvestmentPackagesPage() {
       </div>
 
       {/* Packages Grid */}
-      <div className="flex flex-nowrap overflow-x-auto gap-4 pb-8 pt-2 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="relative">
+        {filteredPackages.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => scrollPackages('left')}
+              aria-label={t("packages.scroll_left")}
+              className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-[#276152] hover:bg-[#276152] hover:text-white transition-all active:scale-95"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollPackages('right')}
+              aria-label={t("packages.scroll_right")}
+              className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-[#276152] hover:bg-[#276152] hover:text-white transition-all active:scale-95"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
+        )}
+        <div ref={packagesScrollRef} className="flex flex-nowrap overflow-x-auto gap-4 pb-8 pt-2 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {filteredPackages.length === 0 ? (
           <div className="w-full py-12 text-center text-gray-400 font-bold bg-white rounded-3xl border border-gray-150 shadow-sm">
             {t("packages.empty_packages")}
@@ -616,6 +648,7 @@ export default function InvestmentPackagesPage() {
             )
           })
         )}
+        </div>
       </div>
 
       {/* Benefit Comparison Section */}

@@ -11,12 +11,20 @@ import {
   Plus, 
   ArrowUp,
   Loader2,
-  Link2
+  Link2,
+  CheckCircle2,
+  Clock,
+  X
 } from "lucide-react"
 import { toast } from "sonner"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
+
+const getImageUrl = (url?: string) => {
+  if (!url) return ''
+  return url.startsWith('/uploads') ? import.meta.env.VITE_API_URL.replace('/api', '') + url : url
+}
 
 export default function Dashboard() {
   const { t } = useTranslation()
@@ -36,6 +44,7 @@ export default function Dashboard() {
   const [monthlyCommission, setMonthlyCommission] = useState(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [referralStats, setReferralStats] = useState<any>(null)
+  const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -259,9 +268,210 @@ export default function Dashboard() {
         })}
       </div>
 
+      {/* Purchased Package + Invite Friends Row */}
+      <div className={`grid grid-cols-1 gap-6 items-stretch ${userProfile?.purchasedPackages?.length > 0 ? 'xl:grid-cols-2' : ''}`}>
+      {userProfile?.purchasedPackages && userProfile.purchasedPackages.length > 0 && (() => {
+        const purchased = userProfile.purchasedPackages[0]
+        const pkg = purchased.packageId
+        const imageUrl = pkg?.imageUrl
+
+        const benefitItems = [
+          { key: "vipLounge", label: t("packages.comparison.vip_lounge") },
+          { key: "roomService", label: t("packages.comparison.room_service") },
+          { key: "transportation", label: t("packages.comparison.transportation") },
+          { key: "priority", label: t("packages.comparison.priority") },
+          { key: "concierge", label: t("packages.comparison.concierge") },
+        ].filter((b) => pkg?.[b.key])
+
+        return (
+          <>
+            <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+
+              <button
+                type="button"
+                onClick={() => setShowPackageDetail(true)}
+                className="w-[150px] md:w-[170px] aspect-[2/3.1] relative rounded-2xl overflow-hidden shrink-0 shadow-md group cursor-pointer"
+              >
+                {imageUrl ? (
+                  <img src={getImageUrl(imageUrl)} alt={purchased.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-[#276152] flex items-center justify-center text-white font-bold text-lg text-center px-4">
+                    {purchased.title}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    {t("packages.view_details")}
+                  </span>
+                </div>
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-emerald-700 shadow-sm flex items-center gap-1">
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                  {t("packages.owned")}
+                </div>
+              </button>
+
+              <div className="flex-1 space-y-4 z-10 w-full">
+                <div>
+                  <h3 className="text-[13px] font-bold text-emerald-600 uppercase tracking-wider mb-1">{t("packages.your_current_package")}</h3>
+                  <h2 className="text-2xl font-bold text-[#111827]">{purchased.title}</h2>
+                  {purchased.purchasedAt && (
+                    <p className="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1">
+                      <Clock size={12} />
+                      {t("packages.purchased_at")} {dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <p className="text-[11px] text-gray-500 font-bold uppercase">{t("packages.invested_amount")}</p>
+                    <p className="text-lg font-black text-[#111827]">${purchased.price.toLocaleString()} USDT</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                    <p className="text-[11px] text-emerald-600 font-bold uppercase">{t("packages.aqe_received_label")}</p>
+                    <p className="text-lg font-black text-emerald-700">{purchased.aqeAmount.toLocaleString()} AQE</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPackageDetail(true)}
+                  className="text-[13px] font-bold text-[#276152] hover:underline"
+                >
+                  {t("packages.view_details")} →
+                </button>
+              </div>
+            </div>
+
+            {/* Purchased Package Detail Popup */}
+            {showPackageDetail && (
+              <div
+                className="fixed inset-0 bg-[#0d1f1d]/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+                onClick={() => setShowPackageDetail(false)}
+              >
+                <div
+                  className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Portrait package image */}
+                  <div className="w-full md:w-[42%] aspect-[2/2.4] md:aspect-auto relative shrink-0">
+                    {imageUrl ? (
+                      <img src={getImageUrl(imageUrl)} alt={purchased.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-[#276152] flex items-center justify-center text-white font-bold text-2xl text-center px-6">
+                        {purchased.title}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowPackageDetail(false)}
+                      className="md:hidden absolute top-3 right-3 size-9 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Info column */}
+                  <div className="flex-1 flex flex-col">
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-emerald-700 bg-emerald-50">
+                          <CheckCircle2 size={12} />
+                          {t("packages.owned")}
+                        </span>
+                        <h2 className="text-xl font-black text-[#0d1f1d] mt-2">{purchased.title}</h2>
+                        {purchased.purchasedAt && (
+                          <p className="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium">
+                            <Clock size={12} />
+                            {t("packages.purchased_at")} {dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}
+                          </p>
+                        )}
+                      </div>
+                      <button onClick={() => setShowPackageDetail(false)} className="hidden md:flex size-9 rounded-xl bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    <div className="overflow-y-auto max-h-[60vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      <div className="p-6 grid grid-cols-2 gap-3">
+                        <div className="bg-[#f8faf9] rounded-xl p-3">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.invested_amount")}</p>
+                          <p className="text-[15px] font-black text-[#111827] mt-0.5">${purchased.price.toLocaleString()} USDT</p>
+                        </div>
+                        <div className="bg-[#f8faf9] rounded-xl p-3">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.aqe_received_label")}</p>
+                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{purchased.aqeAmount.toLocaleString()} AQE</p>
+                        </div>
+                        <div className="bg-[#f8faf9] rounded-xl p-3">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.stay_days")}</p>
+                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{pkg?.stayDays || "—"}</p>
+                        </div>
+                        <div className="bg-[#f8faf9] rounded-xl p-3">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.room_type")}</p>
+                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{pkg?.roomType || "—"}</p>
+                        </div>
+                      </div>
+
+                      {benefitItems.length > 0 && (
+                        <div className="px-6 pb-4 space-y-2">
+                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t("packages.included_benefits")}</p>
+                          <div className="space-y-2">
+                            {benefitItems.map((b) => (
+                              <div key={b.key} className="flex items-center gap-2 text-sm text-[#111827] font-medium">
+                                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                <span>{b.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="px-6 pb-6 grid grid-cols-3 gap-3">
+                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.guests")}</p>
+                          <p className="text-sm font-black text-[#111827] mt-0.5">{pkg?.guests || "—"}</p>
+                        </div>
+                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.savings")}</p>
+                          <p className="text-sm font-black text-[#111827] mt-0.5">{pkg?.savings || "—"}</p>
+                        </div>
+                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
+                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.wellness")}</p>
+                          <p className="text-sm font-black mt-0.5" style={{ color: pkg?.wellness ? "#276152" : "#9ca3af" }}>
+                            {pkg?.wellness ? t("packages.included") : t("packages.not_included")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 border-t border-gray-100 flex gap-3 mt-auto">
+                      <button
+                        onClick={() => setShowPackageDetail(false)}
+                        className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        {t("packages.close_btn")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPackageDetail(false)
+                          navigate("/partnership-packages")
+                        }}
+                        className="flex-1 h-11 rounded-xl text-sm font-bold text-white bg-[#276152] hover:bg-[#1e4d41] transition-colors"
+                      >
+                        {t("packages.view_all_packages")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
+
       {/* Referral / Invite Friends Card */}
-      <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden h-full">
+        <div className="flex flex-col gap-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-full bg-[#d9ede8] flex items-center justify-center text-[#276152] shrink-0">
@@ -276,7 +486,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:w-1/2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
             <div className="flex-1 bg-gray-50 rounded-[12px] px-4 h-11 flex items-center overflow-hidden border border-gray-100 relative min-w-[200px]">
               <span className="text-[13px] font-medium text-gray-500 truncate">
                 {FRONTEND_URL ? `${FRONTEND_URL.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}` : `register?ref=${userProfile?.username || 'TN2024AQE'}`}
@@ -301,7 +511,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="flex items-center gap-6 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 shrink-0 text-[13px]">
+          <div className="flex items-center gap-6 border-t border-gray-100 pt-4 shrink-0 text-[13px]">
             <div>
               <p className="text-gray-400 font-medium">{t("pre_register.total_referrals")}</p>
               <p className="text-[20px] font-black text-[#276152]">{referralStats?.totalReferrals || 0}</p>
@@ -312,6 +522,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Quick Actions Row */}
