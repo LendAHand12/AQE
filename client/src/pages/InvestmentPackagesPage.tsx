@@ -956,10 +956,6 @@ export default function InvestmentPackagesPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="size-1.5 rounded-full bg-[#276152] mt-1.5 shrink-0" />
-            <span>{t("packages.notes.item_2", { defaultValue: `Tỷ lệ niêm yết từ ngày 01/07/2026 là 1 AQE = ${aqeRate} USDT.` })}</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="size-1.5 rounded-full bg-[#276152] mt-1.5 shrink-0" />
             <span>{t("packages.notes.item_3", { defaultValue: "Quyền lợi nghỉ dưỡng áp dụng theo điều khoản của từng gói." })}</span>
           </li>
           <li className="flex items-start gap-2">
