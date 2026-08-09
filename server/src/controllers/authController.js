@@ -173,7 +173,7 @@ export const getUserProfile = async (req, res) => {
         });
         const totalPaid = successfulPayments.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
-        await req.user.populate('purchasedPackages.packageId', 'imageUrl stayDays roomType vipLounge guests roomService transportation savings wellness priority concierge color');
+        await req.user.populate('purchasedPackages.packageId', 'imageUrl stayDays roomType vipLounge guests roomService transportation savings wellness priority concierge color aqeRequired');
 
         const userObj = req.user.toObject();
         userObj.totalPaid = totalPaid;

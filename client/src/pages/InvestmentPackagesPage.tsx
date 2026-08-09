@@ -23,6 +23,7 @@ import apiClient from "@/lib/axios"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
+import { PackageDetailModal } from "@/components/PackageDetailModal"
 import { useSocket } from "@/providers/SocketProvider"
 import { useTranslation } from "react-i18next"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
@@ -1000,99 +1001,47 @@ export default function InvestmentPackagesPage() {
         </div>
       )}
 
-      {/* Detail Privileges Modal — Figma 33-11350 style */}
+      {/* Package Detail Modal */}
       {detailPackage && (() => {
-        const modalColors = getPackageColors(detailPackage.color)
         const benefits = getPackageBenefits(detailPackage.price, t)
         const displayStayDays = detailPackage.stayDays || benefits.stayDays
         const displayRoomType = detailPackage.roomType || benefits.roomType
         const displayGuests = detailPackage.guests || benefits.guests
         const displaySavings = detailPackage.savings || benefits.savings
         const hasWellness = detailPackage.wellness !== undefined ? detailPackage.wellness : benefits.wellness
+        const benefitLabels = [
+          { flag: detailPackage.vipLounge !== undefined ? detailPackage.vipLounge : benefits.vipLounge, label: t("packages.comparison.vip_lounge_desc") },
+          { flag: detailPackage.roomService !== undefined ? detailPackage.roomService : benefits.roomService, label: t("packages.comparison.room_service_desc") },
+          { flag: detailPackage.transportation !== undefined ? detailPackage.transportation : benefits.transport, label: t("packages.comparison.transportation_desc") },
+          { flag: !!displaySavings, label: t("packages.comparison.savings_desc", { value: displaySavings }) },
+          { flag: detailPackage.priority !== undefined ? detailPackage.priority : benefits.priority, label: t("packages.comparison.priority") },
+          { flag: detailPackage.concierge !== undefined ? detailPackage.concierge : benefits.concierge, label: t("packages.comparison.concierge") },
+        ].filter((b) => b.flag).map((b) => b.label)
+
         return (
-          <div className="fixed inset-0 bg-[#0d1f1d]/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
-            onClick={() => setDetailPackage(null)}
-          >
-            <div
-              className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200 overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Package header */}
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ color: modalColors.primary, backgroundColor: modalColors.badgeBg }}>
-                    {getSegmentLabel(detailPackage.segment)}
-                  </span>
-                  <h2 className="text-xl font-black text-[#0d1f1d] mt-2">{detailPackage.title}</h2>
-                </div>
-                <button onClick={() => setDetailPackage(null)} className="size-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-
-              <div className="overflow-y-auto max-h-[70vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {/* Package meta grid — Investment, AQE, Stay, Room */}
-                <div className="p-6 grid grid-cols-2 gap-3">
-                  <div className="bg-[#f8faf9] rounded-xl p-3">
-                    <p className="text-[11px] text-gray-400 font-semibold">Investment</p>
-                    <p className="text-[15px] font-black text-[#111827] mt-0.5">${detailPackage.price.toLocaleString()} USDT</p>
-                  </div>
-                  <div className="bg-[#f8faf9] rounded-xl p-3">
-                    <p className="text-[11px] text-gray-400 font-semibold">AQE Received</p>
-                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{(detailPackage.aqeAmount * (1 + detailPackage.bonusPercent/100)).toLocaleString()} AQE</p>
-                  </div>
-                  <div className="bg-[#f8faf9] rounded-xl p-3">
-                    <p className="text-[11px] text-gray-400 font-semibold">Stay</p>
-                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{displayStayDays || '—'}</p>
-                  </div>
-                  <div className="bg-[#f8faf9] rounded-xl p-3">
-                    <p className="text-[11px] text-gray-400 font-semibold">Room Type</p>
-                    <p className="text-[15px] font-black text-[#111827] mt-0.5">{displayRoomType || '—'}</p>
-                  </div>
-                </div>
-
-                {/* Additional extras row */}
-                <div className="px-6 pb-4 grid grid-cols-3 gap-3">
-                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                    <p className="text-[11px] text-gray-400 font-semibold">Additional Guests</p>
-                    <p className="text-sm font-black text-[#111827] mt-0.5">{displayGuests || '—'}</p>
-                  </div>
-                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                    <p className="text-[11px] text-gray-400 font-semibold">Savings</p>
-                    <p className="text-sm font-black text-[#111827] mt-0.5">{displaySavings || '—'}</p>
-                  </div>
-                  <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                    <p className="text-[11px] text-gray-400 font-semibold">Wellness</p>
-                    <p className="text-sm font-black mt-0.5" style={{ color: hasWellness ? '#276152' : '#9ca3af' }}>
-                      {hasWellness ? 'Included' : 'Not Included'}
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Footer actions */}
-              <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setDetailPackage(null)}
-                  className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  {t('packages.close_btn', { defaultValue: 'Close' })}
-                </button>
-                <button
-                  onClick={() => {
-                    const pkg = detailPackage
-                    setDetailPackage(null)
-                    handlePurchaseClick(pkg)
-                  }}
-                  className="flex-1 h-11 rounded-xl text-sm font-bold text-white transition-colors hover:opacity-90"
-                  style={{ backgroundColor: modalColors.primary }}
-                >
-                  {t('packages.invest_now', { defaultValue: 'Invest Now' })}
-                </button>
-              </div>
-            </div>
-          </div>
+          <PackageDetailModal
+            title={detailPackage.title}
+            imageUrl={detailPackage.imageUrl}
+            badgeLabel={getSegmentLabel(detailPackage.segment)}
+            investment={{ label: t("packages.invested_amount"), value: `$${detailPackage.price.toLocaleString()} USDT` }}
+            aqeReceived={{ label: t("packages.aqe_received_label"), value: `${(detailPackage.aqeAmount * (1 + detailPackage.bonusPercent / 100)).toLocaleString()} AQE` }}
+            aqeRequired={detailPackage.aqeRequired > 0 ? { label: t("packages.aqe_required_label"), value: `${detailPackage.aqeRequired.toLocaleString()} AQE` } : undefined}
+            stay={{ label: t("packages.comparison.stay_days"), value: displayStayDays || "—" }}
+            roomType={{ label: t("packages.comparison.room_type"), value: displayRoomType || "—" }}
+            benefitsTitle={t("packages.included_benefits")}
+            benefits={benefitLabels}
+            guests={{ label: t("packages.comparison.guests"), value: displayGuests || "—" }}
+            savings={{ label: t("packages.comparison.savings"), value: displaySavings || "—" }}
+            wellness={{ label: t("packages.comparison.wellness"), value: hasWellness ? t("packages.included") : t("packages.not_included"), included: hasWellness }}
+            closeLabel={t("packages.close_btn")}
+            primaryLabel={t("packages.invest_now")}
+            onClose={() => setDetailPackage(null)}
+            onPrimaryClick={() => {
+              const pkg = detailPackage
+              setDetailPackage(null)
+              handlePurchaseClick(pkg)
+            }}
+          />
         )
       })()}
       {/* Integration with Payment checkout Modal */}

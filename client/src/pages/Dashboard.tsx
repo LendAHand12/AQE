@@ -13,13 +13,13 @@ import {
   Loader2,
   Link2,
   CheckCircle2,
-  Clock,
-  X
+  Clock
 } from "lucide-react"
 import { toast } from "sonner"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
+import { PackageDetailModal } from "@/components/PackageDetailModal"
 
 const getImageUrl = (url?: string) => {
   if (!url) return ''
@@ -276,12 +276,13 @@ export default function Dashboard() {
         const imageUrl = pkg?.imageUrl
 
         const benefitItems = [
-          { key: "vipLounge", label: t("packages.comparison.vip_lounge") },
-          { key: "roomService", label: t("packages.comparison.room_service") },
-          { key: "transportation", label: t("packages.comparison.transportation") },
-          { key: "priority", label: t("packages.comparison.priority") },
-          { key: "concierge", label: t("packages.comparison.concierge") },
-        ].filter((b) => pkg?.[b.key])
+          { show: !!pkg?.vipLounge, label: t("packages.comparison.vip_lounge_desc") },
+          { show: !!pkg?.roomService, label: t("packages.comparison.room_service_desc") },
+          { show: !!pkg?.transportation, label: t("packages.comparison.transportation_desc") },
+          { show: !!pkg?.savings, label: t("packages.comparison.savings_desc", { value: pkg?.savings }) },
+          { show: !!pkg?.priority, label: t("packages.comparison.priority") },
+          { show: !!pkg?.concierge, label: t("packages.comparison.concierge") },
+        ].filter((b) => b.show)
 
         return (
           <>
@@ -346,124 +347,29 @@ export default function Dashboard() {
 
             {/* Purchased Package Detail Popup */}
             {showPackageDetail && (
-              <div
-                className="fixed inset-0 bg-[#0d1f1d]/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
-                onClick={() => setShowPackageDetail(false)}
-              >
-                <div
-                  className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Portrait package image */}
-                  <div className="w-full md:w-[42%] aspect-[2/2.4] md:aspect-auto relative shrink-0">
-                    {imageUrl ? (
-                      <img src={getImageUrl(imageUrl)} alt={purchased.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-[#276152] flex items-center justify-center text-white font-bold text-2xl text-center px-6">
-                        {purchased.title}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => setShowPackageDetail(false)}
-                      className="md:hidden absolute top-3 right-3 size-9 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-
-                  {/* Info column */}
-                  <div className="flex-1 flex flex-col">
-                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-emerald-700 bg-emerald-50">
-                          <CheckCircle2 size={12} />
-                          {t("packages.owned")}
-                        </span>
-                        <h2 className="text-xl font-black text-[#0d1f1d] mt-2">{purchased.title}</h2>
-                        {purchased.purchasedAt && (
-                          <p className="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium">
-                            <Clock size={12} />
-                            {t("packages.purchased_at")} {dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}
-                          </p>
-                        )}
-                      </div>
-                      <button onClick={() => setShowPackageDetail(false)} className="hidden md:flex size-9 rounded-xl bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors">
-                        <X size={16} />
-                      </button>
-                    </div>
-
-                    <div className="overflow-y-auto max-h-[60vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                      <div className="p-6 grid grid-cols-2 gap-3">
-                        <div className="bg-[#f8faf9] rounded-xl p-3">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.invested_amount")}</p>
-                          <p className="text-[15px] font-black text-[#111827] mt-0.5">${purchased.price.toLocaleString()} USDT</p>
-                        </div>
-                        <div className="bg-[#f8faf9] rounded-xl p-3">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.aqe_received_label")}</p>
-                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{purchased.aqeAmount.toLocaleString()} AQE</p>
-                        </div>
-                        <div className="bg-[#f8faf9] rounded-xl p-3">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.stay_days")}</p>
-                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{pkg?.stayDays || "—"}</p>
-                        </div>
-                        <div className="bg-[#f8faf9] rounded-xl p-3">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.room_type")}</p>
-                          <p className="text-[15px] font-black text-[#111827] mt-0.5">{pkg?.roomType || "—"}</p>
-                        </div>
-                      </div>
-
-                      {benefitItems.length > 0 && (
-                        <div className="px-6 pb-4 space-y-2">
-                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{t("packages.included_benefits")}</p>
-                          <div className="space-y-2">
-                            {benefitItems.map((b) => (
-                              <div key={b.key} className="flex items-center gap-2 text-sm text-[#111827] font-medium">
-                                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                                <span>{b.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="px-6 pb-6 grid grid-cols-3 gap-3">
-                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.guests")}</p>
-                          <p className="text-sm font-black text-[#111827] mt-0.5">{pkg?.guests || "—"}</p>
-                        </div>
-                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.savings")}</p>
-                          <p className="text-sm font-black text-[#111827] mt-0.5">{pkg?.savings || "—"}</p>
-                        </div>
-                        <div className="bg-[#f8faf9] rounded-xl p-3 text-center">
-                          <p className="text-[11px] text-gray-400 font-semibold">{t("packages.comparison.wellness")}</p>
-                          <p className="text-sm font-black mt-0.5" style={{ color: pkg?.wellness ? "#276152" : "#9ca3af" }}>
-                            {pkg?.wellness ? t("packages.included") : t("packages.not_included")}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-6 border-t border-gray-100 flex gap-3 mt-auto">
-                      <button
-                        onClick={() => setShowPackageDetail(false)}
-                        className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-                      >
-                        {t("packages.close_btn")}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowPackageDetail(false)
-                          navigate("/partnership-packages")
-                        }}
-                        className="flex-1 h-11 rounded-xl text-sm font-bold text-white bg-[#276152] hover:bg-[#1e4d41] transition-colors"
-                      >
-                        {t("packages.view_all_packages")}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <PackageDetailModal
+                title={purchased.title}
+                imageUrl={imageUrl}
+                subtitle={purchased.purchasedAt ? `${t("packages.purchased_at")} ${dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}` : undefined}
+                badgeLabel={t("packages.owned")}
+                investment={{ label: t("packages.invested_amount"), value: `$${purchased.price.toLocaleString()} USDT` }}
+                aqeReceived={{ label: t("packages.aqe_received_label"), value: `${purchased.aqeAmount.toLocaleString()} AQE` }}
+                aqeRequired={pkg?.aqeRequired > 0 ? { label: t("packages.aqe_required_label"), value: `${pkg.aqeRequired.toLocaleString()} AQE` } : undefined}
+                stay={{ label: t("packages.comparison.stay_days"), value: pkg?.stayDays || "—" }}
+                roomType={{ label: t("packages.comparison.room_type"), value: pkg?.roomType || "—" }}
+                benefitsTitle={t("packages.included_benefits")}
+                benefits={benefitItems.map((b) => b.label)}
+                guests={{ label: t("packages.comparison.guests"), value: pkg?.guests || "—" }}
+                savings={{ label: t("packages.comparison.savings"), value: pkg?.savings || "—" }}
+                wellness={{ label: t("packages.comparison.wellness"), value: pkg?.wellness ? t("packages.included") : t("packages.not_included"), included: !!pkg?.wellness }}
+                closeLabel={t("packages.close_btn")}
+                primaryLabel={t("packages.view_all_packages")}
+                onClose={() => setShowPackageDetail(false)}
+                onPrimaryClick={() => {
+                  setShowPackageDetail(false)
+                  navigate("/partnership-packages")
+                }}
+              />
             )}
           </>
         )
