@@ -222,11 +222,21 @@ export const getUserById = async (req, res) => {
             },
             {
                 $project: {
-                    totalNetwork: { $size: "$descendants" }
+                    totalNetwork: {
+                        $size: {
+                            $filter: {
+                                input: "$descendants",
+                                as: "descendant",
+                                cond: { $ne: ["$$descendant.isDeleted", true] }
+                            }
+                        }
+                    }
                 }
             }
         ]);
         const totalNetwork = totalNetworkArr[0]?.totalNetwork || 0;
+
+        console.log({totalNetwork})
 
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
