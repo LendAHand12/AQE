@@ -493,6 +493,7 @@
   "withdrawals": {
     "errors": {
       "wallet_required": "Please provide a receiving wallet address",
+      "invalid_amount": "Please enter a valid amount to convert",
       "insufficient_balance": "Insufficient balance to withdraw (Min 10 USDT after fee)",
       "not_found": "Withdrawal request not found",
       "kyc_required": "FaceID verification required before withdrawing",

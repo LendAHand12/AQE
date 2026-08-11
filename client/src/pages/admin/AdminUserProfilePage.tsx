@@ -48,6 +48,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -261,6 +262,7 @@ export default function AdminUserProfilePage() {
     hash: "",
     depositType: "individual", // 'individual' or 'package'
     packageId: "",
+    payCommission: false,
   })
   const [depositing, setDepositing] = useState(false)
   const [packages, setPackages] = useState<any[]>([])
@@ -332,7 +334,7 @@ export default function AdminUserProfilePage() {
       toast.success("Manual deposit processed successfully")
       setIsDepositDialogOpen(false)
       fetchUserDetails()
-      setDepositData({ paidAmount: "", hash: "" })
+      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false })
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || "Could not process manual deposit"
@@ -576,6 +578,12 @@ export default function AdminUserProfilePage() {
                 className="rounded-full px-8 py-2 font-bold transition-all data-[state=active]:bg-[#276152] data-[state=active]:text-white"
               >
                 AQE
+              </TabsTrigger>
+              <TabsTrigger
+                value="withdraws"
+                className="rounded-full px-8 py-2 font-bold transition-all data-[state=active]:bg-[#276152] data-[state=active]:text-white"
+              >
+                Withdraws
               </TabsTrigger>
             </TabsList>
 
@@ -1406,6 +1414,107 @@ export default function AdminUserProfilePage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Tab: Withdraws */}
+            <TabsContent value="withdraws" className="outline-none">
+              <Card className="overflow-hidden rounded-[24px] border-gray-100 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
+                    <Wallet size={20} className="text-[#276152]" />
+                    Withdrawal History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="pl-6 font-bold">Time</TableHead>
+                        <TableHead className="font-bold">Method</TableHead>
+                        <TableHead className="text-right font-bold">Amount</TableHead>
+                        <TableHead className="text-right font-bold">Fee</TableHead>
+                        <TableHead className="font-bold">Status</TableHead>
+                        <TableHead className="font-bold">Destination</TableHead>
+                        <TableHead className="pr-6 text-right font-bold">Hash</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.withdrawals?.length > 0 ? (
+                        data.withdrawals.map((w: any) => (
+                          <TableRow key={w._id}>
+                            <TableCell className="pl-6 text-xs text-gray-500">
+                              {dayjs(w.createdAt).format("DD/MM/YYYY HH:mm")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={cn(
+                                  "w-fit rounded-full border-none text-[10px] font-bold",
+                                  w.paymentMethod === "AQE"
+                                    ? "bg-amber-50 text-amber-600 border border-amber-100"
+                                    : w.paymentMethod === "ZELLE"
+                                      ? "bg-orange-50 text-orange-600"
+                                      : "bg-blue-50 text-blue-600"
+                                )}
+                              >
+                                {w.paymentMethod === "AQE" ? "AQE CONVERT" : w.paymentMethod}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-bold">
+                              {w.amount?.toLocaleString()} {w.symbol || "USDT"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm text-gray-500">
+                              {w.paymentMethod === "AQE" ? 0 : (w.fee ?? 1)} USDT
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={cn(
+                                  "flex w-fit items-center gap-1 rounded-full border-none text-[10px] font-bold",
+                                  w.status === "SUCCESS"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : w.status === "FAILED"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-amber-100 text-amber-700"
+                                )}
+                              >
+                                {w.status === "PENDING" && <Clock size={12} className="animate-pulse" />}
+                                {w.status === "SUCCESS" ? "Success" : w.status === "FAILED" ? "Rejected" : "Pending"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] text-sm text-gray-600">
+                              <span className="truncate block">
+                                {w.paymentMethod === "ZELLE"
+                                  ? `${w.zelleName || ""} (${w.zelleInfo || ""})`
+                                  : w.paymentMethod === "AQE"
+                                    ? "AQE Balance"
+                                    : w.walletAddress || "—"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="pr-6 text-right">
+                              {w.hash ? (
+                                <a
+                                  href={`https://bscscan.com/tx/${w.hash}`}
+                                  target="_blank"
+                                  className="inline-flex items-center gap-1 font-mono text-xs text-gray-400 hover:text-[#276152]"
+                                >
+                                  {w.hash.substring(0, 6)}... <ExternalLink size={12} />
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="py-12 text-center text-gray-400">
+                            No withdrawal data
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
@@ -1715,8 +1824,8 @@ export default function AdminUserProfilePage() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="individual">Nạp Lẻ (AQE Only)</SelectItem>
-                  <SelectItem value="package">Nạp Theo Gói (Package)</SelectItem>
+                  <SelectItem value="individual">Individual Top-up (AQE Only)</SelectItem>
+                  <SelectItem value="package">Package Top-up</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1777,6 +1886,19 @@ export default function AdminUserProfilePage() {
                 placeholder="Blockchain transaction hash"
                 className="h-11 rounded-[8px] border-gray-200 font-mono text-xs"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="payCommission"
+                checked={depositData.payCommission}
+                onCheckedChange={(checked) =>
+                  setDepositData({ ...depositData, payCommission: !!checked })
+                }
+                className="border-gray-300 data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]"
+              />
+              <label htmlFor="payCommission" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+                Pay referral commission to upline (default: no)
+              </label>
             </div>
           </div>
           <DialogFooter className="pt-4">

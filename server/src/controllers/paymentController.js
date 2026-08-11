@@ -7,7 +7,7 @@ import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import Notification from '../models/Notification.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-import { finalizeBlockchainPayment, processCommissions } from '../services/paymentService.js';
+import { finalizeBlockchainPayment, processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
@@ -523,6 +523,8 @@ export const approveManualPayment = async (req, res) => {
                     bonusPercent: finalBonusPercent,
                     purchasedAt: new Date()
                 });
+            } else {
+                await applyEligiblePackageForAqeHolding(user);
             }
 
             await user.save();

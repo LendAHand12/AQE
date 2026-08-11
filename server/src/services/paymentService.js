@@ -4,9 +4,46 @@ import Commission from '../models/Commission.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import Notification from '../models/Notification.js';
 import { TokenState } from '../models/Blockchain.js';
+import InvestmentPackage from '../models/InvestmentPackage.js';
 import { emitNotification } from '../utils/socket.js';
 import { getSystemTime } from '../utils/time.js';
 import { getSystemConfig } from '../utils/configHelper.js';
+
+/**
+ * Auto-apply the highest-tier package a user's official AQE balance (aqeBalance)
+ * now qualifies for, based on each active package's aqeRequired threshold.
+ * Only used for direct AQE purchases NOT tied to a specific package ("mua lẻ") —
+ * package purchases already record their own purchasedPackages entry.
+ * Never downgrades an existing package (compared by recorded price) and never
+ * credits extra AQE — it only records that the user now holds enough AQE for that tier.
+ */
+export async function applyEligiblePackageForAqeHolding(user) {
+    const currentAqe = user.aqeBalance || 0;
+    if (currentAqe <= 0) return;
+
+    const eligiblePackage = await InvestmentPackage.findOne({
+        isActive: true,
+        aqeRequired: { $gt: 0, $lte: currentAqe }
+    }).sort({ aqeRequired: -1 });
+
+    if (!eligiblePackage) return;
+
+    const alreadyOwnsExact = user.purchasedPackages.some((p) => String(p.packageId) === String(eligiblePackage._id));
+    if (alreadyOwnsExact) return;
+
+    const highestExistingPrice = user.purchasedPackages.reduce((max, p) => Math.max(max, p.price || 0), 0);
+    if (highestExistingPrice >= eligiblePackage.price) return;
+
+    user.purchasedPackages = [{
+        packageId: eligiblePackage._id,
+        title: eligiblePackage.title,
+        price: eligiblePackage.price,
+        aqeAmount: eligiblePackage.aqeAmount,
+        bonusPercent: eligiblePackage.bonusPercent,
+        purchasedAt: new Date()
+    }];
+}
+
 /**
  * Shared logic to process commissions
  */
@@ -259,6 +296,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     bonusPercent: finalBonusPercent,
                     purchasedAt: new Date()
                 });
+            } else {
+                await applyEligiblePackageForAqeHolding(user);
             }
 
             await user.save();

@@ -15,7 +15,7 @@ import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
-import { processCommissions } from '../services/paymentService.js';
+import { processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
 import Config from '../models/Config.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
 import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
@@ -1050,7 +1050,7 @@ export const getWalletConnections = async (req, res) => {
 export const manualDepositUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { pledgeAmount, paidAmount, hash, depositType, packageId } = req.body;
+        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission } = req.body;
 
         if (!paidAmount || !hash) {
             return res.status(400).json({ message: 'Missing paidAmount or hash' });
@@ -1177,12 +1177,16 @@ export const manualDepositUser = async (req, res) => {
                 bonusPercent: finalBonusPercent,
                 purchasedAt: new Date()
             });
+        } else {
+            await applyEligiblePackageForAqeHolding(user);
         }
 
         await user.save();
 
-        // Process commissions (Pass the transaction to calculate f1/f2 properly for packages)
-        await processCommissions(user, amountNum, tx);
+        // Process commissions only if explicitly requested (default: no commission for admin manual deposits)
+        if (payCommission === true) {
+            await processCommissions(user, amountNum, tx);
+        }
 
         // Notify user
         const titleMsg = isPackage ? 'Partnership Package Successful (Admin Deposit)' : 'Token Purchase Successful (Admin Deposit)';
@@ -1203,7 +1207,7 @@ export const manualDepositUser = async (req, res) => {
             adminUsername: req.admin.username,
             action: 'MANUAL_DEPOSIT',
             target: userId,
-            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''}`,
+            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''} (Commission: ${payCommission === true ? 'paid' : 'not paid'})`,
             ipAddress: req.ip
         });
 

@@ -493,6 +493,7 @@
   "withdrawals": {
     "errors": {
       "wallet_required": "Vui lòng cung cấp địa chỉ ví nhận tiền",
+      "invalid_amount": "Vui lòng nhập số tiền hợp lệ để quy đổi",
       "insufficient_balance": "Số dư không đủ để rút (Tối thiểu 10 USDT sau khi trừ phí)",
       "not_found": "Không tìm thấy yêu cầu rút tiền",
       "kyc_required": "Bạn cần xác thực khuôn mặt (FaceID) trước khi rút tiền",

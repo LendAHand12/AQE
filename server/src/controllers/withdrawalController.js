@@ -16,7 +16,7 @@ import { getSystemConfig } from '../utils/configHelper.js';
  * @access  Private
  */
 export const requestWithdrawal = async (req, res) => {
-    const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET' } = req.body;
+    const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET', amount } = req.body;
     const { user } = req;
     const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
 
@@ -29,8 +29,22 @@ export const requestWithdrawal = async (req, res) => {
             if (!zelleName) return res.status(400).json({ message: 'Tên tài khoản Zelle là bắt buộc' });
         }
 
-        // 1. Check Balance (Withdraw/Convert ALL)
-        const withdrawalAmount = user.usdtBalance - fee;
+        // 1. Determine amount to withdraw/convert.
+        // AQE conversion lets the user pick a partial amount; other methods still withdraw the full balance.
+        let withdrawalAmount;
+        if (paymentMethod === 'AQE') {
+            const requestedAmount = parseFloat(amount);
+            if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                return res.status(400).json({ message: 'withdrawals.errors.invalid_amount' });
+            }
+            if (requestedAmount > user.usdtBalance) {
+                return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
+            }
+            withdrawalAmount = requestedAmount;
+        } else {
+            withdrawalAmount = user.usdtBalance - fee;
+        }
+
         if (withdrawalAmount < 10) {
             return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
         }

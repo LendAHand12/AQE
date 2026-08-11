@@ -485,6 +485,7 @@
   "withdrawals": {
     "errors": {
       "wallet_required": "Proporcione una dirección de billetera receptora",
+      "invalid_amount": "Por favor ingrese un monto válido para convertir",
       "insufficient_balance": "Saldo insuficiente para retirar (mínimo 10 USDT después de la tarifa)",
       "not_found": "Solicitud de retiro no encontrada",
       "kyc_required": "Se requiere verificación FaceID antes de retirar",
