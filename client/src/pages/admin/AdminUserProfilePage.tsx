@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { PackageDetailModal } from "@/components/PackageDetailModal"
 import {
   Select,
   SelectContent,
@@ -263,6 +264,7 @@ export default function AdminUserProfilePage() {
     depositType: "individual", // 'individual' or 'package'
     packageId: "",
     payCommission: false,
+    grantAqe: true,
   })
   const [depositing, setDepositing] = useState(false)
   const [packages, setPackages] = useState<any[]>([])
@@ -270,6 +272,7 @@ export default function AdminUserProfilePage() {
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [aqeTypeFilter, setAqeTypeFilter] = useState<string>("ALL")
+  const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   useEffect(() => {
     fetchUserDetails()
@@ -334,7 +337,7 @@ export default function AdminUserProfilePage() {
       toast.success("Manual deposit processed successfully")
       setIsDepositDialogOpen(false)
       fetchUserDetails()
-      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false })
+      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false, grantAqe: true })
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || "Could not process manual deposit"
@@ -590,6 +593,73 @@ export default function AdminUserProfilePage() {
             {/* Tab: Information & Pledge History */}
             <TabsContent value="info" className="space-y-6 outline-none">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Card className="rounded-[24px] border-gray-100 shadow-sm md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
+                      <Building2 size={20} className="text-[#276152]" />
+                      Current Package
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {user.purchasedPackages?.length > 0 ? (() => {
+                      const purchased = user.purchasedPackages[0]
+                      const pkg = purchased.packageId
+                      return (
+                        <div className="flex flex-col items-center gap-6 md:flex-row">
+                          <div className="relative aspect-[3/4] w-[120px] shrink-0 overflow-hidden rounded-[16px] shadow-sm">
+                            {pkg?.imageUrl ? (
+                              <img
+                                src={getImageUrl(pkg.imageUrl)}
+                                alt={purchased.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-[#276152] px-2 text-center text-sm font-bold text-white">
+                                {purchased.title}
+                              </div>
+                            )}
+                          </div>
+                          <div className="w-full flex-1 space-y-3">
+                            <div>
+                              <h3 className="text-[20px] font-extrabold text-[#111827]">
+                                {purchased.title}
+                              </h3>
+                              <p className="mt-0.5 text-[12px] font-medium text-gray-400">
+                                Purchased at {dayjs(purchased.purchasedAt).format("DD/MM/YYYY HH:mm")}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="rounded-[12px] bg-gray-50 p-3">
+                                <p className="text-[11px] font-bold uppercase text-gray-400">Invested</p>
+                                <p className="text-[15px] font-extrabold text-[#111827]">
+                                  ${purchased.price?.toLocaleString()} USDT
+                                </p>
+                              </div>
+                              <div className="rounded-[12px] bg-emerald-50 p-3">
+                                <p className="text-[11px] font-bold uppercase text-emerald-600">AQE Received</p>
+                                <p className="text-[15px] font-extrabold text-emerald-700">
+                                  {purchased.aqeAmount?.toLocaleString()} AQE
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowPackageDetail(true)}
+                              className="rounded-[8px] border-[#276152] text-xs font-bold text-[#276152] hover:bg-[#276152]/5"
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })() : (
+                      <div className="py-10 text-center text-sm font-medium text-gray-400">
+                        This user does not own any package yet.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Card className="rounded-[24px] border-gray-100 shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
@@ -1860,6 +1930,22 @@ export default function AdminUserProfilePage() {
               </div>
             )}
 
+            {depositData.depositType === "package" && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="grantAqe"
+                  checked={depositData.grantAqe}
+                  onCheckedChange={(checked) =>
+                    setDepositData({ ...depositData, grantAqe: !!checked })
+                  }
+                  className="border-gray-300 data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]"
+                />
+                <label htmlFor="grantAqe" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+                  Grant AQE for this package (uncheck to just assign the package, e.g. user already qualifies)
+                </label>
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-500">
                 Payment Amount (USDT) *
@@ -1923,6 +2009,46 @@ export default function AdminUserProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Current Package Detail Modal */}
+      {showPackageDetail && user.purchasedPackages?.length > 0 && (() => {
+        const purchased = user.purchasedPackages[0]
+        const pkg = purchased.packageId
+        const benefitItems = [
+          { show: !!pkg?.vipLounge, label: "VIP Lounge 24/7" },
+          { show: !!pkg?.roomService, label: "24/7 Restaurant Room Service" },
+          { show: !!pkg?.transportation, label: "Airport Transportation 24/7" },
+          { show: !!pkg?.savings, label: `${pkg?.savings} Saving on All Services` },
+          { show: !!pkg?.priority, label: "Priority booking option" },
+          { show: !!pkg?.concierge, label: "Personal Concierge" },
+        ].filter((b) => b.show).map((b) => b.label)
+
+        return (
+          <PackageDetailModal
+            title={purchased.title}
+            imageUrl={pkg?.imageUrl}
+            subtitle={purchased.purchasedAt ? `Purchased at ${dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}` : undefined}
+            badgeLabel="Owned"
+            investment={{ label: "Invested", value: `$${purchased.price?.toLocaleString()} USDT` }}
+            aqeReceived={{ label: "AQE Received", value: `${purchased.aqeAmount?.toLocaleString()} AQE` }}
+            aqeRequired={pkg?.aqeRequired > 0 ? { label: "AQE Required", value: `${pkg.aqeRequired.toLocaleString()} AQE` } : undefined}
+            stay={{ label: "Stay", value: pkg?.stayDays || "—" }}
+            roomType={{ label: "Room Type", value: pkg?.roomType || "—" }}
+            benefitsTitle="Included Benefits"
+            benefits={benefitItems}
+            guests={{ label: "Guests", value: pkg?.guests || "—" }}
+            savings={{ label: "Savings", value: pkg?.savings || "—" }}
+            wellness={{ label: "Wellness", value: pkg?.wellness ? "Included" : "Not Included", included: !!pkg?.wellness }}
+            closeLabel="Close"
+            primaryLabel="Manage Packages"
+            onClose={() => setShowPackageDetail(false)}
+            onPrimaryClick={() => {
+              setShowPackageDetail(false)
+              navigate("/admin/packages")
+            }}
+          />
+        )
+      })()}
 
       {/* Image Preview Overlay */}
       {previewImage && (

@@ -150,7 +150,8 @@ export const getUserById = async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id, isDeleted: false })
             .select('-password')
-            .populate('referredBy', 'username fullName email');
+            .populate('referredBy', 'username fullName email')
+            .populate('purchasedPackages.packageId', 'imageUrl stayDays roomType vipLounge guests roomService transportation savings wellness priority concierge color aqeRequired');
         
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });
@@ -1050,7 +1051,7 @@ export const getWalletConnections = async (req, res) => {
 export const manualDepositUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission } = req.body;
+        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission, grantAqe } = req.body;
 
         if (!paidAmount || !hash) {
             return res.status(400).json({ message: 'Missing paidAmount or hash' });
@@ -1102,7 +1103,10 @@ export const manualDepositUser = async (req, res) => {
             finalBonusPercent = packageData.bonusPercent;
         }
 
-        const bonusTokens = finalTokensCalculated * (finalBonusPercent / 100);
+        // For package deposits, admin can choose to just assign the package (no AQE credited)
+        // vs. a real package purchase (AQE credited as usual). Individual deposits always grant AQE.
+        const shouldGrantAqe = !isPackage || grantAqe === true;
+        const bonusTokens = shouldGrantAqe ? finalTokensCalculated * (finalBonusPercent / 100) : 0;
 
         // Create transaction of type PAYMENT, status SUCCESS
         const tx = await Transaction.create({
@@ -1132,40 +1136,42 @@ export const manualDepositUser = async (req, res) => {
         });
 
         const balanceBefore = user.aqeBalance;
-        user.aqeBalance += finalTokensCalculated;
+        if (shouldGrantAqe) {
+            user.aqeBalance += finalTokensCalculated;
 
-        // Log purchase receipt
-        await BalanceHistory.create({
-            userId: user._id,
-            amount: finalTokensCalculated,
-            symbol: 'AQE',
-            type: 'RECEIVE',
-            status: 'SUCCESS',
-            isOfficial: true,
-            balanceBefore,
-            balanceAfter: user.aqeBalance,
-            description: isPackage 
-                ? `Manual Deposit (Package): ${packageData.title}`
-                : `Manual Deposit by Admin (${req.admin.username})`
-        });
-
-        // Log bonus reward
-        if (bonusTokens > 0) {
-            const balanceBeforeBonus = user.aqeBalance;
-            user.aqeBalance += bonusTokens;
+            // Log purchase receipt
             await BalanceHistory.create({
                 userId: user._id,
-                amount: bonusTokens,
+                amount: finalTokensCalculated,
                 symbol: 'AQE',
-                type: 'REWARD',
+                type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
-                balanceBefore: balanceBeforeBonus,
+                balanceBefore,
                 balanceAfter: user.aqeBalance,
                 description: isPackage
-                    ? `Manual Deposit Bonus: ${finalBonusPercent}% for ${packageData.title}`
-                    : `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+                    ? `Manual Deposit (Package): ${packageData.title}`
+                    : `Manual Deposit by Admin (${req.admin.username})`
             });
+
+            // Log bonus reward
+            if (bonusTokens > 0) {
+                const balanceBeforeBonus = user.aqeBalance;
+                user.aqeBalance += bonusTokens;
+                await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: balanceBeforeBonus,
+                    balanceAfter: user.aqeBalance,
+                    description: isPackage
+                        ? `Manual Deposit Bonus: ${finalBonusPercent}% for ${packageData.title}`
+                        : `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+                });
+            }
         }
 
         if (isPackage) {
@@ -1189,9 +1195,13 @@ export const manualDepositUser = async (req, res) => {
         }
 
         // Notify user
-        const titleMsg = isPackage ? 'Partnership Package Successful (Admin Deposit)' : 'Token Purchase Successful (Admin Deposit)';
+        const titleMsg = isPackage
+            ? (shouldGrantAqe ? 'Partnership Package Successful (Admin Deposit)' : 'Partnership Package Assigned (Admin)')
+            : 'Token Purchase Successful (Admin Deposit)';
         const contentMsg = isPackage
-            ? `A manual deposit of ${amountNum} USDT for ${packageData.title} has been credited. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a ${finalBonusPercent}% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`
+            ? (shouldGrantAqe
+                ? `A manual deposit of ${amountNum} USDT for ${packageData.title} has been credited. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a ${finalBonusPercent}% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`
+                : `The ${packageData.title} package has been assigned to your account.`)
             : `A manual deposit of ${amountNum} USDT has been credited to your account. You received ${tokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
         
         await Notification.create({
@@ -1207,7 +1217,7 @@ export const manualDepositUser = async (req, res) => {
             adminUsername: req.admin.username,
             action: 'MANUAL_DEPOSIT',
             target: userId,
-            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''} (Commission: ${payCommission === true ? 'paid' : 'not paid'})`,
+            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''} (Commission: ${payCommission === true ? 'paid' : 'not paid'})${isPackage ? ` (AQE: ${shouldGrantAqe ? 'granted' : 'not granted'})` : ''}`,
             ipAddress: req.ip
         });
 
