@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
     // { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
-    { icon: HandCoins, label: t("sidebar.investment_packages"), path: "/partnership-packages", key: "partnership-packages" },
+    { icon: HandCoins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },
     { icon: History, label: t("sidebar.payment_history"), path: "/payment-history", key: "payments" },

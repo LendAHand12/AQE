@@ -8,7 +8,8 @@ import {
   ShieldCheck,
   Copy,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
@@ -72,8 +73,9 @@ export default function PaymentPage() {
 
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<Payment | null>(null);
-  const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error, awaiting
+  const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error, awaiting, cancelled
   const [txHash, setTxHash] = useState('');
+  const [cancelling, setCancelling] = useState(false);
   const method = searchParams.get('method') === 'zelle' ? 'zelle' : 'wallet';
 
   useEffect(() => {
@@ -94,11 +96,27 @@ export default function PaymentPage() {
         setTxHash(res.data.hash);
       } else if (res.data.status === 'AWAITING_APPROVAL') {
         setStatus('awaiting');
+      } else if (res.data.status === 'CANCELLED') {
+        setStatus('cancelled');
       }
     } catch (error) {
       toast.error(t("payments.page.errors.not_found"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm(t("payments.page.cancel_confirm"))) return;
+    setCancelling(true);
+    try {
+      await apiClient.post('/payments/cancel', { paymentId });
+      setStatus('cancelled');
+      toast.success(t("payments.page.cancel_success"));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -275,11 +293,13 @@ export default function PaymentPage() {
                 "px-3 py-1 rounded-full text-xs font-bold uppercase",
                 status === 'success' ? "bg-emerald-50 text-emerald-600" :
                   status === 'awaiting' ? "bg-amber-50 text-amber-600" :
-                    "bg-gray-50 text-gray-500"
+                    status === 'cancelled' ? "bg-rose-50 text-rose-600" :
+                      "bg-gray-50 text-gray-500"
               )}>
                 {status === 'success' ? t("payments.page.status_success") :
                   status === 'awaiting' ? t("payments.page.status_awaiting") :
-                    t("payments.page.status_pending")}
+                    status === 'cancelled' ? t("payments.page.status_cancelled") :
+                      t("payments.page.status_pending")}
               </span>
             </div>
           </div>
@@ -321,6 +341,21 @@ export default function PaymentPage() {
               </div>
               <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
                 {t("payments.page.back_home")}
+              </Button>
+            </div>
+          ) : status === 'cancelled' ? (
+            <div className="text-center space-y-6 pt-4">
+              <div className="flex justify-center">
+                <div className="size-20 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(244,63,94,0.3)]">
+                  <XCircle size={40} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.cancelled_title")}</h3>
+                <p className="text-sm text-gray-400">{t("payments.page.cancelled_hint")}</p>
+              </div>
+              <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold">
+                {t("payments.page.create_new_btn")}
               </Button>
             </div>
           ) : (
@@ -419,6 +454,16 @@ export default function PaymentPage() {
                   </Button>
                 </div>
               )}
+
+              <div className="text-center">
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="text-sm font-bold text-rose-500 hover:text-rose-600 hover:underline disabled:opacity-50"
+                >
+                  {cancelling ? t("auth.processing") : t("payments.page.cancel_btn")}
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -586,6 +586,15 @@
       "success_desc": "Su transacción ha sido confirmada. Las unidades AQE se acreditarán en su cuenta en breve.",
       "close_btn": "Cerca"
     },
+    "pending_order": {
+      "title_pending": "Tiene un pago sin finalizar",
+      "title_awaiting": "Pago en espera de aprobación del administrador",
+      "desc_pending": "Continúe para completar su pago de {{amount}} USDT, o cancele para empezar de nuevo.",
+      "desc_awaiting": "Su pago de {{amount}} USDT está esperando la aprobación del administrador.",
+      "continue_btn": "Continuar Pago",
+      "cancel_btn": "Cancelar",
+      "acknowledge_btn": "Entendido"
+    },
     "page": {
       "title": "Pago AQE",
       "total_label": "Pago Total",
@@ -620,7 +629,14 @@
       "status_awaiting": "En espera de aprobación",
       "manual_confirm_success": "Notificación enviada al administrador. Su transacción será procesada en breve.",
       "manual_success_hint": "El administrador verificará y aprobará su transacción dentro de 30 a 60 minutos.",
-      "pending_manual_exists": "Tienes una transacción pendiente de aprobación. Espere la aprobación o el rechazo del administrador antes de realizar una nueva transacción."
+      "pending_manual_exists": "Tienes una transacción pendiente de aprobación. Espere la aprobación o el rechazo del administrador antes de realizar una nueva transacción.",
+      "status_cancelled": "Cancelado",
+      "cancel_btn": "Cancelar este pedido",
+      "cancel_confirm": "¿Cancelar este pedido de pago? Solo cancele si aún no ha enviado el dinero.",
+      "cancel_success": "Pedido cancelado exitosamente",
+      "cancelled_title": "Pedido Cancelado",
+      "cancelled_hint": "Este pedido de pago ha sido cancelado. Puede iniciar una nueva compra en cualquier momento.",
+      "create_new_btn": "Iniciar Nueva Compra"
     },
     "pledge_success": "Monto del compromiso registrado exitosamente",
     "payment_success": "Pago exitoso",

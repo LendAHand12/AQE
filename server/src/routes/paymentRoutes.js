@@ -8,7 +8,8 @@ import {
     getPaymentById,
     getPaymentHistory,
     confirmTransactionHash,
-    confirmManualPayment
+    confirmManualPayment,
+    cancelPayment
 } from '../controllers/paymentController.js';
 import {
     getUserCommissions,
@@ -29,6 +30,7 @@ router.post('/payment', protect, submitPreRegisterPayment);
 router.post('/create', protect, createPayment);
 router.post('/confirm-hash', confirmTransactionHash);
 router.post('/confirm-manual', protect, confirmManualPayment);
+router.post('/cancel', protect, cancelPayment);
 router.get('/pledge', protect, getMyPreRegister);
 router.get('/history', protect, getPaymentHistory);
 router.get('/my-payments', protect, getUserPayments);

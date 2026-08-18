@@ -593,6 +593,15 @@
       "success_desc": "Giao dịch của bạn đã được xác nhận. AQE sẽ được cộng vào tài khoản trong giây lát.",
       "close_btn": "Đóng"
     },
+    "pending_order": {
+      "title_pending": "Bạn có 1 lệnh thanh toán chưa hoàn tất",
+      "title_awaiting": "Lệnh thanh toán đang chờ admin duyệt",
+      "desc_pending": "Tiếp tục để hoàn tất thanh toán {{amount}} USDT, hoặc hủy để tạo lệnh mới.",
+      "desc_awaiting": "Lệnh thanh toán {{amount}} USDT đang chờ quản trị viên phê duyệt.",
+      "continue_btn": "Tiếp tục thanh toán",
+      "cancel_btn": "Hủy",
+      "acknowledge_btn": "Đã hiểu"
+    },
     "page": {
       "title": "Thanh toán AQE",
       "total_label": "Tổng thanh toán",
@@ -627,7 +636,14 @@
       "status_awaiting": "Chờ duyệt",
       "manual_confirm_success": "Thông báo đã được gửi tới quản trị viên. Giao dịch sẽ được xử lý sớm nhất.",
       "manual_success_hint": "Quản trị viên sẽ kiểm tra và phê duyệt giao dịch của bạn trong vòng 30-60 phút.",
-      "pending_manual_exists": "Bạn có giao dịch đang chờ duyệt. Vui lòng đợi quản trị viên phê duyệt hoặc từ chối trước khi thực hiện giao dịch mới."
+      "pending_manual_exists": "Bạn có giao dịch đang chờ duyệt. Vui lòng đợi quản trị viên phê duyệt hoặc từ chối trước khi thực hiện giao dịch mới.",
+      "status_cancelled": "Đã hủy",
+      "cancel_btn": "Hủy lệnh này",
+      "cancel_confirm": "Hủy lệnh thanh toán này? Chỉ hủy nếu bạn chưa chuyển tiền.",
+      "cancel_success": "Đã hủy lệnh thành công",
+      "cancelled_title": "Lệnh đã bị hủy",
+      "cancelled_hint": "Lệnh thanh toán này đã bị hủy. Bạn có thể tạo giao dịch mua mới bất cứ lúc nào.",
+      "create_new_btn": "Tạo giao dịch mới"
     },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",

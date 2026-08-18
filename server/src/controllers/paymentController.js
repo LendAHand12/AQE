@@ -168,15 +168,18 @@ export const getMyPreRegister = async (req, res) => {
         const transactions = await Transaction.find({
             from: req.user._id,
             type: 'PAYMENT',
-            status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
+            status: { $in: ['SUCCESS', 'PENDING', 'AWAITING_APPROVAL'] }
         }).sort({ createdAt: -1 });
 
         const awaitingApprovalAmount = transactions
             .filter(t => t.status === 'AWAITING_APPROVAL')
             .reduce((sum, t) => sum + (t.amount || 0), 0);
 
+        // Most recent unfinished order (not yet confirmed by user, or awaiting admin approval)
+        const pendingTransaction = transactions.find(t => t.status === 'PENDING' || t.status === 'AWAITING_APPROVAL') || null;
+
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
-            if (awaitingApprovalAmount > 0) {
+            if (pendingTransaction) {
                 return res.json({
                     userId: user._id,
                     username: user.username,
@@ -185,7 +188,8 @@ export const getMyPreRegister = async (req, res) => {
                     awaitingApprovalAmount,
                     preRegisterTokens: 0,
                     status: 'pending',
-                    transactions: transactions
+                    transactions,
+                    pendingTransaction
                 });
             }
             return res.json(null);
@@ -200,7 +204,8 @@ export const getMyPreRegister = async (req, res) => {
             preRegisterTokens: user.preRegisterTokens,
             status: user.paidUsdtPreRegister >= user.pledgeUsdt ? 'completed' : 'pending',
             transactions,
-            pledgeRounds: user.pledgeRounds
+            pledgeRounds: user.pledgeRounds,
+            pendingTransaction
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -253,10 +258,10 @@ export const createPayment = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Check for pending manual payments
-        const existingAwaiting = await Transaction.findOne({ from: req.user._id, status: 'AWAITING_APPROVAL' });
-        if (existingAwaiting) {
-            return res.status(400).json({ message: 'payments.pending_manual_exists' });
+        // Check for an existing unfinished order (not yet confirmed, or awaiting admin approval)
+        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'AWAITING_APPROVAL'] } });
+        if (existingPending) {
+            return res.status(400).json({ message: 'payments.page.pending_manual_exists' });
         }
 
         let purchaseAmount = amount;
@@ -426,6 +431,29 @@ export const confirmManualPayment = async (req, res) => {
             message: 'payments.manual_confirm_success',
             status: 'AWAITING_APPROVAL'
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    User cancels their own unconfirmed order (PENDING only — once AWAITING_APPROVAL, the user has already claimed to have paid, so admin must approve/reject it instead)
+export const cancelPayment = async (req, res) => {
+    const { paymentId } = req.body;
+    try {
+        const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
+        if (!transaction) {
+            return res.status(404).json({ message: 'Payment not found' });
+        }
+
+        if (transaction.status !== 'PENDING') {
+            return res.status(400).json({ message: 'Only unconfirmed orders can be cancelled' });
+        }
+
+        transaction.status = 'CANCELLED';
+        transaction.description = `${transaction.description || ''} (Cancelled by user)`.trim();
+        await transaction.save();
+
+        res.json({ message: 'payments.cancel_success', status: 'CANCELLED' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

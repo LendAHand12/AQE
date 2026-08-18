@@ -4,7 +4,6 @@ import {
   Loader2,
   CheckCircle2,
   ShieldAlert,
-  Clock,
   ArrowRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,6 +14,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
+import { PendingPaymentDialog } from "@/components/PendingPaymentDialog"
 import { useSocket } from "@/providers/SocketProvider"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
 
@@ -77,7 +77,7 @@ export default function BuyPage() {
     e.preventDefault()
     e.stopPropagation()
 
-    if (awaitingPayment?.awaitingApprovalAmount > 0) {
+    if (awaitingPayment?.pendingTransaction) {
       toast.error(t("buy.pending_warning"))
       return
     }
@@ -226,28 +226,13 @@ export default function BuyPage() {
             </div>
           )}
 
-          {/* Awaiting Admin approval warning */}
-          {awaitingPayment?.awaitingApprovalAmount > 0 && (
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-[12px] flex items-start gap-2.5">
-              <Clock size={16} className="text-amber-500 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <p className="text-[12px] text-amber-700 font-bold leading-none">
-                  Awaiting manual approval
-                </p>
-                <p className="text-[10px] text-amber-600 font-medium">
-                  {t("buy.pending_warning")}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Submit Action */}
           <div className="pt-1">
             {isKycVerified ? (
               <Button
                 type="button"
                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[12px] font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
-                disabled={loading || purchaseAmount < 10 || awaitingPayment?.awaitingApprovalAmount > 0}
+                disabled={loading || purchaseAmount < 10 || !!awaitingPayment?.pendingTransaction}
                 onClick={handlePurchase}
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> :
@@ -294,6 +279,11 @@ export default function BuyPage() {
         status={modalStatus}
         countryCode={userProfile?.countryCode}
         isDirectPurchase={true}
+      />
+
+      <PendingPaymentDialog
+        pendingTransaction={awaitingPayment?.pendingTransaction}
+        onCancelled={fetchInitialData}
       />
 
     </div>

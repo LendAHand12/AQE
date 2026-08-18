@@ -112,7 +112,15 @@ export const getUsers = async (req, res) => {
         const queryRegex = search ? createVietnameseRegex(search) : null;
         const statusFilter = req.query.status;
 
-        const query = { 
+        // AQE balance filter (official AQE only, i.e. aqeBalance)
+        const aqeOperator = req.query.aqeOperator; // 'gt' or 'lt'
+        const aqeValue = parseFloat(req.query.aqeValue);
+        const aqeFilter = {};
+        if ((aqeOperator === 'gt' || aqeOperator === 'lt') && !isNaN(aqeValue)) {
+            aqeFilter.aqeBalance = aqeOperator === 'gt' ? { $gt: aqeValue } : { $lt: aqeValue };
+        }
+
+        const query = {
             isDeleted: false,
             ...(statusFilter === 'active' && { isActive: true }),
             ...(statusFilter === 'inactive' && { isActive: false }),
@@ -122,7 +130,8 @@ export const getUsers = async (req, res) => {
                     { email: { $regex: queryRegex } },
                     { username: { $regex: queryRegex } }
                 ]
-            })
+            }),
+            ...aqeFilter
         };
 
 

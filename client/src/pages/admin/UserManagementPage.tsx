@@ -51,6 +51,8 @@ export default function UserManagementPage() {
   // Initialize from search params
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all")
+  const [aqeOperator, setAqeOperator] = useState(searchParams.get("aqeOperator") || "gt")
+  const [aqeValue, setAqeValue] = useState(searchParams.get("aqeValue") || "")
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"))
   
   const ITEMS_PER_PAGE = 10
@@ -80,7 +82,11 @@ export default function UserManagementPage() {
     else setFetching(true)
     
     try {
-      const response = await apiClient.get(`/admin/users?page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}&status=${statusFilter}`)
+      let url = `/admin/users?page=${page}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}&status=${statusFilter}`
+      if (aqeValue !== "") {
+        url += `&aqeOperator=${aqeOperator}&aqeValue=${aqeValue}`
+      }
+      const response = await apiClient.get(url)
       setUsers(response.data.users)
       setTotalPages(response.data.pages)
 
@@ -97,8 +103,12 @@ export default function UserManagementPage() {
     const params: any = { page: page.toString() }
     if (searchTerm) params.search = searchTerm
     if (statusFilter !== 'all') params.status = statusFilter
+    if (aqeValue !== "") {
+      params.aqeOperator = aqeOperator
+      params.aqeValue = aqeValue
+    }
     setSearchParams(params, { replace: true })
-  }, [page, searchTerm, statusFilter])
+  }, [page, searchTerm, statusFilter, aqeOperator, aqeValue])
 
   useEffect(() => {
     fetchUsers()
@@ -117,7 +127,7 @@ export default function UserManagementPage() {
       }
     }, 500)
     return () => clearTimeout(timer)
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, statusFilter, aqeOperator, aqeValue])
 
 
   const handleDelete = async (id: string) => {
@@ -218,9 +228,9 @@ export default function UserManagementPage() {
 
       <div className="space-y-4">
         {/* Filter Area */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-3">
           <p className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[18px] text-[#276152] tracking-[0.54px]">User List</p>
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center flex-wrap">
             {hasPermission('USERS_EXPORT') && (
               <Button
                 variant="outline"
@@ -251,6 +261,24 @@ export default function UserManagementPage() {
                 <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Inactive</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex items-center gap-2">
+              <Select value={aqeOperator} onValueChange={setAqeOperator}>
+                <SelectTrigger className="w-[150px] bg-white border border-[#d5d7db] !h-[44px] rounded-[12px] font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#276152] focus:ring-0">
+                  <SelectValue placeholder="AQE" />
+                </SelectTrigger>
+                <SelectContent className="rounded-[12px] border-none shadow-lg">
+                  <SelectItem value="gt" className="font-['SVN-Gilroy:Medium',sans-serif]">AQE greater than</SelectItem>
+                  <SelectItem value="lt" className="font-['SVN-Gilroy:Medium',sans-serif]">AQE less than</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                placeholder="Amount"
+                className="w-[130px] h-[44px] rounded-[12px] border-[#d5d7db]"
+                value={aqeValue}
+                onChange={(e) => setAqeValue(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
@@ -265,6 +293,7 @@ export default function UserManagementPage() {
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Registration Date</TableHead>
 
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Balance</TableHead>
+                <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">AQE Balance</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">KYC</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px]">Status</TableHead>
                 <TableHead className="py-4 px-4 font-['SVN-Gilroy:SemiBold',sans-serif] text-[#0d1f1d] text-[16px] tracking-[0.48px] h-[44px] text-center">Actions</TableHead>
@@ -295,6 +324,9 @@ export default function UserManagementPage() {
 
                   <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px] font-medium">
                     {user.usdtBalance?.toLocaleString()} USDT
+                  </TableCell>
+                  <TableCell className="py-4 px-4 font-['SVN-Gilroy:Regular',sans-serif] text-[#111827] text-[16px] font-medium">
+                    {(user.aqeBalance || 0).toLocaleString()} AQE
                   </TableCell>
                   <TableCell className="py-4 px-4">
                     {user.kycStatus === 'verified' && (

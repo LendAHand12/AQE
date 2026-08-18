@@ -24,6 +24,7 @@ import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
 import { PackageDetailModal } from "@/components/PackageDetailModal"
+import { PendingPaymentDialog } from "@/components/PendingPaymentDialog"
 import { useSocket } from "@/providers/SocketProvider"
 import { useTranslation } from "react-i18next"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
@@ -235,6 +236,10 @@ export default function InvestmentPackagesPage() {
   }
 
   const handlePurchaseClick = (pkg: Package) => {
+    if (awaitingPayment?.pendingTransaction) {
+      toast.error(t("buy.pending_warning"))
+      return
+    }
     if (userProfile?.kycStatus !== 'verified' && userProfile?.kycStatus !== 'pending') {
       toast.error(t("kyc.errors.step_locked", { defaultValue: "Vui lòng hoàn tất xác minh KYC trước khi tham gia đầu tư" }))
       return
@@ -248,7 +253,7 @@ export default function InvestmentPackagesPage() {
   const handleBuyAqe = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (awaitingPayment?.awaitingApprovalAmount > 0) {
+    if (awaitingPayment?.pendingTransaction) {
       toast.error(t("buy.pending_warning"))
       return
     }
@@ -431,23 +436,12 @@ export default function InvestmentPackagesPage() {
                   </div>
                 </div>
 
-                {/* Awaiting approval warning */}
-                {awaitingPayment?.awaitingApprovalAmount > 0 && (
-                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2">
-                    <Clock size={15} className="text-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-amber-700 font-bold">Awaiting manual approval</p>
-                      <p className="text-[11px] text-amber-600 font-medium mt-0.5">{t("buy.pending_warning")}</p>
-                    </div>
-                  </div>
-                )}
-
                 {/* CTA */}
                 {isKycVerified ? (
                   <Button
                     type="button"
                     onClick={handleBuyAqe}
-                    disabled={purchaseAmount < 10 || awaitingPayment?.awaitingApprovalAmount > 0}
+                    disabled={purchaseAmount < 10 || !!awaitingPayment?.pendingTransaction}
                     className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
                   >
                     <span>{t("buy.buy_btn")}</span>
@@ -1070,6 +1064,11 @@ export default function InvestmentPackagesPage() {
         status={buyModalStatus}
         countryCode={userProfile?.countryCode}
         isDirectPurchase={true}
+      />
+
+      <PendingPaymentDialog
+        pendingTransaction={awaitingPayment?.pendingTransaction}
+        onCancelled={fetchInitialData}
       />
 
     </div>

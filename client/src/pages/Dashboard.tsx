@@ -142,7 +142,7 @@ export default function Dashboard() {
     {
       label: t("dashboard.buy_token", "Mua AQE"),
       icon: Plus,
-      path: "/pre-register",
+      path: "/buy",
     },
     {
       label: t("dashboard.withdraw", "Rút tiền"),

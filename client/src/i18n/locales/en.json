@@ -105,7 +105,7 @@
     "network_sales_desc": "Total downline sales",
     "monthly_commissions": "Monthly Profit",
     "monthly_commissions_desc": "Commission this month",
-    "buy_token": "Buy AQE",
+    "buy_token": "Participate AQE",
     "withdraw": "Withdraw",
     "deposit": "Deposit",
     "view_report": "View Report",
@@ -594,6 +594,15 @@
       "success_desc": "Your transaction has been confirmed. AQE units will be credited to your account shortly.",
       "close_btn": "Close"
     },
+    "pending_order": {
+      "title_pending": "You have an unfinished payment",
+      "title_awaiting": "Payment awaiting admin approval",
+      "desc_pending": "Continue to complete your payment of {{amount}} USDT, or cancel to start over.",
+      "desc_awaiting": "Your payment of {{amount}} USDT is awaiting administrator approval.",
+      "continue_btn": "Continue Payment",
+      "cancel_btn": "Cancel",
+      "acknowledge_btn": "Got it"
+    },
     "page": {
       "title": "AQE Payment",
       "total_label": "Total Payment",
@@ -628,7 +637,14 @@
       "status_awaiting": "Awaiting Approval",
       "manual_confirm_success": "Notification sent to admin. Your transaction will be processed shortly.",
       "manual_success_hint": "Administrator will verify and approve your transaction within 30-60 minutes.",
-      "pending_manual_exists": "You have a transaction awaiting approval. Please wait for administrator approval or rejection before making a new transaction."
+      "pending_manual_exists": "You have a transaction awaiting approval. Please wait for administrator approval or rejection before making a new transaction.",
+      "status_cancelled": "Cancelled",
+      "cancel_btn": "Cancel this order",
+      "cancel_confirm": "Cancel this payment order? Only cancel if you haven't sent the money yet.",
+      "cancel_success": "Order cancelled successfully",
+      "cancelled_title": "Order Cancelled",
+      "cancelled_hint": "This payment order has been cancelled. You can start a new purchase anytime.",
+      "create_new_btn": "Start New Purchase"
     },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",
