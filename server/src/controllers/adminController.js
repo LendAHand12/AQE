@@ -984,6 +984,88 @@ export const getDirectReferrals = async (req, res) => {
     }
 };
 
+// @desc    Change (or clear) a user's referrer
+// @route   PUT /api/admin/users/:id/referrer
+export const updateUserReferrer = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false });
+        if (!user) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+
+        const { referrerId } = req.body;
+        const oldReferrerId = user.referredBy;
+        let newReferrer = null;
+
+        if (referrerId) {
+            if (referrerId === String(user._id)) {
+                return res.status(400).json({ message: 'A user cannot be their own referrer' });
+            }
+
+            newReferrer = await User.findOne({ _id: referrerId, isDeleted: false });
+            if (!newReferrer) {
+                return res.status(404).json({ message: 'Referrer not found' });
+            }
+
+            // Cycle check: the new referrer must not be a descendant of this user
+            const descendantsResult = await User.aggregate([
+                { $match: { _id: user._id } },
+                {
+                    $graphLookup: {
+                        from: 'users',
+                        startWith: '$_id',
+                        connectFromField: '_id',
+                        connectToField: 'referredBy',
+                        as: 'descendants'
+                    }
+                },
+                { $project: { descendantIds: '$descendants._id' } }
+            ]);
+            const descendantIds = (descendantsResult[0]?.descendantIds || []).map(String);
+            if (descendantIds.includes(String(newReferrer._id))) {
+                return res.status(400).json({ message: 'Cannot set referrer: this would create a circular reference in the referral tree' });
+            }
+        }
+
+        user.referredBy = newReferrer ? newReferrer._id : null;
+        const updatedUser = await user.save();
+
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'CHANGE_REFERRER',
+            target: user.email,
+            details: {
+                userId: user._id,
+                oldReferrerId: oldReferrerId || null,
+                newReferrerId: newReferrer ? newReferrer._id : null
+            },
+            ipAddress: req.ip
+        });
+
+        const notification = await Notification.create({
+            userId: user._id,
+            title: 'notifications.referrer_changed_title',
+            message: newReferrer ? 'notifications.referrer_changed_msg' : 'notifications.referrer_removed_msg',
+            type: 'SYSTEM',
+            isRead: false,
+            metadata: newReferrer ? { referrerName: `@${newReferrer.username}` } : {}
+        });
+        emitNotification(user._id, {
+            ...notification.toObject(),
+            messageParams: newReferrer ? { referrerName: `@${newReferrer.username}` } : {}
+        });
+
+        const populatedUser = await User.findById(updatedUser._id)
+            .select('-password')
+            .populate('referredBy', 'username fullName email');
+
+        res.json(populatedUser);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get wallet connections history
 // @route   GET /api/admin/wallet-connections
 // @access  Admin

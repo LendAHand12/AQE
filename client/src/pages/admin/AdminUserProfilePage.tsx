@@ -269,6 +269,14 @@ export default function AdminUserProfilePage() {
   const [depositing, setDepositing] = useState(false)
   const [packages, setPackages] = useState<any[]>([])
 
+  // Change Referrer state
+  const [isReferrerDialogOpen, setIsReferrerDialogOpen] = useState(false)
+  const [referrerSearch, setReferrerSearch] = useState("")
+  const [referrerResults, setReferrerResults] = useState<any[]>([])
+  const [searchingReferrer, setSearchingReferrer] = useState(false)
+  const [selectedReferrer, setSelectedReferrer] = useState<any>(null)
+  const [changingReferrer, setChangingReferrer] = useState(false)
+
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [aqeTypeFilter, setAqeTypeFilter] = useState<string>("ALL")
@@ -277,6 +285,30 @@ export default function AdminUserProfilePage() {
   useEffect(() => {
     fetchUserDetails()
   }, [id])
+
+  useEffect(() => {
+    if (!isReferrerDialogOpen) return
+    if (!referrerSearch.trim()) {
+      setReferrerResults([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setSearchingReferrer(true)
+      try {
+        const res = await apiClient.get("/admin/users", {
+          params: { search: referrerSearch, limit: 10 },
+        })
+        setReferrerResults(
+          (res.data.users || []).filter((u: any) => u._id !== id)
+        )
+      } catch (err) {
+        toast.error("Could not search users")
+      } finally {
+        setSearchingReferrer(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [referrerSearch, isReferrerDialogOpen, id])
 
   const fetchUserDetails = async () => {
     setLoading(true)
@@ -344,6 +376,29 @@ export default function AdminUserProfilePage() {
       )
     } finally {
       setDepositing(false)
+    }
+  }
+
+  const openReferrerDialog = () => {
+    setSelectedReferrer(user.referredBy || null)
+    setReferrerSearch("")
+    setReferrerResults([])
+    setIsReferrerDialogOpen(true)
+  }
+
+  const handleChangeReferrer = async () => {
+    setChangingReferrer(true)
+    try {
+      await apiClient.put(`/admin/users/${id}/referrer`, {
+        referrerId: selectedReferrer?._id || null,
+      })
+      toast.success("Referrer updated successfully")
+      setIsReferrerDialogOpen(false)
+      fetchUserDetails()
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not update referrer")
+    } finally {
+      setChangingReferrer(false)
     }
   }
 
@@ -790,18 +845,27 @@ export default function AdminUserProfilePage() {
                       <p className="text-[11px] font-bold text-gray-400 uppercase">
                         Referred By
                       </p>
-                      {user.referredBy ? (
-                        <Link
-                          to={`/admin/users/${user.referredBy._id}`}
-                          className="text-[14px] font-bold text-[#276152] hover:underline"
+                      <div className="flex items-center gap-2">
+                        {user.referredBy ? (
+                          <Link
+                            to={`/admin/users/${user.referredBy._id}`}
+                            className="text-[14px] font-bold text-[#276152] hover:underline"
+                          >
+                            @{user.referredBy.username}
+                          </Link>
+                        ) : (
+                          <p className="text-[14px] font-medium text-gray-400">
+                            None (Root)
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={openReferrerDialog}
+                          className="text-[12px] font-bold text-blue-600 hover:underline"
                         >
-                          @{user.referredBy.username}
-                        </Link>
-                      ) : (
-                        <p className="text-[14px] font-medium text-gray-400">
-                          None (Root)
-                        </p>
-                      )}
+                          Change
+                        </button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -2103,6 +2167,109 @@ export default function AdminUserProfilePage() {
               className="bg-red-600 font-bold text-white hover:bg-red-700"
             >
               Confirm Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isReferrerDialogOpen} onOpenChange={setIsReferrerDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#111827]">
+              Change Referrer for @{user.username}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="rounded-[8px] bg-amber-50 p-3 text-[12px] font-medium text-amber-700">
+              Changing this affects the user's position in the referral tree
+              and future commission calculations.
+            </p>
+
+            <div className="rounded-[8px] border border-gray-200 p-3">
+              <p className="text-[11px] font-bold text-gray-400 uppercase">
+                New referrer
+              </p>
+              <p className="text-[14px] font-bold text-[#276152]">
+                {selectedReferrer
+                  ? `@${selectedReferrer.username}`
+                  : "None (Root)"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedReferrer(null)}
+              className={cn(
+                "w-full rounded-[8px] border p-2 text-left text-[13px] font-semibold transition-colors",
+                !selectedReferrer
+                  ? "border-[#276152] bg-[#276152]/5 text-[#276152]"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50"
+              )}
+            >
+              Set as Root (no referrer)
+            </button>
+
+            <Input
+              value={referrerSearch}
+              onChange={(e) => setReferrerSearch(e.target.value)}
+              placeholder="Search by username, email or full name..."
+            />
+
+            <div className="custom-scrollbar max-h-[240px] space-y-1 overflow-y-auto">
+              {searchingReferrer ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#276152]" />
+                </div>
+              ) : referrerResults.length > 0 ? (
+                referrerResults.map((candidate: any) => (
+                  <button
+                    key={candidate._id}
+                    type="button"
+                    onClick={() => setSelectedReferrer(candidate)}
+                    className={cn(
+                      "flex w-full flex-col rounded-[8px] border p-2 text-left transition-colors",
+                      selectedReferrer?._id === candidate._id
+                        ? "border-[#276152] bg-[#276152]/5"
+                        : "border-transparent hover:bg-gray-50"
+                    )}
+                  >
+                    <span className="text-[13px] font-bold text-gray-900">
+                      @{candidate.username}{" "}
+                      <span className="font-medium text-gray-500">
+                        {candidate.fullName}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {candidate.email}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="py-6 text-center text-[12px] text-gray-400 italic">
+                  {referrerSearch
+                    ? "No users found"
+                    : "Type to search for a user"}
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsReferrerDialogOpen(false)}
+              disabled={changingReferrer}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangeReferrer}
+              disabled={changingReferrer}
+              className="bg-[#276152] font-bold text-white hover:bg-[#1e4a3f]"
+            >
+              {changingReferrer && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

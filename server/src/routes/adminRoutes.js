@@ -8,6 +8,7 @@ import {
     deleteUser,
     getUserById,
     getDirectReferrals,
+    updateUserReferrer,
     generate2FA,
     enable2FA,
     disable2FA,
@@ -86,6 +87,7 @@ router.route('/users/:id')
     .delete(adminProtect, deleteUser);
 
 router.get('/users/:id/referrals', adminProtect, getDirectReferrals);
+router.put('/users/:id/referrer', adminProtect, updateUserReferrer);
 router.post('/users/:id/manual-deposit', adminProtect, manualDepositUser);
 
 router.route('/token-settings')

@@ -668,7 +668,10 @@
     "kyc_approved_title": "Xác thực KYC thành công",
     "kyc_approved_msg": "Chúc mừng! Hồ sơ xác thực danh tính (KYC) của bạn đã được duyệt.",
     "kyc_rejected_title": "Xác thực KYC bị từ chối",
-    "kyc_rejected_msg": "Hồ sơ xác thực danh tính (KYC) của bạn đã bị từ chối. Lý do: {{reason}}"
+    "kyc_rejected_msg": "Hồ sơ xác thực danh tính (KYC) của bạn đã bị từ chối. Lý do: {{reason}}",
+    "referrer_changed_title": "Người giới thiệu đã được cập nhật",
+    "referrer_changed_msg": "Quản trị viên đã cập nhật người giới thiệu của bạn thành {{referrerName}}.",
+    "referrer_removed_msg": "Quản trị viên đã gỡ người giới thiệu của bạn. Tài khoản của bạn hiện là tài khoản gốc."
   },
   "confirm_email": {
     "verifying": "Xác thực Email",

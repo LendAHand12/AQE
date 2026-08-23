@@ -669,7 +669,10 @@
     "kyc_approved_title": "KYC Verification Approved",
     "kyc_approved_msg": "Congratulations! Your identity verification (KYC) has been approved.",
     "kyc_rejected_title": "KYC Verification Rejected",
-    "kyc_rejected_msg": "Your identity verification (KYC) was rejected. Reason: {{reason}}"
+    "kyc_rejected_msg": "Your identity verification (KYC) was rejected. Reason: {{reason}}",
+    "referrer_changed_title": "Referrer Updated",
+    "referrer_changed_msg": "An administrator has updated your referrer to {{referrerName}}.",
+    "referrer_removed_msg": "An administrator has removed your referrer. You are now a root account."
   },
   "confirm_email": {
     "verifying": "Verifying Email",
