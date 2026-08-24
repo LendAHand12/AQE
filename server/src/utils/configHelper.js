@@ -52,4 +52,6 @@ export const invalidateConfigCache = () => {
  */
 export const getDefaultConfig = () => ({
     aqeToUsdtRate: 1.02,
+    heweToQhewRate: 1,
+    heweToAqeRate: 1,
 });

@@ -673,6 +673,73 @@
     "referrer_changed_msg": "Quản trị viên đã cập nhật người giới thiệu của bạn thành {{referrerName}}.",
     "referrer_removed_msg": "Quản trị viên đã gỡ người giới thiệu của bạn. Tài khoản của bạn hiện là tài khoản gốc."
   },
+  "swap": {
+    "page_title": "Quy đổi AQE",
+    "form": {
+      "title": "Quy đổi HEWE",
+      "subtitle": "Điền thông tin của bạn để quy đổi HEWE sang QHEWE hoặc AQE.",
+      "full_name": "Họ và tên",
+      "full_name_placeholder": "Nhập họ và tên của bạn",
+      "phone": "Số điện thoại",
+      "phone_placeholder": "Nhập số điện thoại của bạn",
+      "email": "Email",
+      "email_placeholder": "Nhập địa chỉ email của bạn",
+      "id_code": "Mã ID",
+      "id_code_placeholder": "Nhập mã ID của bạn",
+      "output_token": "Quy đổi thành",
+      "amount": "Số lượng (HEWE)",
+      "amount_placeholder": "Nhập số lượng cần quy đổi",
+      "estimated_receive": "Bạn sẽ nhận được khoảng",
+      "continue_btn": "Tiếp tục",
+      "errors": {
+        "required_fields": "Vui lòng điền đầy đủ thông tin bắt buộc",
+        "invalid_amount": "Vui lòng nhập số lượng hợp lệ"
+      }
+    },
+    "connect": {
+      "title": "Gửi HEWE",
+      "hint": "Kết nối ví của bạn trên mạng AMC20 và gửi HEWE đến ví quản trị để hoàn tất yêu cầu.",
+      "connect_wallet": "Kết nối ví",
+      "wrong_network": "Sai mạng",
+      "switch_network": "Chuyển sang AMC20",
+      "send_btn": "Gửi HEWE",
+      "sending": "Đang gửi...",
+      "verifying": "Đang xác minh...",
+      "wallet_connected": "Ví đã kết nối",
+      "disconnect": "Ngắt kết nối",
+      "back_btn": "Quay lại"
+    },
+    "success": {
+      "title": "Đã gửi yêu cầu",
+      "hint": "Yêu cầu quy đổi của bạn đã được gửi và đang chờ xét duyệt. Chúng tôi sẽ gửi email khi yêu cầu được duyệt.",
+      "back_home": "Về trang chủ"
+    },
+    "errors": {
+      "connect_failed": "Kết nối ví thất bại",
+      "switch_failed": "Không thể chuyển mạng",
+      "insufficient_balance": "Số dư HEWE không đủ",
+      "submit_failed": "Không thể gửi yêu cầu của bạn",
+      "duplicate_tx": "Giao dịch này đã được gửi trước đó"
+    },
+    "wallet_page": {
+      "verifying_title": "Đang xác minh liên kết",
+      "verifying_desc": "Vui lòng chờ trong giây lát, chúng tôi đang xác minh liên kết của bạn.",
+      "success_title": "Đã gửi ví",
+      "success_desc": "Địa chỉ ví Quantum của bạn đã được gửi. Vui lòng chờ trong khi chúng tôi xử lý chuyển khoản.",
+      "error_title": "Liên kết không hợp lệ",
+      "error_desc": "Liên kết này không hợp lệ hoặc đã được sử dụng.",
+      "form_title": "Gửi ví Quantum của bạn",
+      "form_desc": "Vui lòng nhập địa chỉ ví Quantum mà bạn muốn nhận {{outputToken}}.",
+      "wallet_label": "Địa chỉ ví Quantum",
+      "wallet_placeholder": "Nhập địa chỉ ví Quantum của bạn",
+      "submit_btn": "Gửi",
+      "back_home": "Về trang chủ",
+      "errors": {
+        "required": "Vui lòng nhập địa chỉ ví của bạn",
+        "submit_failed": "Không thể gửi địa chỉ ví của bạn"
+      }
+    }
+  },
   "confirm_email": {
     "verifying": "Xác thực Email",
     "verifying_desc": "Vui lòng chờ trong giây lát, chúng tôi đang kiểm tra mã xác thực của bạn.",

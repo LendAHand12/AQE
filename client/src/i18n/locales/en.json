@@ -674,6 +674,73 @@
     "referrer_changed_msg": "An administrator has updated your referrer to {{referrerName}}.",
     "referrer_removed_msg": "An administrator has removed your referrer. You are now a root account."
   },
+  "swap": {
+    "page_title": "AQE Swap",
+    "form": {
+      "title": "Convert HEWE",
+      "subtitle": "Fill in your information to convert HEWE into QHEWE or AQE.",
+      "full_name": "Full Name",
+      "full_name_placeholder": "Enter your full name",
+      "phone": "Phone Number",
+      "phone_placeholder": "Enter your phone number",
+      "email": "Email",
+      "email_placeholder": "Enter your email address",
+      "id_code": "ID Code",
+      "id_code_placeholder": "Enter your ID code",
+      "output_token": "Convert To",
+      "amount": "Amount (HEWE)",
+      "amount_placeholder": "Enter the amount to convert",
+      "estimated_receive": "You will receive approximately",
+      "continue_btn": "Continue",
+      "errors": {
+        "required_fields": "Please fill in all required fields",
+        "invalid_amount": "Please enter a valid amount"
+      }
+    },
+    "connect": {
+      "title": "Send HEWE",
+      "hint": "Connect your wallet on the AMC20 network and send HEWE to the admin wallet to complete your request.",
+      "connect_wallet": "Connect Wallet",
+      "wrong_network": "Wrong Network",
+      "switch_network": "Switch to AMC20",
+      "send_btn": "Send HEWE",
+      "sending": "Sending...",
+      "verifying": "Verifying...",
+      "wallet_connected": "Connected Wallet",
+      "disconnect": "Disconnect",
+      "back_btn": "Back"
+    },
+    "success": {
+      "title": "Request Submitted",
+      "hint": "Your conversion request has been submitted and is pending review. We will email you once it is approved.",
+      "back_home": "Back to Home"
+    },
+    "errors": {
+      "connect_failed": "Wallet connection failed",
+      "switch_failed": "Could not switch network",
+      "insufficient_balance": "Insufficient HEWE balance",
+      "submit_failed": "Could not submit your request",
+      "duplicate_tx": "This transaction has already been submitted"
+    },
+    "wallet_page": {
+      "verifying_title": "Verifying Link",
+      "verifying_desc": "Please wait a moment while we verify your link.",
+      "success_title": "Wallet Submitted",
+      "success_desc": "Your Quantum wallet address has been submitted. Please wait while we process your transfer.",
+      "error_title": "Invalid Link",
+      "error_desc": "This link is invalid or has already been used.",
+      "form_title": "Submit Your Quantum Wallet",
+      "form_desc": "Please enter the Quantum wallet address where you would like to receive your {{outputToken}}.",
+      "wallet_label": "Quantum Wallet Address",
+      "wallet_placeholder": "Enter your Quantum wallet address",
+      "submit_btn": "Submit",
+      "back_home": "Back to Home",
+      "errors": {
+        "required": "Please enter your wallet address",
+        "submit_failed": "Could not submit your wallet address"
+      }
+    }
+  },
   "confirm_email": {
     "verifying": "Verifying Email",
     "verifying_desc": "Please wait a moment while we verify your authentication code.",

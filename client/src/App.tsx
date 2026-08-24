@@ -37,6 +37,10 @@ import KycCallbackPage from "@/pages/KycCallbackPage"
 import ClaimPage from "@/pages/ClaimPage"
 import ClaimProfilePage from "@/pages/ClaimProfilePage"
 import PaymentPage from "@/pages/PaymentPage"
+import SwapPage from "@/pages/SwapPage"
+import SwapWalletPage from "@/pages/SwapWalletPage"
+import AdminSwapRequestsPage from "@/pages/admin/AdminSwapRequestsPage"
+import AdminSwapRequestDetailPage from "@/pages/admin/AdminSwapRequestDetailPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -127,6 +131,8 @@ export function App() {
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
+              <Route path="/admin/swap-requests" element={<AdminSwapRequestsPage />} />
+              <Route path="/admin/swap-requests/:id" element={<AdminSwapRequestDetailPage />} />
               <Route path="/admin/accounts" element={<AdminManagementPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/tickets" element={<AdminTicketsPage />} />
@@ -134,6 +140,8 @@ export function App() {
             </Route>
 
             <Route path="/pay" element={<PaymentPage />} />
+            <Route path="/swap" element={<SwapPage />} />
+            <Route path="/swap/wallet/:token" element={<SwapWalletPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />

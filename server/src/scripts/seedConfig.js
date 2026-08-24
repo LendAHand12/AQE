@@ -15,6 +15,16 @@ const DEFAULT_CONFIGS = [
         label: 'AQE/USDT Exchange Rate (1 AQE = X USDT)',
         value: 1.02,
     },
+    {
+        key: 'heweToQhewRate',
+        label: 'HEWE/QHEWE Swap Rate (1 HEWE = X QHEWE)',
+        value: 1,
+    },
+    {
+        key: 'heweToAqeRate',
+        label: 'HEWE/AQE Swap Rate (1 HEWE = X AQE)',
+        value: 1,
+    },
 ];
 
 const seedConfig = async () => {

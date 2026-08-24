@@ -83,6 +83,39 @@ export const sendResetPasswordEmail = async (email, token, fullName) => {
     }
 };
 
+export const sendSwapApprovedEmail = async (email, fullName, token, outputToken, amount) => {
+    const walletSubmitUrl = `${process.env.FRONTEND_URL}/swap/wallet/${token}`;
+
+    const mailOptions = {
+        from: `AQ Estate Support <${process.env.EMAIL_FROM}>`,
+        to: email,
+        cc: process.env.SUPPORT_EMAIL,
+        subject: 'Your AQ Estate Swap Request Has Been Approved',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <h2 style="color: #276152;">Hello ${fullName},</h2>
+                <p>Your request to convert <strong>${amount} HEWE</strong> into <strong>${outputToken}</strong> has been approved.</p>
+                <p>Please click the button below to submit the wallet address where you would like to receive your ${outputToken}:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${walletSubmitUrl}" style="background-color: #276152; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Submit Wallet Address</a>
+                </div>
+                <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+                <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${walletSubmitUrl}</p>
+                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+                <p style="font-size: 12px; color: #9ca3af;">If you did not make this request, please ignore this email.</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Swap approval email sent to ${email}`);
+    } catch (error) {
+        console.error('Error sending swap approval email:', error);
+        throw new Error('Could not send swap approval email.');
+    }
+};
+
 export const sendTicketCreatedEmailToAdmin = async (ticket, userEmail, fullName) => {
     const adminUrl = `${process.env.FRONTEND_URL}/admin/tickets/${ticket._id}`;
 

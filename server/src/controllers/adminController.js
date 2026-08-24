@@ -1344,8 +1344,8 @@ export const updateAdminSystemConfig = async (req, res) => {
             return res.status(400).json({ message: 'Value is required' });
         }
 
-        // Only aqeToUsdtRate is configurable
-        if (key !== 'aqeToUsdtRate') {
+        const CONFIGURABLE_KEYS = ['aqeToUsdtRate', 'heweToQhewRate', 'heweToAqeRate'];
+        if (!CONFIGURABLE_KEYS.includes(key)) {
             return res.status(400).json({ message: `Config key "${key}" is not configurable` });
         }
 

@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Wallet,
   Headset,
+  ArrowLeftRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
@@ -60,6 +61,12 @@ const mainNavItems: NavItem[] = [
     href: "/admin/withdrawals",
     icon: HandCoins,
     requiredPermission: "WITHDRAWALS_VIEW"
+  },
+  {
+    title: "Swap Requests",
+    href: "/admin/swap-requests",
+    icon: ArrowLeftRight,
+    requiredPermission: "SWAP_VIEW"
   },
   {
     title: "Wallet Connections",

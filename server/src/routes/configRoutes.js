@@ -13,11 +13,13 @@ router.get('/exchange-rate', async (req, res) => {
         const config = await getSystemConfig();
         res.json({
             aqeToUsdtRate: config.aqeToUsdtRate,
+            heweToQhewRate: config.heweToQhewRate,
+            heweToAqeRate: config.heweToAqeRate,
         });
     } catch (error) {
         console.error('[PublicConfig] Error:', error);
         // Fallback giá trị mặc định nếu DB lỗi
-        res.json({ aqeToUsdtRate: 1.02 });
+        res.json({ aqeToUsdtRate: 1.02, heweToQhewRate: 1, heweToAqeRate: 1 });
     }
 });
 
