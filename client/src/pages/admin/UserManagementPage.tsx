@@ -167,7 +167,7 @@ export default function UserManagementPage() {
       setIsEditDialogOpen(false)
       fetchUsers()
     } catch (err: any) {
-      toast.error("Update failed")
+      toast.error(err.response?.data?.message || "Update failed")
     }
   }
 

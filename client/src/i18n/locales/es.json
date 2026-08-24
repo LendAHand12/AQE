@@ -78,6 +78,7 @@
       "invalid_credentials": "Correo electrónico o contraseña no válidos",
       "phone_exists": "Este número de teléfono ya está en uso.",
       "email_exists": "Esta dirección de correo electrónico ya está en uso",
+      "email_not_found": "No se encontró ninguna cuenta con esta dirección de correo electrónico",
       "username_exists": "Este nombre de usuario ya está en uso",
       "unconfirmed": "El correo electrónico de su cuenta aún no ha sido confirmado. Por favor revisa tu bandeja de entrada para activar."
     }

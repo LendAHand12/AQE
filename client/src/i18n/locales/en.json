@@ -79,6 +79,7 @@
       "invalid_credentials": "Invalid email or password",
       "phone_exists": "This phone number is already in use",
       "email_exists": "This email address is already in use",
+      "email_not_found": "No account was found with this email address",
       "username_exists": "This username is already in use",
       "unconfirmed": "Your account's email has not been confirmed yet. Please check your inbox to activate.",
       "upload_failed": "Failed to upload image. Please try again.",

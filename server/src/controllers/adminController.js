@@ -430,14 +430,14 @@ export const updateUserByAdmin = async (req, res) => {
             // Check for email uniqueness if changing
             if (req.body.email && req.body.email !== user.email) {
                 const emailExists = await User.findOne({ email: req.body.email, isDeleted: false });
-                if (emailExists) return res.status(400).json({ message: 'auth.errors.email_exists' });
+                if (emailExists) return res.status(400).json({ message: 'This email address is already in use' });
                 user.email = req.body.email;
             }
 
             // Check for phone uniqueness if changing
             if (req.body.phone && req.body.phone !== user.phone) {
                 const phoneExists = await User.findOne({ phone: req.body.phone, isDeleted: false });
-                if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
+                if (phoneExists) return res.status(400).json({ message: 'This phone number is already in use' });
                 user.phone = req.body.phone;
             }
 

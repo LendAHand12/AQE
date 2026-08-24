@@ -120,7 +120,6 @@ export default function SwapWalletPage() {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={status === 'submitting'}
                   className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] rounded-2xl text-lg font-bold shadow-xl shadow-[#276152]/10 transition-all"
                 >
                   {t('swap.wallet_page.submit_btn')}
