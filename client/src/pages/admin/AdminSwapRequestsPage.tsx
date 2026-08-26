@@ -7,6 +7,7 @@ import {
   ArrowLeftRight,
   Clock,
   Filter,
+  Plus,
 } from "lucide-react"
 import {
   Table,
@@ -24,6 +25,7 @@ import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import { useAdminPermissions } from "@/hooks/useAdminPermissions"
 
 export const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
@@ -43,6 +45,8 @@ export const STATUS_STYLES: Record<string, string> = {
 
 export default function AdminSwapRequestsPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAdminPermissions()
+  const canApprove = hasPermission('SWAP_APPROVE')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [swapRequests, setSwapRequests] = useState<any[]>([])
@@ -114,7 +118,7 @@ export default function AdminSwapRequestsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input
-            placeholder="Search name, email, phone, ID code, tx hash..."
+            placeholder="Search name, email, phone, ID number, tx hash..."
             className="pl-12 h-12 border-gray-100 focus-visible:ring-[#276152] rounded-[16px] text-md"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,6 +138,14 @@ export default function AdminSwapRequestsPage() {
             <option value="COMPLETED">Completed</option>
             <option value="REJECTED">Rejected</option>
           </select>
+          {canApprove && (
+            <Button
+              onClick={() => navigate("/admin/swap-requests/new")}
+              className="h-12 rounded-[16px] bg-[#276152] font-bold text-white hover:bg-[#1e4d40]"
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> New Manual Request
+            </Button>
+          )}
         </div>
       </div>
 

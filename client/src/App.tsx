@@ -41,6 +41,7 @@ import SwapPage from "@/pages/SwapPage"
 import SwapWalletPage from "@/pages/SwapWalletPage"
 import AdminSwapRequestsPage from "@/pages/admin/AdminSwapRequestsPage"
 import AdminSwapRequestDetailPage from "@/pages/admin/AdminSwapRequestDetailPage"
+import AdminCreateSwapRequestPage from "@/pages/admin/AdminCreateSwapRequestPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -132,6 +133,7 @@ export function App() {
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
               <Route path="/admin/swap-requests" element={<AdminSwapRequestsPage />} />
+              <Route path="/admin/swap-requests/new" element={<AdminCreateSwapRequestPage />} />
               <Route path="/admin/swap-requests/:id" element={<AdminSwapRequestDetailPage />} />
               <Route path="/admin/accounts" element={<AdminManagementPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

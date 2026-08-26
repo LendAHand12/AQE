@@ -28,50 +28,83 @@ export const proxyAmc20Rpc = async (req, res) => {
     }
 };
 
+// Shared validation + data-shaping for both the public self-service flow and
+// the admin manual-entry flow (e.g. the user already sent HEWE on-chain but
+// never made it back into the app to submit the request themselves).
+const validateAndBuildSwapRequestData = async (body) => {
+    const { fullName, phone, countryCode, email, idCode, outputToken, amount, fromWalletAddress, txHash } = body;
+
+    if (!fullName || !phone || !email || !idCode || !outputToken || !amount || !txHash) {
+        throw Object.assign(new Error('Missing required fields'), { status: 400 });
+    }
+
+    if (!['QHEWE', 'AQE'].includes(outputToken)) {
+        throw Object.assign(new Error('Invalid output token'), { status: 400 });
+    }
+
+    const existing = await SwapRequest.findOne({ txHash });
+    if (existing) {
+        throw Object.assign(new Error('This transaction has already been submitted'), { status: 400 });
+    }
+
+    // Lock in the exchange rate at the moment the request is created, so a
+    // later admin-side config change doesn't retroactively change what this
+    // user is entitled to receive.
+    const systemConfig = await getSystemConfig();
+    const rateAtRequest = outputToken === 'QHEWE'
+        ? systemConfig.heweToQhewRate
+        : systemConfig.heweToAqeRate;
+
+    return {
+        fullName,
+        phone,
+        countryCode: countryCode || '+84',
+        email,
+        idCode,
+        outputToken,
+        amount,
+        rateAtRequest,
+        fromWalletAddress,
+        txHash
+    };
+};
+
 // @desc    Create a swap request (public)
 // @route   POST /api/swap
 export const createSwapRequest = async (req, res) => {
     try {
-        const { fullName, phone, countryCode, email, idCode, outputToken, amount, fromWalletAddress, txHash } = req.body;
+        const data = await validateAndBuildSwapRequestData(req.body);
+        const swapRequest = await SwapRequest.create({ ...data, status: 'PENDING' });
+        res.status(201).json(swapRequest);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message });
+    }
+};
 
-        if (!fullName || !phone || !email || !idCode || !outputToken || !amount || !txHash) {
-            return res.status(400).json({ message: 'Missing required fields' });
-        }
-
-        if (!['QHEWE', 'AQE'].includes(outputToken)) {
-            return res.status(400).json({ message: 'Invalid output token' });
-        }
-
-        const existing = await SwapRequest.findOne({ txHash });
-        if (existing) {
-            return res.status(400).json({ message: 'This transaction has already been submitted' });
-        }
-
-        // Lock in the exchange rate at the moment the request is created, so a
-        // later admin-side config change doesn't retroactively change what this
-        // user is entitled to receive.
-        const systemConfig = await getSystemConfig();
-        const rateAtRequest = outputToken === 'QHEWE'
-            ? systemConfig.heweToQhewRate
-            : systemConfig.heweToAqeRate;
-
+// @desc    Manually create a swap request on behalf of a user who already
+//          sent HEWE on-chain but never completed the request in-app (Admin)
+// @route   POST /api/swap/admin/manual
+export const createManualSwapRequest = async (req, res) => {
+    try {
+        const data = await validateAndBuildSwapRequestData(req.body);
         const swapRequest = await SwapRequest.create({
-            fullName,
-            phone,
-            countryCode: countryCode || '+84',
-            email,
-            idCode,
-            outputToken,
-            amount,
-            rateAtRequest,
-            fromWalletAddress,
-            txHash,
+            ...data,
+            createdBy: req.admin._id,
             status: 'PENDING'
+        });
+
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'SWAP_MANUAL_CREATE',
+            target: swapRequest.email,
+            details: { swapRequestId: swapRequest._id, txHash: swapRequest.txHash },
+            ipAddress: req.ip
         });
 
         res.status(201).json(swapRequest);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(error.status || 500).json({ message: error.message });
     }
 };
 
@@ -154,6 +187,7 @@ export const getAllSwapRequests = async (req, res) => {
         const total = await SwapRequest.countDocuments(query);
         const swapRequests = await SwapRequest.find(query)
             .populate('processedBy', 'username')
+            .populate('createdBy', 'username')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -174,7 +208,8 @@ export const getAllSwapRequests = async (req, res) => {
 export const getSwapRequestById = async (req, res) => {
     try {
         const swapRequest = await SwapRequest.findById(req.params.id)
-            .populate('processedBy', 'username');
+            .populate('processedBy', 'username')
+            .populate('createdBy', 'username');
 
         if (!swapRequest) {
             return res.status(404).json({ message: 'Swap request not found' });

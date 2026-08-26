@@ -178,7 +178,7 @@ export default function AdminSwapRequestDetailPage() {
             <p className="text-[14px] font-medium text-gray-700">{swapRequest.fullName}</p>
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase text-gray-400">ID Code</p>
+            <p className="text-[11px] font-bold uppercase text-gray-400">ID Number</p>
             <p className="text-[14px] font-medium text-gray-700">{swapRequest.idCode}</p>
           </div>
           <div>
@@ -192,6 +192,14 @@ export default function AdminSwapRequestDetailPage() {
           <div>
             <p className="text-[11px] font-bold uppercase text-gray-400">Submitted At</p>
             <p className="text-[14px] font-medium text-gray-700">{dayjs(swapRequest.createdAt).format("DD/MM/YYYY HH:mm:ss")}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-bold uppercase text-gray-400">Source</p>
+            <p className="text-[14px] font-medium text-gray-700">
+              {swapRequest.createdBy
+                ? `Created manually by @${swapRequest.createdBy.username}`
+                : "Submitted by user via /swap"}
+            </p>
           </div>
         </CardContent>
       </Card>

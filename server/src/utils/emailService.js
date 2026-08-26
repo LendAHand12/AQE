@@ -93,7 +93,7 @@ export const sendSwapApprovedEmail = async (email, fullName, token, outputToken,
         subject: 'Your AQ Estate Swap Request Has Been Approved',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-                <h2 style="color: #276152;">Hello ${fullName},</h2>
+                <p>Dear ${fullName},</p>
                 <p>Your request to convert <strong>${amount} HEWE</strong> into <strong>${outputToken}</strong> has been approved.</p>
                 <p>Please click the button below to submit the wallet address where you would like to receive your ${outputToken}:</p>
                 <div style="text-align: center; margin: 30px 0;">
@@ -101,8 +101,11 @@ export const sendSwapApprovedEmail = async (email, fullName, token, outputToken,
                 </div>
                 <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
                 <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${walletSubmitUrl}</p>
-                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #9ca3af;">If you did not make this request, please ignore this email.</p>
+                <p>The receiving wallet must be a QB CURE Post-Quantum Wallet that supports ${outputToken}.</p>
+                <p>Before submitting your wallet address, please carefully verify that the address is complete and correct.</p>
+                <p><strong>Important:</strong> Digital asset transfers are irreversible. ${outputToken} and its affiliated entities are not responsible for any loss of digital assets resulting from an incorrect, incomplete, incompatible, or improperly submitted wallet address.</p>
+                <p>Thank you for being part of the AQE Community.</p>
+                <p>AQE Support Team</p>
             </div>
         `,
     };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import {
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Pagination } from "@/components/common/Pagination"
 import {
   Table,
   TableBody,
@@ -280,6 +281,19 @@ export default function AdminUserProfilePage() {
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [aqeTypeFilter, setAqeTypeFilter] = useState<string>("ALL")
+  const [aqeHistoryPage, setAqeHistoryPage] = useState(1)
+  const AQE_HISTORY_PER_PAGE = 10
+
+  const filteredAqeHistory = useMemo(() => {
+    return (data?.tokenHistory || []).filter(
+      (bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter)
+    )
+  }, [data?.tokenHistory, aqeTypeFilter])
+
+  const paginatedAqeHistory = useMemo(() => {
+    const start = (aqeHistoryPage - 1) * AQE_HISTORY_PER_PAGE
+    return filteredAqeHistory.slice(start, start + AQE_HISTORY_PER_PAGE)
+  }, [filteredAqeHistory, aqeHistoryPage])
   const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   useEffect(() => {
@@ -1451,7 +1465,13 @@ export default function AdminUserProfilePage() {
                     AQE Distribution History
                   </CardTitle>
                   <div className="w-[180px]">
-                    <Select value={aqeTypeFilter} onValueChange={setAqeTypeFilter}>
+                    <Select
+                      value={aqeTypeFilter}
+                      onValueChange={(value) => {
+                        setAqeTypeFilter(value)
+                        setAqeHistoryPage(1)
+                      }}
+                    >
                       <SelectTrigger className="h-9 rounded-full border-gray-200 bg-white px-4 text-xs font-bold text-gray-700">
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
@@ -1484,11 +1504,8 @@ export default function AdminUserProfilePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.tokenHistory?.filter(
-                        (bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter)
-                      ).length > 0 ? (
-                        data.tokenHistory
-                          .filter((bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter))
+                      {paginatedAqeHistory.length > 0 ? (
+                        paginatedAqeHistory
                           .map((bh: any) => (
                             <TableRow key={bh._id}>
                               <TableCell className="pl-6 text-xs text-gray-500">
@@ -1545,6 +1562,13 @@ export default function AdminUserProfilePage() {
                       )}
                     </TableBody>
                   </Table>
+                  <Pagination
+                    currentPage={aqeHistoryPage}
+                    totalPages={Math.ceil(filteredAqeHistory.length / AQE_HISTORY_PER_PAGE)}
+                    onPageChange={setAqeHistoryPage}
+                    totalItems={filteredAqeHistory.length}
+                    itemsPerPage={AQE_HISTORY_PER_PAGE}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -74,6 +74,11 @@ const swapRequestSchema = mongoose.Schema({
     },
     processedAt: {
         type: Date
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+        default: null
     }
 }, {
     timestamps: true

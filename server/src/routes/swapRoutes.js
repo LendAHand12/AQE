@@ -6,6 +6,7 @@ import {
     submitSwapWallet,
     getAllSwapRequests,
     getSwapRequestById,
+    createManualSwapRequest,
     approveSwapRequest,
     rejectSwapRequest,
     completeSwapRequest
@@ -22,6 +23,7 @@ router.post('/wallet/:token', submitSwapWallet);
 
 // Admin routes
 router.get('/admin/all', adminProtect, getAllSwapRequests);
+router.post('/admin/manual', adminProtect, createManualSwapRequest);
 router.get('/admin/:id', adminProtect, getSwapRequestById);
 router.put('/admin/:id/approve', adminProtect, approveSwapRequest);
 router.put('/admin/:id/reject', adminProtect, rejectSwapRequest);
