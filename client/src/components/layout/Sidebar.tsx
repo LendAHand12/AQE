@@ -11,7 +11,6 @@ import {
   X,
   Wallet,
   Headset,
-  Coins,
   Gamepad2,
   HandCoins
 } from "lucide-react"
