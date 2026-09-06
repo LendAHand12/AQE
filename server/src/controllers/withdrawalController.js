@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { emitNotification } from '../utils/socket.js';
 import Notification from '../models/Notification.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 
 /**
  * @desc    Get Withdrawal Verification URL (FaceID)
@@ -15,7 +16,7 @@ import Notification from '../models/Notification.js';
  * @access  Private
  */
 export const requestWithdrawal = async (req, res) => {
-    const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET' } = req.body;
+    const { walletAddress, zelleInfo, zelleName, paymentMethod = 'WALLET', amount } = req.body;
     const { user } = req;
     const fee = paymentMethod === 'AQE' ? 0.0 : 1.0;
 
@@ -28,8 +29,22 @@ export const requestWithdrawal = async (req, res) => {
             if (!zelleName) return res.status(400).json({ message: 'Tên tài khoản Zelle là bắt buộc' });
         }
 
-        // 1. Check Balance (Withdraw/Convert ALL)
-        const withdrawalAmount = user.usdtBalance - fee;
+        // 1. Determine amount to withdraw/convert.
+        // AQE conversion lets the user pick a partial amount; other methods still withdraw the full balance.
+        let withdrawalAmount;
+        if (paymentMethod === 'AQE') {
+            const requestedAmount = parseFloat(amount);
+            if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                return res.status(400).json({ message: 'withdrawals.errors.invalid_amount' });
+            }
+            if (requestedAmount > user.usdtBalance) {
+                return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
+            }
+            withdrawalAmount = requestedAmount;
+        } else {
+            withdrawalAmount = user.usdtBalance - fee;
+        }
+
         if (withdrawalAmount < 10) {
             return res.status(400).json({ message: 'withdrawals.errors.insufficient_balance' });
         }
@@ -112,9 +127,16 @@ export const completeWithdrawal = async (req, res) => {
         const balanceBefore = user.usdtBalance;
         user.usdtBalance -= totalDeduction;
 
+        let receivedAqe = withdrawalAmount;
+        let rate = 1;
+
         if (paymentMethod === 'AQE') {
+            const systemConfig = await getSystemConfig();
+            rate = systemConfig.aqeToUsdtRate;
+            receivedAqe = withdrawalAmount / rate;
+            
             const aqeBefore = user.aqeBalance || 0;
-            user.aqeBalance = aqeBefore + withdrawalAmount;
+            user.aqeBalance = aqeBefore + receivedAqe;
         }
         await user.save();
 
@@ -136,14 +158,14 @@ export const completeWithdrawal = async (req, res) => {
         if (paymentMethod === 'AQE') {
             await BalanceHistory.create({
                 userId: user._id,
-                amount: withdrawalAmount,
+                amount: receivedAqe,
                 symbol: 'AQE',
                 type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
-                balanceBefore: user.aqeBalance - withdrawalAmount,
+                balanceBefore: user.aqeBalance - receivedAqe,
                 balanceAfter: user.aqeBalance,
-                description: `Converted from USDT withdrawal`
+                description: `Converted from ${withdrawalAmount} USDT withdrawal (Rate 1:${rate})`
             });
         }
 
@@ -380,7 +402,7 @@ export const rejectWithdrawal = async (req, res) => {
 
         // Refund user balance
         const user = await User.findById(withdrawal.userId);
-        const fee = 1.0;
+        const fee = withdrawal.paymentMethod === 'AQE' ? 0.0 : (withdrawal.fee !== undefined ? withdrawal.fee : 1.0);
         const totalRefund = withdrawal.amount + fee;
         
         const balanceBefore = user.usdtBalance;

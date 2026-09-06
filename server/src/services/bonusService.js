@@ -113,7 +113,7 @@ export const calculateDailyBonus = async () => {
                     isOfficial: true,
                     balanceBefore: balanceBefore,
                     balanceAfter: user.provisionalAqeBonus,
-                    description: `Daily Bonus 6% APR consolidated daily yield`
+                    description: `Daily Bonus 6% APR consolidated daily bonus`
                 });
             }
 

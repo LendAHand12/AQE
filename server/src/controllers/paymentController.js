@@ -7,13 +7,12 @@ import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import Notification from '../models/Notification.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-import { finalizeBlockchainPayment, processCommissions } from '../services/paymentService.js';
+import { finalizeBlockchainPayment, processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
-import PlinkoSettings from '../models/PlinkoSettings.js';
-
+import { getSystemConfig } from '../utils/configHelper.js';
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -96,8 +95,9 @@ export const submitPreRegisterPayment = async (req, res) => {
             user.pledgeUsdt = pledgeAmountNum;
         }
 
-        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-        const price = 1.02;
+        // Pegged rate: lấy từ admin config
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
 
         const tokensCalculated = amountNum / price;
 
@@ -168,15 +168,18 @@ export const getMyPreRegister = async (req, res) => {
         const transactions = await Transaction.find({
             from: req.user._id,
             type: 'PAYMENT',
-            status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] }
+            status: { $in: ['SUCCESS', 'PENDING', 'AWAITING_APPROVAL'] }
         }).sort({ createdAt: -1 });
 
         const awaitingApprovalAmount = transactions
             .filter(t => t.status === 'AWAITING_APPROVAL')
             .reduce((sum, t) => sum + (t.amount || 0), 0);
 
+        // Most recent unfinished order (not yet confirmed by user, or awaiting admin approval)
+        const pendingTransaction = transactions.find(t => t.status === 'PENDING' || t.status === 'AWAITING_APPROVAL') || null;
+
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
-            if (awaitingApprovalAmount > 0) {
+            if (pendingTransaction) {
                 return res.json({
                     userId: user._id,
                     username: user.username,
@@ -185,7 +188,8 @@ export const getMyPreRegister = async (req, res) => {
                     awaitingApprovalAmount,
                     preRegisterTokens: 0,
                     status: 'pending',
-                    transactions: transactions
+                    transactions,
+                    pendingTransaction
                 });
             }
             return res.json(null);
@@ -200,7 +204,8 @@ export const getMyPreRegister = async (req, res) => {
             preRegisterTokens: user.preRegisterTokens,
             status: user.paidUsdtPreRegister >= user.pledgeUsdt ? 'completed' : 'pending',
             transactions,
-            pledgeRounds: user.pledgeRounds
+            pledgeRounds: user.pledgeRounds,
+            pendingTransaction
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -253,10 +258,10 @@ export const createPayment = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Check for pending manual payments
-        const existingAwaiting = await Transaction.findOne({ from: req.user._id, status: 'AWAITING_APPROVAL' });
-        if (existingAwaiting) {
-            return res.status(400).json({ message: 'payments.pending_manual_exists' });
+        // Check for an existing unfinished order (not yet confirmed, or awaiting admin approval)
+        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'AWAITING_APPROVAL'] } });
+        if (existingPending) {
+            return res.status(400).json({ message: 'payments.page.pending_manual_exists' });
         }
 
         let purchaseAmount = amount;
@@ -280,7 +285,7 @@ export const createPayment = async (req, res) => {
         
         let description = "";
         if (packageData) {
-            description = `Purchase of Investment Package: ${packageData.title} (${methodText})`;
+            description = `Purchase of Partnership Package: ${packageData.title} (${methodText})`;
         } else if (isDirectPurchase) {
             description = `Direct purchase of AQE digital units (${methodText})`;
         } else {
@@ -431,6 +436,29 @@ export const confirmManualPayment = async (req, res) => {
     }
 };
 
+// @desc    User cancels their own unconfirmed order (PENDING only — once AWAITING_APPROVAL, the user has already claimed to have paid, so admin must approve/reject it instead)
+export const cancelPayment = async (req, res) => {
+    const { paymentId } = req.body;
+    try {
+        const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
+        if (!transaction) {
+            return res.status(404).json({ message: 'Payment not found' });
+        }
+
+        if (transaction.status !== 'PENDING') {
+            return res.status(400).json({ message: 'Only unconfirmed orders can be cancelled' });
+        }
+
+        transaction.status = 'CANCELLED';
+        transaction.description = `${transaction.description || ''} (Cancelled by user)`.trim();
+        await transaction.save();
+
+        res.json({ message: 'payments.cancel_success', status: 'CANCELLED' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Admin Approve Manual Payment
 export const approveManualPayment = async (req, res) => {
     try {
@@ -452,7 +480,8 @@ export const approveManualPayment = async (req, res) => {
             const nowVN = getSystemTime();
             
             const isPackage = !!transaction.metadata?.packageId;
-            let finalTokensCalculated = transaction.amount / 1.02; // fallback price = 1.02
+            const systemConfig = await getSystemConfig();
+            let finalTokensCalculated = transaction.amount / systemConfig.aqeToUsdtRate; // fallback from config
             let finalBonusPercent = 0;
 
             if (isPackage) {
@@ -522,35 +551,28 @@ export const approveManualPayment = async (req, res) => {
                     bonusPercent: finalBonusPercent,
                     purchasedAt: new Date()
                 });
+            } else {
+                await applyEligiblePackageForAqeHolding(user);
             }
 
-            // Credit Plinko Points: 1 USDT = 1 Point
-            const pointsToAdd = transaction.amount;
-            if (pointsToAdd > 0) {
-                user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-                
+            // Credit Plinko Balls: 1 ball per 10 USDT
+            const ballsToAdd = Math.floor(transaction.amount / 10);
+            if (ballsToAdd > 0) {
+                user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
                 await Notification.create({
                     userId: user._id,
-                    title: 'Plinko Points Credited',
-                    message: `You have been credited with ${pointsToAdd} Plinko points for your purchase of ${transaction.amount} USDT. Go to the Plinko page to play and win rewards!`,
+                    title: 'Plinko Balls Credited',
+                    message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your purchase of ${transaction.amount} USDT. Go to the Plinko page to play and win AQE rewards!`,
                     type: 'SYSTEM'
                 });
-                
-                emitNotification(user._id, {
-                    title: 'Plinko Points Credited',
-                    message: `+${pointsToAdd} Plinko Points!`,
-                    type: 'SYSTEM'
-                });
-            }
 
-            // Jackpot contribution: 1% of USDT amount
-            const jackpotContribution = transaction.amount * 0.01;
-            let plinkoSettings = await PlinkoSettings.findOne();
-            if (!plinkoSettings) {
-                plinkoSettings = await PlinkoSettings.create({});
+                emitNotification(user._id, {
+                    title: 'Plinko Balls Credited',
+                    message: `+${ballsToAdd} Plinko Ball(s)!`,
+                    type: 'SYSTEM'
+                });
             }
-            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-            await plinkoSettings.save();
 
             await user.save();
 
@@ -558,7 +580,7 @@ export const approveManualPayment = async (req, res) => {
             await processCommissions(user, transaction.amount, transaction);
 
             // Notify user
-            const title = isPackage ? 'Investment Package Approved' : 'Token Purchase Approved';
+            const title = isPackage ? 'Partnership Package Approved' : 'Token Purchase Approved';
             const message = isPackage
                 ? `Your manual payment of ${transaction.amount} USDT for ${transaction.metadata.packageTitle} has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
                 : `Your manual payment of ${transaction.amount} USDT has been approved. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
@@ -596,7 +618,8 @@ export const approveManualPayment = async (req, res) => {
         const may31VN = new Date('2026-05-31T23:59:59');
         const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-        let price = 1.02;
+        const systemConfig = await getSystemConfig();
+        let price = systemConfig.aqeToUsdtRate;
         const tokensCalculated = transaction.amount / price;
 
         // Update Transaction
@@ -653,33 +676,24 @@ export const approveManualPayment = async (req, res) => {
                 { isOfficial: true }
             );
         }
-        // Credit Plinko Points: 1 USDT = 1 Point
-        const pointsToAdd = transaction.amount;
-        if (pointsToAdd > 0) {
-            user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-            
+        // Credit Plinko Balls: 1 ball per 10 USDT
+        const ballsToAdd = Math.floor(transaction.amount / 10);
+        if (ballsToAdd > 0) {
+            user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
             await Notification.create({
                 userId: user._id,
-                title: 'Plinko Points Credited',
-                message: `You have been credited with ${pointsToAdd} Plinko points for your payment of ${transaction.amount} USDT. Go to the Plinko page to play and win rewards!`,
+                title: 'Plinko Balls Credited',
+                message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your payment of ${transaction.amount} USDT. Go to the Plinko page to play and win AQE rewards!`,
                 type: 'SYSTEM'
             });
-            
-            emitNotification(user._id, {
-                title: 'Plinko Points Credited',
-                message: `+${pointsToAdd} Plinko Points!`,
-                type: 'SYSTEM'
-            });
-        }
 
-        // Jackpot contribution: 1% of USDT amount
-        const jackpotContribution = transaction.amount * 0.01;
-        let plinkoSettings = await PlinkoSettings.findOne();
-        if (!plinkoSettings) {
-            plinkoSettings = await PlinkoSettings.create({});
+            emitNotification(user._id, {
+                title: 'Plinko Balls Credited',
+                message: `+${ballsToAdd} Plinko Ball(s)!`,
+                type: 'SYSTEM'
+            });
         }
-        plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-        await plinkoSettings.save();
 
         await user.save();
 

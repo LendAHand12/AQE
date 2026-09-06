@@ -71,8 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const mainMenuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard", key: "dashboard" },
     // { icon: Rocket, label: t("sidebar.preRegister"), path: "/pre-register", key: "pre-register" },
-    { icon: HandCoins, label: t("sidebar.investment_packages"), path: "/investment-packages", key: "investment-packages" },
-    { icon: Coins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy-aqe" },
+    { icon: HandCoins, label: t("sidebar.buy_aqe"), path: "/buy", key: "buy" },
     { icon: Wallet, label: t("sidebar.assets"), path: "/assets", key: "assets" },
     { icon: Gamepad2, label: i18n.language === 'vi' ? 'Trò chơi Plinko' : 'Plinko Game', path: "/plinko", key: "plinko" },
     { icon: Users, label: t("sidebar.referrals"), path: "/referrals", key: "referrals" },

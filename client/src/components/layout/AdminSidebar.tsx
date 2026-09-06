@@ -12,6 +12,7 @@ import {
   Wallet,
   Headset,
   Gamepad2,
+  ArrowLeftRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import logoGreen from "@/assets/logo_green.svg"
@@ -63,6 +64,12 @@ const mainNavItems: NavItem[] = [
     requiredPermission: "WITHDRAWALS_VIEW"
   },
   {
+    title: "Swap Requests",
+    href: "/admin/swap-requests",
+    icon: ArrowLeftRight,
+    requiredPermission: "SWAP_VIEW"
+  },
+  {
     title: "Wallet Connections",
     href: "/admin/wallet-connections",
     icon: Wallet,
@@ -102,7 +109,7 @@ const mainNavItems: NavItem[] = [
 
 const bottomNavItems = [
   {
-    title: "Personal Settings",
+    title: "Settings",
     href: "/admin/settings",
     icon: Settings,
   },

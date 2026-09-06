@@ -39,6 +39,11 @@ import ClaimPage from "@/pages/ClaimPage"
 import ClaimProfilePage from "@/pages/ClaimProfilePage"
 import PaymentPage from "@/pages/PaymentPage"
 import PlinkoPage from "@/pages/plinko"
+import SwapPage from "@/pages/SwapPage"
+import SwapWalletPage from "@/pages/SwapWalletPage"
+import AdminSwapRequestsPage from "@/pages/admin/AdminSwapRequestsPage"
+import AdminSwapRequestDetailPage from "@/pages/admin/AdminSwapRequestDetailPage"
+import AdminCreateSwapRequestPage from "@/pages/admin/AdminCreateSwapRequestPage"
 import { SocketProvider } from "./providers/SocketProvider"
 import { AuthProvider } from "./providers/AuthProvider"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -47,7 +52,7 @@ import TicketsPage from "@/pages/TicketsPage"
 import CreateTicketPage from "@/pages/CreateTicketPage"
 import TicketDetailPage from "@/pages/TicketDetailPage"
 import TermsPage from "@/pages/TermsPage"
-import BuyPage from "@/pages/BuyPage"
+
 import InvestmentPackagesPage from "@/pages/InvestmentPackagesPage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import ReturnPolicyPage from "@/pages/ReturnPolicyPage"
@@ -96,8 +101,7 @@ export function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 {/* <Route path="/pre-register" element={<PreRegisterPage />} /> */}
-                <Route path="/buy" element={<BuyPage />} />
-                <Route path="/investment-packages" element={<InvestmentPackagesPage />} />
+                <Route path="/buy" element={<InvestmentPackagesPage />} />
                 <Route path="/payment-history" element={<PaymentHistoryPage />} />
                 <Route path="/balance-history" element={<BalanceHistoryPage />} />
                 <Route path="/assets" element={<AssetsPage />} />
@@ -132,6 +136,9 @@ export function App() {
               <Route path="/admin/transactions/payments" element={<AdminPaymentHistoryPage />} />
               <Route path="/admin/transactions/commissions" element={<AdminCommissionHistoryPage />} />
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
+              <Route path="/admin/swap-requests" element={<AdminSwapRequestsPage />} />
+              <Route path="/admin/swap-requests/new" element={<AdminCreateSwapRequestPage />} />
+              <Route path="/admin/swap-requests/:id" element={<AdminSwapRequestDetailPage />} />
               <Route path="/admin/accounts" element={<AdminManagementPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/tickets" element={<AdminTicketsPage />} />
@@ -139,6 +146,8 @@ export function App() {
             </Route>
 
             <Route path="/pay" element={<PaymentPage />} />
+            <Route path="/swap" element={<SwapPage />} />
+            <Route path="/swap/wallet/:token" element={<SwapWalletPage />} />
             <Route path="/explorer" element={<ExplorerPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />

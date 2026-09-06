@@ -23,6 +23,8 @@ export type AdminPermission =
   | "PACKAGES_VIEW"
   | "PACKAGES_EDIT"
   | "PACKAGES_DELETE"
+  | "SWAP_VIEW"
+  | "SWAP_APPROVE"
 
 export const useAdminPermissions = () => {
   const adminInfo = useMemo(() => {

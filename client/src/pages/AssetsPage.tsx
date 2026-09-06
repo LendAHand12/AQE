@@ -28,10 +28,12 @@ import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
 import { cn, formatTruncated } from "@/lib/utils"
 import { Pagination } from "@/components/common/Pagination"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
 
 export default function AssetsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { rate: aqeRate } = useExchangeRate()
   const { user, syncProfile } = useAuth()
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,6 +71,7 @@ export default function AssetsPage() {
   const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'ZELLE'>(user?.countryCode === '+1' && !user?.walletAddress ? 'ZELLE' : 'WALLET')
   const [zelleInfo, setZelleInfo] = useState('')
   const [zelleName, setZelleName] = useState('')
+  const [convertAmount, setConvertAmount] = useState('')
 
   useEffect(() => {
     fetchData()
@@ -149,7 +152,13 @@ export default function AssetsPage() {
 
   const handleConvert = async () => {
     const currentBalance = summary.usdtBalance;
-    if (currentBalance < 10) {
+    const amountNum = parseFloat(convertAmount);
+
+    if (!convertAmount || isNaN(amountNum) || amountNum <= 0) {
+      toast.error(t("withdrawals.errors.invalid_amount"));
+      return;
+    }
+    if (amountNum > currentBalance || amountNum < 10) {
       toast.error(t("assets.withdraw_dialog.insufficient_balance"));
       return;
     }
@@ -157,7 +166,8 @@ export default function AssetsPage() {
     setWithdrawing(true);
     try {
       const res = await apiClient.post("/withdrawals/request", {
-        paymentMethod: 'AQE'
+        paymentMethod: 'AQE',
+        amount: amountNum
       });
 
       if (res.data.url) {
@@ -231,6 +241,7 @@ export default function AssetsPage() {
               if (user?.kycStatus !== 'verified' || !user?.faceTecTid) {
                 setIsKycWarningOpen(true);
               } else {
+                setConvertAmount(summary.usdtBalance > 0 ? summary.usdtBalance.toString() : '');
                 setIsConvertOpen(true);
               }
             }}
@@ -625,7 +636,7 @@ export default function AssetsPage() {
               <DialogDescription className="text-[14px] text-gray-500">
                 {user?.language === 'vi' 
                   ? "Quy đổi số dư USDT hiện tại của bạn sang số dư AQE để hưởng lãi suất."
-                  : "Convert your current USDT balance to AQE balance to earn daily yield."}
+                  : "Convert your current USDT balance to AQE balance to earn daily bonus."}
               </DialogDescription>
             </DialogHeader>
 
@@ -638,9 +649,31 @@ export default function AssetsPage() {
               </div>
 
               <div className="p-5 rounded-[20px] bg-gray-50 border border-gray-100 space-y-4">
-                <div className="flex justify-between text-[14px]">
-                  <span className="text-gray-500">{t("assets.withdraw_dialog.amount_label")}</span>
-                  <span className="font-bold text-gray-900">{currentBalance.toLocaleString()} USDT</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[14px] text-gray-500">{t("assets.withdraw_dialog.amount_label")}</span>
+                    <button
+                      type="button"
+                      onClick={() => setConvertAmount(currentBalance > 0 ? currentBalance.toString() : '')}
+                      className="text-[12px] font-bold text-[#276152] hover:underline"
+                    >
+                      {user?.language === 'vi' ? 'Tối đa' : 'Max'}: {currentBalance.toLocaleString()} USDT
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={10}
+                      max={currentBalance}
+                      value={convertAmount}
+                      onChange={(e) => setConvertAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="h-12 pl-4 pr-16 rounded-[12px] border-gray-200 font-bold text-[16px] text-gray-900 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-white rounded-md text-[11px] font-bold text-gray-500 border border-gray-200">
+                      USDT
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-between text-[14px]">
                   <span className="text-gray-500">{t("assets.withdraw_dialog.fee_note")}</span>
@@ -652,7 +685,7 @@ export default function AssetsPage() {
                     {t("assets.bonus.claim_option_aqe")}
                   </span>
                   <span className="text-[20px] font-black text-[#276152]">
-                    {currentBalance.toLocaleString()} AQE
+                    {((parseFloat(convertAmount) || 0) / (aqeRate || 1)).toLocaleString(undefined, { maximumFractionDigits: 2 })} AQE
                   </span>
                 </div>
               </div>
@@ -662,14 +695,14 @@ export default function AssetsPage() {
                 <p className="text-[12px] text-amber-800 leading-relaxed">
                   {user?.language === 'vi' 
                     ? "Lưu ý: Số AQE được quy đổi sẽ được chuyển ngay lập tức vào số dư AQE của bạn và bắt đầu tính lãi 6% APR hàng ngày."
-                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily yield."}
+                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily bonus."}
                 </p>
               </div>
             </div>
 
             <Button
               onClick={handleConvert}
-              disabled={withdrawing}
+              disabled={withdrawing || !convertAmount || (parseFloat(convertAmount) || 0) < 10 || (parseFloat(convertAmount) || 0) > currentBalance}
               className="w-full h-[56px] bg-amber-600 hover:bg-amber-700 text-white rounded-[16px] font-bold text-[16px] shadow-lg shadow-amber-600/10"
             >
               {withdrawing ? (

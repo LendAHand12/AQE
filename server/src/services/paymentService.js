@@ -4,9 +4,46 @@ import Commission from '../models/Commission.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import Notification from '../models/Notification.js';
 import { TokenState } from '../models/Blockchain.js';
+import InvestmentPackage from '../models/InvestmentPackage.js';
 import { emitNotification } from '../utils/socket.js';
 import { getSystemTime } from '../utils/time.js';
-import PlinkoSettings from '../models/PlinkoSettings.js';
+import { getSystemConfig } from '../utils/configHelper.js';
+
+/**
+ * Auto-apply the highest-tier package a user's official AQE balance (aqeBalance)
+ * now qualifies for, based on each active package's aqeRequired threshold.
+ * Only used for direct AQE purchases NOT tied to a specific package ("mua lẻ") —
+ * package purchases already record their own purchasedPackages entry.
+ * Never downgrades an existing package (compared by recorded price) and never
+ * credits extra AQE — it only records that the user now holds enough AQE for that tier.
+ */
+export async function applyEligiblePackageForAqeHolding(user) {
+    const currentAqe = user.aqeBalance || 0;
+    if (currentAqe <= 0) return;
+
+    const eligiblePackage = await InvestmentPackage.findOne({
+        isActive: true,
+        aqeRequired: { $gt: 0, $lte: currentAqe }
+    }).sort({ aqeRequired: -1 });
+
+    if (!eligiblePackage) return;
+
+    const alreadyOwnsExact = user.purchasedPackages.some((p) => String(p.packageId) === String(eligiblePackage._id));
+    if (alreadyOwnsExact) return;
+
+    const highestExistingPrice = user.purchasedPackages.reduce((max, p) => Math.max(max, p.price || 0), 0);
+    if (highestExistingPrice >= eligiblePackage.price) return;
+
+    user.purchasedPackages = [{
+        packageId: eligiblePackage._id,
+        title: eligiblePackage.title,
+        price: eligiblePackage.price,
+        aqeAmount: eligiblePackage.aqeAmount,
+        bonusPercent: eligiblePackage.bonusPercent,
+        purchasedAt: new Date()
+    }];
+}
+
 /**
  * Shared logic to process commissions
  */
@@ -165,8 +202,9 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             phase = 'LIVE';
         }
 
-        // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-        const price = 1.02;
+        // Pegged rate: lấy từ admin config (default 1 AQE = 1.02 USDT)
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
 
         const isPostMay = nowVN > may31VN;
         const isLivePhase = nowVN >= julyFirstVN;
@@ -225,7 +263,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 balanceBefore,
                 balanceAfter: user.aqeBalance,
                 description: isPackage 
-                    ? `Purchased Investment Package: ${transaction.metadata.packageTitle} via Blockchain`
+                    ? `Purchased Partnership Package: ${transaction.metadata.packageTitle} via Blockchain`
                     : `Purchased AQE digital units via Blockchain`
             });
 
@@ -258,35 +296,28 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     bonusPercent: finalBonusPercent,
                     purchasedAt: new Date()
                 });
+            } else {
+                await applyEligiblePackageForAqeHolding(user);
             }
 
-            // Credit Plinko Points: 1 point per 1 USDT
-            const pointsToAdd = processingAmount;
-            if (pointsToAdd > 0) {
-                user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-                
+            // Credit Plinko Balls: 1 ball per 10 USDT
+            const ballsToAdd = Math.floor(processingAmount / 10);
+            if (ballsToAdd > 0) {
+                user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
                 await Notification.create({
                     userId: user._id,
-                    title: 'Plinko Points Credited',
-                    message: `You have been credited with ${pointsToAdd} Plinko points for your purchase of ${processingAmount} USDT. Go to the Plinko page to play and win rewards!`,
+                    title: 'Plinko Balls Credited',
+                    message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your purchase of ${processingAmount} USDT. Go to the Plinko page to play and win AQE rewards!`,
                     type: 'SYSTEM'
                 });
-                
-                emitNotification(user._id, {
-                    title: 'Plinko Points Credited',
-                    message: `+${pointsToAdd} Plinko Points!`,
-                    type: 'SYSTEM'
-                });
-            }
 
-            // Jackpot contribution: 1% of USDT amount
-            const jackpotContribution = processingAmount * 0.01;
-            let plinkoSettings = await PlinkoSettings.findOne();
-            if (!plinkoSettings) {
-                plinkoSettings = await PlinkoSettings.create({});
+                emitNotification(user._id, {
+                    title: 'Plinko Balls Credited',
+                    message: `+${ballsToAdd} Plinko Ball(s)!`,
+                    type: 'SYSTEM'
+                });
             }
-            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-            await plinkoSettings.save();
 
             await user.save();
             console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
@@ -295,7 +326,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             await processCommissions(user, processingAmount, transaction);
 
             // Notify user
-            const title = isPackage ? 'Investment Package Confirmed' : 'Token Purchase Successful';
+            const title = isPackage ? 'Partnership Package Confirmed' : 'Token Purchase Successful';
             const message = isPackage
                 ? `Your purchase of ${transaction.metadata.packageTitle} for ${processingAmount} USDT has been confirmed. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a bonus of ${bonusTokens.toFixed(2)} AQE (${finalBonusPercent}%)` : ''}.`
                 : `Your payment of ${processingAmount} USDT has been confirmed. You received ${tokensCalculated.toFixed(2)} AQE tokens${finalBonusPercent > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
@@ -401,33 +432,24 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 user.aqeBalance += tokensCalculated;
             }
 
-            // Credit Plinko Points: 1 point per 1 USDT
-            const pointsToAdd = processingAmount;
-            if (pointsToAdd > 0) {
-                user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-                
+            // Credit Plinko Balls: 1 ball per 10 USDT
+            const ballsToAdd = Math.floor(processingAmount / 10);
+            if (ballsToAdd > 0) {
+                user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
                 await Notification.create({
                     userId: user._id,
-                    title: 'Plinko Points Credited',
-                    message: `You have been credited with ${pointsToAdd} Plinko points for your payment of ${processingAmount} USDT. Go to the Plinko page to play and win rewards!`,
+                    title: 'Plinko Balls Credited',
+                    message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your payment of ${processingAmount} USDT. Go to the Plinko page to play and win AQE rewards!`,
                     type: 'SYSTEM'
                 });
-                
-                emitNotification(user._id, {
-                    title: 'Plinko Points Credited',
-                    message: `+${pointsToAdd} Plinko Points!`,
-                    type: 'SYSTEM'
-                });
-            }
 
-            // Jackpot contribution: 1% of USDT amount
-            const jackpotContribution = processingAmount * 0.01;
-            let plinkoSettings = await PlinkoSettings.findOne();
-            if (!plinkoSettings) {
-                plinkoSettings = await PlinkoSettings.create({});
+                emitNotification(user._id, {
+                    title: 'Plinko Balls Credited',
+                    message: `+${ballsToAdd} Plinko Ball(s)!`,
+                    type: 'SYSTEM'
+                });
             }
-            plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-            await plinkoSettings.save();
 
             await user.save();
             console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
@@ -477,8 +499,9 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
     const may31VN = new Date('2026-05-31T23:59:59');
     const julyFirstVN = new Date('2026-07-01T00:00:00');
 
-    // Pegged rate: 1 AQE = 1.02 USDT (not related to pool price yet)
-    const price = 1.02;
+    // Pegged rate: lấy từ admin config (default 1 AQE = 1.02 USDT)
+    const systemConfig = await getSystemConfig();
+    const price = systemConfig.aqeToUsdtRate;
 
     const tokensCalculated = paidAmount / price;
     const isLivePhase = nowVN >= julyFirstVN;
@@ -572,33 +595,24 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
         user.aqeBalance += tokensCalculated;
     }
 
-    // Credit Plinko Points: 1 point per 1 USDT
-    const pointsToAdd = paidAmount;
-    if (pointsToAdd > 0) {
-        user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-        
+    // Credit Plinko Balls: 1 ball per 10 USDT
+    const ballsToAdd = Math.floor(paidAmount / 10);
+    if (ballsToAdd > 0) {
+        user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
         await Notification.create({
             userId: user._id,
-            title: 'Plinko Points Credited',
-            message: `You have been credited with ${pointsToAdd} Plinko points for your manual deposit of ${paidAmount} USDT. Go to the Plinko page to play and win rewards!`,
+            title: 'Plinko Balls Credited',
+            message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your manual deposit of ${paidAmount} USDT. Go to the Plinko page to play and win AQE rewards!`,
             type: 'SYSTEM'
         });
-        
-        emitNotification(user._id, {
-            title: 'Plinko Points Credited',
-            message: `+${pointsToAdd} Plinko Points!`,
-            type: 'SYSTEM'
-        });
-    }
 
-    // Jackpot contribution: 1% of USDT amount
-    const jackpotContribution = paidAmount * 0.01;
-    let plinkoSettings = await PlinkoSettings.findOne();
-    if (!plinkoSettings) {
-        plinkoSettings = await PlinkoSettings.create({});
+        emitNotification(user._id, {
+            title: 'Plinko Balls Credited',
+            message: `+${ballsToAdd} Plinko Ball(s)!`,
+            type: 'SYSTEM'
+        });
     }
-    plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-    await plinkoSettings.save();
 
     await user.save();
 

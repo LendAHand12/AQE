@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { 
-  Coins, 
+import {
+  Coins,
   Save,
   Loader2,
   RefreshCw,
@@ -21,10 +21,7 @@ export default function PlinkoSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
-    pointsToAqeRate: 1,
-    initialJackpot: 1000,
-    targetJackpot: 5000,
-    currentJackpot: 1000
+    plinkoBaseReward: 1
   })
 
   const fetchSettings = async () => {
@@ -32,10 +29,7 @@ export default function PlinkoSettingsPage() {
       const response = await apiClient.get("/admin/plinko-settings")
       if (response.data) {
         setSettings({
-          pointsToAqeRate: response.data.pointsToAqeRate !== undefined ? response.data.pointsToAqeRate : 1,
-          initialJackpot: response.data.initialJackpot || 1000,
-          targetJackpot: response.data.targetJackpot || 5000,
-          currentJackpot: response.data.currentJackpot || response.data.initialJackpot || 1000
+          plinkoBaseReward: response.data.plinkoBaseReward !== undefined ? response.data.plinkoBaseReward : 1
         })
       }
     } catch (err) {
@@ -54,9 +48,7 @@ export default function PlinkoSettingsPage() {
     setSaving(true)
     try {
       await apiClient.put("/admin/plinko-settings", {
-        pointsToAqeRate: settings.pointsToAqeRate,
-        initialJackpot: settings.initialJackpot,
-        targetJackpot: settings.targetJackpot
+        plinkoBaseReward: settings.plinkoBaseReward
       })
       toast.success("Plinko configurations updated successfully!")
       fetchSettings()
@@ -75,17 +67,13 @@ export default function PlinkoSettingsPage() {
     )
   }
 
-  const jackpotProgress = settings.targetJackpot > 0 
-    ? (settings.currentJackpot / settings.targetJackpot) * 100 
-    : 0
-
   return (
     <div className="max-w-[1000px] mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
           <Gamepad2 className="w-6 h-6 text-[#276152]" /> Plinko Game Settings
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Cấu hình tỷ lệ quy đổi điểm Plinko sang AQE và các thông số game</p>
+        <p className="text-gray-500 text-sm mt-1">Cấu hình mức thưởng AQE cơ bản mỗi lần thả bóng</p>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -93,78 +81,42 @@ export default function PlinkoSettingsPage() {
           <Card className="border-none shadow-sm rounded-[24px]">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Coins className="w-5 h-5 text-[#276152]" /> Tỷ lệ quy đổi Điểm sang AQE
+                <Coins className="w-5 h-5 text-[#276152]" /> Mức thưởng AQE cơ bản
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-600">Tỷ lệ quy đổi (1 Plinko Point = X AQE)</label>
-                <Input 
+                <label className="text-sm font-semibold text-gray-600">Giá trị X (AQE nhận được = X × Multiplier)</label>
+                <Input
                   type="number"
                   step="0.0001"
                   min="0.0001"
-                  value={settings.pointsToAqeRate} 
-                  onChange={(e) => setSettings({ ...settings, pointsToAqeRate: Number(e.target.value) })} 
+                  value={settings.plinkoBaseReward}
+                  onChange={(e) => setSettings({ ...settings, plinkoBaseReward: Number(e.target.value) })}
                   className="h-12 rounded-[12px] bg-white border-gray-200"
-                  placeholder="e.g. 1 (1 Point = 1 AQE)"
+                  placeholder="e.g. 1"
                   required
                 />
-                <p className="text-[11px] text-gray-400">Ví dụ: Nhập 1 nghĩa là 1 Điểm quy đổi thành 1 AQE. Nhập 0.5 nghĩa là 1 Điểm quy đổi thành 0.5 AQE.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm rounded-[24px]">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Coins className="w-5 h-5 text-[#276152]" /> Jackpot Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Initial Jackpot (AQE)</label>
-                  <Input 
-                    type="number"
-                    value={settings.initialJackpot} 
-                    onChange={(e) => setSettings({ ...settings, initialJackpot: Number(e.target.value) })} 
-                    className="h-12 rounded-[12px] bg-white border-gray-200"
-                    placeholder="e.g. 1000"
-                    required
-                  />
-                  <p className="text-[11px] text-gray-400">The baseline value that the jackpot resets to after a user wins.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Target Jackpot (AQE)</label>
-                  <Input 
-                    type="number"
-                    value={settings.targetJackpot} 
-                    onChange={(e) => setSettings({ ...settings, targetJackpot: Number(e.target.value) })} 
-                    className="h-12 rounded-[12px] bg-white border-gray-200"
-                    placeholder="e.g. 5000"
-                    required
-                  />
-                  <p className="text-[11px] text-gray-400">The amount needed before the jackpot displays 100% and can be claimed.</p>
-                </div>
+                <p className="text-[11px] text-gray-400">Ví dụ: X = 1, thả bóng rơi vào ô x5 sẽ nhận 5 AQE. X = 2, thả bóng rơi vào ô x5 sẽ nhận 10 AQE.</p>
               </div>
             </CardContent>
           </Card>
 
           <div className="flex justify-end gap-3">
-            <Button 
+            <Button
                type="button"
-               variant="outline" 
+               variant="outline"
                onClick={fetchSettings}
                className="h-12 px-6 rounded-[12px]"
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </Button>
-            <Button 
+            <Button
               type="submit"
               disabled={saving || !canEdit}
               className="h-12 px-8 rounded-[12px] bg-[#276152] hover:bg-[#1e4d41] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} 
+              {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               {canEdit ? "Save Changes" : "No permission to edit"}
             </Button>
           </div>
@@ -174,45 +126,13 @@ export default function PlinkoSettingsPage() {
           <Card className="border-none bg-[#276152] text-white rounded-[24px]">
             <CardContent className="p-6 space-y-6">
               <div className="flex items-center gap-2 opacity-80 uppercase text-[11px] font-bold tracking-widest">
-                <Info className="w-4 h-4" /> Live Jackpot Pool
+                <Info className="w-4 h-4" /> Rules Info
               </div>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-white/60 text-xs block mb-1">Current Jackpot Pool</span>
-                  <span className="text-3xl font-black">{settings.currentJackpot.toFixed(4)} AQE</span>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-white/80 mb-1.5">
-                    <span>Progress to Target</span>
-                    <span>{jackpotProgress.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-black/20 h-3 rounded-full overflow-hidden border border-white/10">
-                    <div 
-                      className="bg-white h-full rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(100, jackpotProgress)}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-white/10 pt-4 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-white/60">Target Jackpot:</span>
-                    <span className="font-bold">{settings.targetJackpot.toFixed(2)} AQE</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-white/60">Initial Jackpot:</span>
-                    <span className="font-bold">{settings.initialJackpot.toFixed(2)} AQE</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-[12px] text-white/60 leading-relaxed bg-black/15 p-4 rounded-[16px] border border-white/5 space-y-2">
-                <p className="font-bold text-white/90">Rules Info:</p>
+              <div className="text-[12px] text-white/80 leading-relaxed space-y-2">
                 <ul className="list-disc pl-4 space-y-1">
-                  <li><strong>USDT Deposits:</strong> 1% of all deposit amounts are added to the live jackpot pool automatically.</li>
-                  <li><strong>Game Rewards:</strong> Normal drops reward a random value between 0.001% and 0.01% of the live jackpot.</li>
-                  <li><strong>Winner:</strong> When the jackpot reaches the target (100%), hitting the jackpot slot (extreme outer edges) awards the entire live jackpot pool and resets it to the initial value.</li>
+                  <li><strong>Nạp USDT:</strong> Mỗi 10 USDT nạp = 1 lần thả bóng (Ball).</li>
+                  <li><strong>Thả bóng:</strong> Bóng rơi vào ô multiplier, AQE nhận được = X × multiplier, cộng vào thưởng chờ claim.</li>
+                  <li><strong>Claim:</strong> Người dùng bấm Claim để chuyển toàn bộ AQE thưởng vào số dư AQE chính thức.</li>
                 </ul>
               </div>
             </CardContent>

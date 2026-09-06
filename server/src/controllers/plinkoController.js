@@ -4,7 +4,27 @@ import PlinkoHistory from '../models/PlinkoHistory.js';
 import PlinkoSettings from '../models/PlinkoSettings.js';
 import AdminLog from '../models/AdminLog.js';
 
-// @desc    Get user's Plinko info (points, plays, settings and recent history)
+const defaultSlots = [
+    { multiplier: 110, weight: 1 },
+    { multiplier: 41, weight: 16 },
+    { multiplier: 10, weight: 120 },
+    { multiplier: 5, weight: 560 },
+    { multiplier: 2, weight: 1820 },
+    { multiplier: 1, weight: 4368 },
+    { multiplier: 0.5, weight: 8008 },
+    { multiplier: 0.2, weight: 11440 },
+    { multiplier: 0.2, weight: 20000 },
+    { multiplier: 0.2, weight: 11440 },
+    { multiplier: 0.5, weight: 8008 },
+    { multiplier: 1, weight: 4368 },
+    { multiplier: 2, weight: 1820 },
+    { multiplier: 5, weight: 560 },
+    { multiplier: 10, weight: 120 },
+    { multiplier: 41, weight: 16 },
+    { multiplier: 110, weight: 1 }
+];
+
+// @desc    Get user's Plinko info (balls, pending AQE reward, settings and recent history)
 // @route   GET /api/plinko/info
 // @access  Private
 export const getPlinkoInfo = async (req, res) => {
@@ -24,14 +44,12 @@ export const getPlinkoInfo = async (req, res) => {
         }
 
         res.json({
-            plinkoPoints: user.plinkoPoints || 0,
+            plinkoBalls: user.plinkoBalls || 0,
+            plinkoAqeReward: user.plinkoAqeReward || 0,
             history,
             settings: {
                 ...settings.toObject(),
-                pointsToAqeRate: settings.pointsToAqeRate !== undefined ? settings.pointsToAqeRate : 1,
-                initialJackpot: settings.initialJackpot || 1000,
-                targetJackpot: settings.targetJackpot || 5000,
-                currentJackpot: settings.currentJackpot || settings.initialJackpot || 1000
+                plinkoBaseReward: settings.plinkoBaseReward !== undefined ? settings.plinkoBaseReward : 1
             }
         });
     } catch (error) {
@@ -39,20 +57,15 @@ export const getPlinkoInfo = async (req, res) => {
     }
 };
 
-// @desc    Play Plinko (Drop a ball with bet amount in Points)
+// @desc    Play Plinko (drop one ball, winnings go to pending AQE reward)
 // @route   POST /api/plinko/play
 // @access  Private
 export const playPlinko = async (req, res) => {
     try {
-        const betAmount = Number(req.body.betAmount || req.body.betPoints || 1);
-        if (isNaN(betAmount) || betAmount <= 0) {
-            return res.status(400).json({ message: 'plinko.invalid_bet_amount' });
-        }
-
-        // 1. Deduct betAmount points atomically and verify user exists with enough points
+        // 1. Deduct 1 ball atomically and verify user has balls available
         const updatedUser = await User.findOneAndUpdate(
-            { _id: req.user._id, plinkoPoints: { $gte: betAmount } },
-            { $inc: { plinkoPoints: -betAmount } },
+            { _id: req.user._id, plinkoBalls: { $gte: 1 } },
+            { $inc: { plinkoBalls: -1 } },
             { returnDocument: 'after' }
         );
 
@@ -61,28 +74,8 @@ export const playPlinko = async (req, res) => {
             if (!userExists) {
                 return res.status(404).json({ message: 'auth.errors.user_not_found' });
             }
-            return res.status(400).json({ message: 'plinko.insufficient_points' });
+            return res.status(400).json({ message: 'plinko.insufficient_balls' });
         }
-
-        const defaultSlots = [
-            { multiplier: 110, weight: 1 },
-            { multiplier: 41, weight: 16 },
-            { multiplier: 10, weight: 120 },
-            { multiplier: 5, weight: 560 },
-            { multiplier: 2, weight: 1820 },
-            { multiplier: 1, weight: 4368 },
-            { multiplier: 0.5, weight: 8008 },
-            { multiplier: 0.2, weight: 11440 },
-            { multiplier: 0.2, weight: 20000 },
-            { multiplier: 0.2, weight: 11440 },
-            { multiplier: 0.5, weight: 8008 },
-            { multiplier: 1, weight: 4368 },
-            { multiplier: 2, weight: 1820 },
-            { multiplier: 5, weight: 560 },
-            { multiplier: 10, weight: 120 },
-            { multiplier: 41, weight: 16 },
-            { multiplier: 110, weight: 1 }
-        ];
 
         // Fetch Plinko Settings
         let settings = await PlinkoSettings.findOne();
@@ -94,6 +87,7 @@ export const playPlinko = async (req, res) => {
         }
 
         const slots = settings.slots;
+        const baseReward = settings.plinkoBaseReward !== undefined ? settings.plinkoBaseReward : 1;
 
         // Use client-provided physical landed slotIndex or weighted fallback
         let slotIndex = 8;
@@ -113,35 +107,35 @@ export const playPlinko = async (req, res) => {
         }
 
         const multiplier = slots[slotIndex].multiplier !== undefined ? slots[slotIndex].multiplier : (slots[slotIndex].amount || 1);
-        const rewardPoints = Math.round(betAmount * multiplier * 100) / 100;
+        const rewardAqe = Math.round(baseReward * multiplier * 10000) / 10000;
 
-        // 3. Credit won points back to user balance
+        // 2. Credit won AQE to the user's pending Plinko reward (not aqeBalance directly)
         const finalUser = await User.findByIdAndUpdate(
             updatedUser._id,
-            { $inc: { plinkoPoints: rewardPoints } },
+            { $inc: { plinkoAqeReward: rewardAqe } },
             { new: true }
         );
 
         if (!finalUser) {
-            return res.status(404).json({ message: 'User not found during points update' });
+            return res.status(404).json({ message: 'User not found during reward update' });
         }
 
-        // 4. Create PlinkoHistory log
+        // 3. Create PlinkoHistory log
         const plinkoLog = await PlinkoHistory.create({
             userId: finalUser._id,
-            betAmount,
+            betAmount: 1,
             multiplier,
-            rewardAmount: rewardPoints,
-            symbol: 'POINTS'
+            rewardAmount: rewardAqe,
+            symbol: 'AQE'
         });
 
         res.json({
             success: true,
-            betAmount,
             multiplier,
-            rewardAmount: rewardPoints,
+            rewardAmount: rewardAqe,
             slotIndex,
-            newPoints: finalUser.plinkoPoints,
+            newBalls: finalUser.plinkoBalls,
+            newPendingReward: finalUser.plinkoAqeReward,
             newBalance: finalUser.aqeBalance,
             playedAt: plinkoLog.playedAt
         });
@@ -150,58 +144,54 @@ export const playPlinko = async (req, res) => {
     }
 };
 
-// @desc    Convert Plinko Points to AQE Tokens
-// @route   POST /api/plinko/convert
+// @desc    Claim pending Plinko AQE reward into main AQE balance
+// @route   POST /api/plinko/claim
 // @access  Private
-export const convertPointsToAqe = async (req, res) => {
+export const claimPlinkoReward = async (req, res) => {
     try {
-        const pointsToConvert = Number(req.body.points);
-        if (isNaN(pointsToConvert) || pointsToConvert <= 0) {
-            return res.status(400).json({ message: 'plinko.invalid_points_convert' });
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'auth.errors.user_not_found' });
         }
 
-        let settings = await PlinkoSettings.findOne();
-        if (!settings) {
-            settings = await PlinkoSettings.create({});
+        const pendingReward = user.plinkoAqeReward || 0;
+        if (pendingReward <= 0) {
+            return res.status(400).json({ message: 'plinko.no_pending_reward' });
         }
 
-        const rate = settings.pointsToAqeRate !== undefined ? settings.pointsToAqeRate : 1;
-        const aqeAmount = Math.round(pointsToConvert * rate * 10000) / 10000;
-
-        // Deduct points & add AQE atomically
+        // Deduct pending reward & add to AQE balance atomically
         const updatedUser = await User.findOneAndUpdate(
-            { _id: req.user._id, plinkoPoints: { $gte: pointsToConvert } },
-            { 
-                $inc: { 
-                    plinkoPoints: -pointsToConvert,
-                    aqeBalance: aqeAmount
-                } 
+            { _id: req.user._id, plinkoAqeReward: { $gte: pendingReward } },
+            {
+                $inc: {
+                    plinkoAqeReward: -pendingReward,
+                    aqeBalance: pendingReward
+                }
             },
             { returnDocument: 'after' }
         );
 
         if (!updatedUser) {
-            return res.status(400).json({ message: 'plinko.insufficient_points_convert' });
+            return res.status(400).json({ message: 'plinko.no_pending_reward' });
         }
 
         // Log Balance History
         await BalanceHistory.create({
             userId: updatedUser._id,
-            amount: aqeAmount,
+            amount: pendingReward,
             symbol: 'AQE',
             type: 'REWARD',
             status: 'SUCCESS',
             isOfficial: true,
-            balanceBefore: updatedUser.aqeBalance - aqeAmount,
+            balanceBefore: updatedUser.aqeBalance - pendingReward,
             balanceAfter: updatedUser.aqeBalance,
-            description: `Quy đổi ${pointsToConvert} điểm Plinko sang ${aqeAmount} AQE (Tỷ lệ: 1 Điểm = ${rate} AQE)`
+            description: `Claim thưởng Plinko: ${pendingReward} AQE`
         });
 
         res.json({
             success: true,
-            convertedPoints: pointsToConvert,
-            aqeReceived: aqeAmount,
-            newPoints: updatedUser.plinkoPoints,
+            claimedAmount: pendingReward,
+            newPendingReward: updatedUser.plinkoAqeReward,
             newAqeBalance: updatedUser.aqeBalance
         });
     } catch (error) {
@@ -228,24 +218,15 @@ export const getPlinkoSettingsAdmin = async (req, res) => {
 // @route   PUT /api/admin/plinko-settings
 // @access  Private (Admin)
 export const updatePlinkoSettingsAdmin = async (req, res) => {
-    const { initialJackpot, targetJackpot, pointsToAqeRate, slots } = req.body;
+    const { plinkoBaseReward, slots } = req.body;
     try {
         let settings = await PlinkoSettings.findOne();
         if (!settings) {
             settings = new PlinkoSettings();
         }
 
-        if (pointsToAqeRate !== undefined) {
-            settings.pointsToAqeRate = Number(pointsToAqeRate);
-        }
-        if (initialJackpot !== undefined) {
-            settings.initialJackpot = Number(initialJackpot);
-            if (settings.currentJackpot === undefined || settings.currentJackpot < settings.initialJackpot) {
-                settings.currentJackpot = settings.initialJackpot;
-            }
-        }
-        if (targetJackpot !== undefined) {
-            settings.targetJackpot = Number(targetJackpot);
+        if (plinkoBaseReward !== undefined) {
+            settings.plinkoBaseReward = Number(plinkoBaseReward);
         }
         if (slots && Array.isArray(slots)) {
             settings.slots = slots;

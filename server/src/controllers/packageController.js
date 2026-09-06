@@ -37,7 +37,7 @@ const PACKAGE_COLORS = [
     '#2d3748', // Charcoal Grey
 ];
 
-// @desc    Create new investment package
+// @desc    Create new partnership package
 // @route   POST /api/admin/packages
 // @access  Admin
 export const adminCreatePackage = async (req, res) => {
@@ -62,7 +62,9 @@ export const adminCreatePackage = async (req, res) => {
             savings,
             wellness,
             priority,
-            concierge
+            concierge,
+            imageUrl,
+            aqeRequired
         } = req.body;
 
         if (!title || !price || !description || !aqeAmount || !segment) {
@@ -91,7 +93,8 @@ export const adminCreatePackage = async (req, res) => {
             savings: savings || '',
             wellness: wellness === true || wellness === 'true',
             priority: priority === true || priority === 'true',
-            concierge: concierge === true || concierge === 'true'
+            concierge: concierge === true || concierge === 'true',
+            imageUrl: imageUrl || ''
         });
 
         // Log the action
@@ -109,7 +112,7 @@ export const adminCreatePackage = async (req, res) => {
     }
 };
 
-// @desc    Update investment package
+// @desc    Update partnership package
 // @route   PUT /api/admin/packages/:id
 // @access  Admin
 export const adminUpdatePackage = async (req, res) => {
@@ -134,7 +137,9 @@ export const adminUpdatePackage = async (req, res) => {
             savings,
             wellness,
             priority,
-            concierge
+            concierge,
+            imageUrl,
+            aqeRequired
         } = req.body;
 
         const investmentPackage = await InvestmentPackage.findById(req.params.id);
@@ -149,6 +154,9 @@ export const adminUpdatePackage = async (req, res) => {
         investmentPackage.bonusPercent = bonusPercent !== undefined ? Number(bonusPercent) : investmentPackage.bonusPercent;
         investmentPackage.segment = segment || investmentPackage.segment;
         investmentPackage.aqeAmount = aqeAmount !== undefined ? Number(aqeAmount) : investmentPackage.aqeAmount;
+        if (aqeRequired !== undefined) {
+            investmentPackage.aqeRequired = Number(aqeRequired);
+        }
         investmentPackage.f1CommissionPercent = f1CommissionPercent !== undefined ? Number(f1CommissionPercent) : investmentPackage.f1CommissionPercent;
         investmentPackage.f2CommissionPercent = f2CommissionPercent !== undefined ? Number(f2CommissionPercent) : investmentPackage.f2CommissionPercent;
         investmentPackage.isActive = isActive !== undefined ? isActive : investmentPackage.isActive;
@@ -165,6 +173,9 @@ export const adminUpdatePackage = async (req, res) => {
         investmentPackage.wellness = wellness !== undefined ? (wellness === true || wellness === 'true') : investmentPackage.wellness;
         investmentPackage.priority = priority !== undefined ? (priority === true || priority === 'true') : investmentPackage.priority;
         investmentPackage.concierge = concierge !== undefined ? (concierge === true || concierge === 'true') : investmentPackage.concierge;
+        if (imageUrl !== undefined) {
+            investmentPackage.imageUrl = imageUrl;
+        }
 
         const updatedPackage = await investmentPackage.save();
 
@@ -183,7 +194,7 @@ export const adminUpdatePackage = async (req, res) => {
     }
 };
 
-// @desc    Delete investment package
+// @desc    Delete partnership package
 // @route   DELETE /api/admin/packages/:id
 // @access  Admin
 export const adminDeletePackage = async (req, res) => {

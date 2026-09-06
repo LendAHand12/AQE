@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import { getSystemTime, getStartOfDay } from '../utils/time.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 
 export const getBonusInfo = async (req, res) => {
     try {
@@ -223,8 +224,9 @@ export const claimBonus = async (req, res) => {
                 newAqeBalance: user.aqeBalance
             };
         } else {
-            // Pegged rate: 1 AQE = 1.02 USDT for claim
-            const price = 1.02;
+            // Pegged rate: lấy từ admin config
+            const systemConfig = await getSystemConfig();
+            const price = systemConfig.aqeToUsdtRate;
             const usdtAmount = amountToClaim * price;
 
             const balanceBefore = user.usdtBalance || 0;

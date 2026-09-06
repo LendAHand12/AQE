@@ -74,8 +74,9 @@ export function BlockchainPaymentModal({
       });
       setPaymentData(res.data);
       return res.data;
-    } catch (error) {
-      toast.error(t("pre_register.pay_failed"));
+    } catch (error: any) {
+      const backendMsg = error.response?.data?.message;
+      toast.error(backendMsg ? t(backendMsg) : t("pre_register.pay_failed"));
       return null;
     } finally {
       setLoading(false);

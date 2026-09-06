@@ -31,6 +31,11 @@ const investmentPackageSchema = mongoose.Schema({
         required: true,
         min: 0
     },
+    aqeRequired: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     f1CommissionPercent: {
         type: Number,
         default: 8,
@@ -91,6 +96,11 @@ const investmentPackageSchema = mongoose.Schema({
     concierge: {
         type: Boolean,
         default: false
+    },
+    // Ảnh đại diện của package
+    imageUrl: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true

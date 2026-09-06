@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const plinkoSettingsSchema = mongoose.Schema({
-    pointsToAqeRate: {
+    plinkoBaseReward: {
         type: Number,
-        default: 1 // 1 Plinko Point = 1 AQE by default
+        default: 1 // Base AQE reward per ball drop (X), actual reward = X * multiplier
     },
     slots: {
         type: [
@@ -31,18 +31,6 @@ const plinkoSettingsSchema = mongoose.Schema({
             { multiplier: 41, weight: 2 },
             { multiplier: 110, weight: 1 }
         ]
-    },
-    initialJackpot: {
-        type: Number,
-        default: 1000
-    },
-    targetJackpot: {
-        type: Number,
-        default: 5000
-    },
-    currentJackpot: {
-        type: Number,
-        default: 1000
     }
 }, { timestamps: true });
 

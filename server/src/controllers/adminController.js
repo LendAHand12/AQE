@@ -15,9 +15,10 @@ import { emitNotification } from '../utils/socket.js';
 import { generateTwoFactorSecret, verifyTwoFactorCode } from '../utils/twoFactor.js';
 import mongoose from 'mongoose';
 import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sales.js';
-import { processCommissions } from '../services/paymentService.js';
-import PlinkoSettings from '../models/PlinkoSettings.js';
-
+import { processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
+import Config from '../models/Config.js';
+import InvestmentPackage from '../models/InvestmentPackage.js';
+import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -111,7 +112,15 @@ export const getUsers = async (req, res) => {
         const queryRegex = search ? createVietnameseRegex(search) : null;
         const statusFilter = req.query.status;
 
-        const query = { 
+        // AQE balance filter (official AQE only, i.e. aqeBalance)
+        const aqeOperator = req.query.aqeOperator; // 'gt' or 'lt'
+        const aqeValue = parseFloat(req.query.aqeValue);
+        const aqeFilter = {};
+        if ((aqeOperator === 'gt' || aqeOperator === 'lt') && !isNaN(aqeValue)) {
+            aqeFilter.aqeBalance = aqeOperator === 'gt' ? { $gt: aqeValue } : { $lt: aqeValue };
+        }
+
+        const query = {
             isDeleted: false,
             ...(statusFilter === 'active' && { isActive: true }),
             ...(statusFilter === 'inactive' && { isActive: false }),
@@ -121,7 +130,8 @@ export const getUsers = async (req, res) => {
                     { email: { $regex: queryRegex } },
                     { username: { $regex: queryRegex } }
                 ]
-            })
+            }),
+            ...aqeFilter
         };
 
 
@@ -149,7 +159,8 @@ export const getUserById = async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id, isDeleted: false })
             .select('-password')
-            .populate('referredBy', 'username fullName email');
+            .populate('referredBy', 'username fullName email')
+            .populate('purchasedPackages.packageId', 'imageUrl stayDays roomType vipLounge guests roomService transportation savings wellness priority concierge color aqeRequired');
         
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });
@@ -221,11 +232,21 @@ export const getUserById = async (req, res) => {
             },
             {
                 $project: {
-                    totalNetwork: { $size: "$descendants" }
+                    totalNetwork: {
+                        $size: {
+                            $filter: {
+                                input: "$descendants",
+                                as: "descendant",
+                                cond: { $ne: ["$$descendant.isDeleted", true] }
+                            }
+                        }
+                    }
                 }
             }
         ]);
         const totalNetwork = totalNetworkArr[0]?.totalNetwork || 0;
+
+        console.log({totalNetwork})
 
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
@@ -409,14 +430,14 @@ export const updateUserByAdmin = async (req, res) => {
             // Check for email uniqueness if changing
             if (req.body.email && req.body.email !== user.email) {
                 const emailExists = await User.findOne({ email: req.body.email, isDeleted: false });
-                if (emailExists) return res.status(400).json({ message: 'auth.errors.email_exists' });
+                if (emailExists) return res.status(400).json({ message: 'This email address is already in use' });
                 user.email = req.body.email;
             }
 
             // Check for phone uniqueness if changing
             if (req.body.phone && req.body.phone !== user.phone) {
                 const phoneExists = await User.findOne({ phone: req.body.phone, isDeleted: false });
-                if (phoneExists) return res.status(400).json({ message: 'auth.errors.phone_exists' });
+                if (phoneExists) return res.status(400).json({ message: 'This phone number is already in use' });
                 user.phone = req.body.phone;
             }
 
@@ -428,7 +449,7 @@ export const updateUserByAdmin = async (req, res) => {
             user.address = req.body.address ?? user.address;
             user.nation = req.body.nation ?? user.nation;
             user.walletAddress = req.body.walletAddress ?? user.walletAddress;
-            user.plinkoPoints = req.body.plinkoPoints !== undefined ? Number(req.body.plinkoPoints) : (user.plinkoPoints || 0);
+            user.plinkoBalls = req.body.plinkoBalls !== undefined ? Number(req.body.plinkoBalls) : (user.plinkoBalls || 0);
 
             // Create notification if KYC status changed
             if (req.body.kycStatus && req.body.kycStatus !== user.kycStatus) {
@@ -964,6 +985,88 @@ export const getDirectReferrals = async (req, res) => {
     }
 };
 
+// @desc    Change (or clear) a user's referrer
+// @route   PUT /api/admin/users/:id/referrer
+export const updateUserReferrer = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id, isDeleted: false });
+        if (!user) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+
+        const { referrerId } = req.body;
+        const oldReferrerId = user.referredBy;
+        let newReferrer = null;
+
+        if (referrerId) {
+            if (referrerId === String(user._id)) {
+                return res.status(400).json({ message: 'A user cannot be their own referrer' });
+            }
+
+            newReferrer = await User.findOne({ _id: referrerId, isDeleted: false });
+            if (!newReferrer) {
+                return res.status(404).json({ message: 'Referrer not found' });
+            }
+
+            // Cycle check: the new referrer must not be a descendant of this user
+            const descendantsResult = await User.aggregate([
+                { $match: { _id: user._id } },
+                {
+                    $graphLookup: {
+                        from: 'users',
+                        startWith: '$_id',
+                        connectFromField: '_id',
+                        connectToField: 'referredBy',
+                        as: 'descendants'
+                    }
+                },
+                { $project: { descendantIds: '$descendants._id' } }
+            ]);
+            const descendantIds = (descendantsResult[0]?.descendantIds || []).map(String);
+            if (descendantIds.includes(String(newReferrer._id))) {
+                return res.status(400).json({ message: 'Cannot set referrer: this would create a circular reference in the referral tree' });
+            }
+        }
+
+        user.referredBy = newReferrer ? newReferrer._id : null;
+        const updatedUser = await user.save();
+
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'CHANGE_REFERRER',
+            target: user.email,
+            details: {
+                userId: user._id,
+                oldReferrerId: oldReferrerId || null,
+                newReferrerId: newReferrer ? newReferrer._id : null
+            },
+            ipAddress: req.ip
+        });
+
+        const notification = await Notification.create({
+            userId: user._id,
+            title: 'notifications.referrer_changed_title',
+            message: newReferrer ? 'notifications.referrer_changed_msg' : 'notifications.referrer_removed_msg',
+            type: 'SYSTEM',
+            isRead: false,
+            metadata: newReferrer ? { referrerName: `@${newReferrer.username}` } : {}
+        });
+        emitNotification(user._id, {
+            ...notification.toObject(),
+            messageParams: newReferrer ? { referrerName: `@${newReferrer.username}` } : {}
+        });
+
+        const populatedUser = await User.findById(updatedUser._id)
+            .select('-password')
+            .populate('referredBy', 'username fullName email');
+
+        res.json(populatedUser);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get wallet connections history
 // @route   GET /api/admin/wallet-connections
 // @access  Admin
@@ -1040,7 +1143,7 @@ export const getWalletConnections = async (req, res) => {
 export const manualDepositUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { pledgeAmount, paidAmount, hash } = req.body;
+        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission, grantAqe } = req.body;
 
         if (!paidAmount || !hash) {
             return res.status(400).json({ message: 'Missing paidAmount or hash' });
@@ -1057,6 +1160,16 @@ export const manualDepositUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Check if package
+        const isPackage = depositType === 'package' && !!packageId;
+        let packageData = null;
+        if (isPackage) {
+            packageData = await InvestmentPackage.findById(packageId);
+            if (!packageData) {
+                return res.status(404).json({ message: 'Package not found' });
+            }
+        }
+
         // Update user's pledge amount if specified
         if (pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '') {
             const pledgeNum = parseFloat(pledgeAmount);
@@ -1066,17 +1179,29 @@ export const manualDepositUser = async (req, res) => {
         }
 
         const amountNum = parseFloat(paidAmount);
-        const price = 1.02;
+        const systemConfig = await getSystemConfig();
+        const price = systemConfig.aqeToUsdtRate;
         const tokensCalculated = amountNum / price;
 
         // 5% bonus only in June 2026
         const nowVN = getSystemTime();
         const isJune = nowVN.getFullYear() === 2026 && nowVN.getMonth() === 5;
-        const bonusPercent = isJune ? 0.05 : 0;
-        const bonusTokens = tokensCalculated * bonusPercent;
+        
+        let finalTokensCalculated = tokensCalculated;
+        let finalBonusPercent = isJune ? 5 : 0;
+        
+        if (isPackage) {
+            finalTokensCalculated = packageData.aqeAmount;
+            finalBonusPercent = packageData.bonusPercent;
+        }
+
+        // For package deposits, admin can choose to just assign the package (no AQE credited)
+        // vs. a real package purchase (AQE credited as usual). Individual deposits always grant AQE.
+        const shouldGrantAqe = !isPackage || grantAqe === true;
+        const bonusTokens = shouldGrantAqe ? finalTokensCalculated * (finalBonusPercent / 100) : 0;
 
         // Create transaction of type PAYMENT, status SUCCESS
-        await Transaction.create({
+        const tx = await Transaction.create({
             hash,
             from: user._id,
             to: 'System',
@@ -1084,85 +1209,116 @@ export const manualDepositUser = async (req, res) => {
             symbol: 'USDT',
             type: 'PAYMENT',
             status: 'SUCCESS',
-            description: `Manual Deposit by Admin (${req.admin.username})`,
+            description: isPackage 
+                ? `Manual Deposit by Admin - Package: ${packageData.title} (${req.admin.username})`
+                : `Manual Deposit by Admin (${req.admin.username})`,
             metadata: {
                 isManual: true,
                 admin: req.admin.username,
-                isDirectPurchase: true
+                isDirectPurchase: true,
+                ...(isPackage && {
+                    packageId: packageData._id,
+                    packageTitle: packageData.title,
+                    aqeAmount: packageData.aqeAmount,
+                    bonusPercent: packageData.bonusPercent,
+                    f1CommissionPercent: packageData.f1CommissionPercent,
+                    f2CommissionPercent: packageData.f2CommissionPercent
+                })
             }
         });
 
         const balanceBefore = user.aqeBalance;
-        user.aqeBalance += tokensCalculated;
+        if (shouldGrantAqe) {
+            user.aqeBalance += finalTokensCalculated;
 
-        // Log purchase receipt
-        await BalanceHistory.create({
-            userId: user._id,
-            amount: tokensCalculated,
-            symbol: 'AQE',
-            type: 'RECEIVE',
-            status: 'SUCCESS',
-            isOfficial: true,
-            balanceBefore,
-            balanceAfter: user.aqeBalance,
-            description: `Manual Deposit by Admin (${req.admin.username})`
-        });
-
-        // Log bonus reward (5%)
-        if (bonusTokens > 0) {
-            const balanceBeforeBonus = user.aqeBalance;
-            user.aqeBalance += bonusTokens;
+            // Log purchase receipt
             await BalanceHistory.create({
                 userId: user._id,
-                amount: bonusTokens,
+                amount: finalTokensCalculated,
                 symbol: 'AQE',
-                type: 'REWARD',
+                type: 'RECEIVE',
                 status: 'SUCCESS',
                 isOfficial: true,
-                balanceBefore: balanceBeforeBonus,
+                balanceBefore,
                 balanceAfter: user.aqeBalance,
-                description: `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+                description: isPackage
+                    ? `Manual Deposit (Package): ${packageData.title}`
+                    : `Manual Deposit by Admin (${req.admin.username})`
             });
+
+            // Log bonus reward
+            if (bonusTokens > 0) {
+                const balanceBeforeBonus = user.aqeBalance;
+                user.aqeBalance += bonusTokens;
+                await BalanceHistory.create({
+                    userId: user._id,
+                    amount: bonusTokens,
+                    symbol: 'AQE',
+                    type: 'REWARD',
+                    status: 'SUCCESS',
+                    isOfficial: true,
+                    balanceBefore: balanceBeforeBonus,
+                    balanceAfter: user.aqeBalance,
+                    description: isPackage
+                        ? `Manual Deposit Bonus: ${finalBonusPercent}% for ${packageData.title}`
+                        : `Manual Deposit Bonus: 5% Bonus for purchasing AQE digital units`
+                });
+            }
         }
 
-        // Credit Plinko Points: 1 USDT = 1 Point
-        const pointsToAdd = amountNum;
-        if (pointsToAdd > 0) {
-            user.plinkoPoints = (user.plinkoPoints || 0) + pointsToAdd;
-            
+        if (isPackage) {
+            user.purchasedPackages.push({
+                packageId: packageData._id,
+                title: packageData.title,
+                price: amountNum,
+                aqeAmount: finalTokensCalculated,
+                bonusPercent: finalBonusPercent,
+                purchasedAt: new Date()
+            });
+        } else {
+            await applyEligiblePackageForAqeHolding(user);
+        }
+
+        // Credit Plinko Balls: 1 ball per 10 USDT
+        const ballsToAdd = Math.floor(amountNum / 10);
+        if (ballsToAdd > 0) {
+            user.plinkoBalls = (user.plinkoBalls || 0) + ballsToAdd;
+
             await Notification.create({
                 userId: user._id,
-                title: 'Plinko Points Credited',
-                message: `You have been credited with ${pointsToAdd} Plinko points for your manual deposit of ${amountNum} USDT. Go to the Plinko page to play and win rewards!`,
+                title: 'Plinko Balls Credited',
+                message: `You have been credited with ${ballsToAdd} Plinko ball(s) for your manual deposit of ${amountNum} USDT. Go to the Plinko page to play and win AQE rewards!`,
                 type: 'SYSTEM'
             });
-            
-            emitNotification(user._id, {
-                title: 'Plinko Points Credited',
-                message: `+${pointsToAdd} Plinko Points!`,
-                type: 'SYSTEM'
-            });
-        }
 
-        // Jackpot contribution: 1% of USDT amount
-        const jackpotContribution = amountNum * 0.01;
-        let plinkoSettings = await PlinkoSettings.findOne();
-        if (!plinkoSettings) {
-            plinkoSettings = await PlinkoSettings.create({});
+            emitNotification(user._id, {
+                title: 'Plinko Balls Credited',
+                message: `+${ballsToAdd} Plinko Ball(s)!`,
+                type: 'SYSTEM'
+            });
         }
-        plinkoSettings.currentJackpot = (plinkoSettings.currentJackpot || plinkoSettings.initialJackpot || 1000) + jackpotContribution;
-        await plinkoSettings.save();
 
         await user.save();
 
-        // Process commissions
-        await processCommissions(user, amountNum);
+        // Process commissions only if explicitly requested (default: no commission for admin manual deposits)
+        if (payCommission === true) {
+            await processCommissions(user, amountNum, tx);
+        }
 
         // Notify user
+        const titleMsg = isPackage
+            ? (shouldGrantAqe ? 'Partnership Package Successful (Admin Deposit)' : 'Partnership Package Assigned (Admin)')
+            : 'Token Purchase Successful (Admin Deposit)';
+        const contentMsg = isPackage
+            ? (shouldGrantAqe
+                ? `A manual deposit of ${amountNum} USDT for ${packageData.title} has been credited. You received ${finalTokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a ${finalBonusPercent}% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`
+                : `The ${packageData.title} package has been assigned to your account.`)
+            : `A manual deposit of ${amountNum} USDT has been credited to your account. You received ${tokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`;
+        
         await Notification.create({
             userId: user._id,
-            title: 'Token Purchase Successful (Admin Deposit)',
-            message: `A manual deposit of ${amountNum} USDT has been credited to your account. You received ${tokensCalculated.toFixed(2)} AQE tokens${bonusTokens > 0 ? ` and a 5% bonus of ${bonusTokens.toFixed(2)} AQE` : ''}.`,
+            title: titleMsg,
+            message: contentMsg,
             type: 'PAYMENT'
         });
 
@@ -1172,7 +1328,7 @@ export const manualDepositUser = async (req, res) => {
             adminUsername: req.admin.username,
             action: 'MANUAL_DEPOSIT',
             target: userId,
-            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''}`,
+            details: `Manually deposited ${paidAmount} USDT to user. Hash: ${hash}${pledgeAmount !== undefined && pledgeAmount !== null && pledgeAmount !== '' ? ` (Pledge updated to: ${pledgeAmount})` : ''} (Commission: ${payCommission === true ? 'paid' : 'not paid'})${isPackage ? ` (AQE: ${shouldGrantAqe ? 'granted' : 'not granted'})` : ''}`,
             ipAddress: req.ip
         });
 
@@ -1183,4 +1339,65 @@ export const manualDepositUser = async (req, res) => {
     }
 };
 
+// @desc    Get all system config (admin)
+// @route   GET /api/admin/config
+// @access  Admin
+export const getAdminSystemConfig = async (req, res) => {
+    try {
+        const docs = await Config.find({}).sort({ key: 1 });
+        res.json(docs);
+    } catch (error) {
+        console.error('[GetAdminSystemConfig] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
+// @desc    Update a system config value by key
+// @route   PUT /api/admin/config/:key
+// @access  Admin
+export const updateAdminSystemConfig = async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { value, label } = req.body;
+
+        if (value === undefined || value === null || value === '') {
+            return res.status(400).json({ message: 'Value is required' });
+        }
+
+        const CONFIGURABLE_KEYS = ['aqeToUsdtRate', 'heweToQhewRate', 'heweToAqeRate'];
+        if (!CONFIGURABLE_KEYS.includes(key)) {
+            return res.status(400).json({ message: `Config key "${key}" is not configurable` });
+        }
+
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+            return res.status(400).json({ message: 'Exchange rate must be greater than 0' });
+        }
+
+        const updateData = { value: parseFloat(value) || value };
+        if (label) updateData.label = label;
+
+        const doc = await Config.findOneAndUpdate(
+            { key },
+            { $set: updateData },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        // Invalidate cache so next request fetches fresh value
+        invalidateConfigCache();
+
+        await AdminLog.create({
+            adminId: req.admin._id,
+            adminUsername: req.admin.username,
+            action: 'UPDATE_CONFIG',
+            target: key,
+            details: `Updated config "${key}" to value: ${value}`,
+            ipAddress: req.ip
+        });
+
+        res.json({ message: 'Config updated successfully', doc });
+    } catch (error) {
+        console.error('[UpdateAdminSystemConfig] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};

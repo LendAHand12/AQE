@@ -18,9 +18,9 @@ const plinkoHistorySchema = mongoose.Schema({
         type: Number, 
         required: true 
     },
-    symbol: { 
-        type: String, 
-        default: 'POINTS' 
+    symbol: {
+        type: String,
+        default: 'AQE'
     },
     playedAt: { 
         type: Date, 

@@ -18,6 +18,12 @@ import {
 import { toast } from "sonner"
 import apiClient from "@/lib/axios"
 import { useAdminPermissions } from "@/hooks/useAdminPermissions"
+import { useExchangeRate } from "@/hooks/useExchangeRate"
+
+const getImageUrl = (url?: string) => {
+  if (!url) return ''
+  return url.startsWith('/uploads') ? import.meta.env.VITE_API_URL.replace('/api', '') + url : url
+}
 
 interface Package {
   _id: string
@@ -27,6 +33,7 @@ interface Package {
   bonusPercent: number
   segment: "Cơ bản" | "Nâng cao" | "Cao cấp"
   aqeAmount: number
+  aqeRequired: number
   f1CommissionPercent: number
   f2CommissionPercent: number
   isActive: boolean
@@ -42,6 +49,8 @@ interface Package {
   wellness?: boolean
   priority?: boolean
   concierge?: boolean
+  // Package Image
+  imageUrl?: string
 }
 
 const PALETTE_COLORS = [
@@ -63,6 +72,7 @@ export default function AdminPackagesPage() {
   const { hasPermission } = useAdminPermissions()
   const canEdit = hasPermission("PACKAGES_EDIT")
   const canDelete = hasPermission("PACKAGES_DELETE")
+  const { rate: aqeRate } = useExchangeRate()
 
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,6 +83,7 @@ export default function AdminPackagesPage() {
   const [title, setTitle] = useState("")
   const [price, setPrice] = useState("")
   const [aqeAmount, setAqeAmount] = useState("")
+  const [aqeRequired, setAqeRequired] = useState("")
   const [bonusPercent, setBonusPercent] = useState("")
   const [f1CommissionPercent, setF1CommissionPercent] = useState("8")
   const [f2CommissionPercent, setF2CommissionPercent] = useState("2")
@@ -93,6 +104,10 @@ export default function AdminPackagesPage() {
   const [priority, setPriority] = useState(false)
   const [concierge, setConcierge] = useState(false)
 
+  // Image State
+  const [imageUrl, setImageUrl] = useState("")
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+
   useEffect(() => {
     fetchPackages()
   }, [])
@@ -101,7 +116,7 @@ export default function AdminPackagesPage() {
   useEffect(() => {
     const priceNum = parseFloat(price) || 0
     const bonusNum = parseFloat(bonusPercent) || 0
-    const baseAqe = priceNum / 1.02
+    const baseAqe = priceNum / aqeRate
     const totalAqe = baseAqe * (1 + bonusNum / 100)
     setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
   }, [price, bonusPercent])
@@ -123,7 +138,8 @@ export default function AdminPackagesPage() {
     setTitle("")
     setPrice("")
     setAqeAmount("")
-    setBonusPercent("0")
+    setAqeRequired("")
+    setBonusPercent("")
     setF1CommissionPercent("8")
     setF2CommissionPercent("2")
     setSegment("Cơ bản")
@@ -141,14 +157,37 @@ export default function AdminPackagesPage() {
     setWellness(false)
     setPriority(false)
     setConcierge(false)
+    setImageUrl("")
     setIsModalOpen(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    setIsUploadingImage(true)
+    try {
+      const res = await apiClient.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      setImageUrl(res.data.imageUrl)
+      toast.success("Image uploaded successfully!")
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.response?.data?.message || "Failed to upload image")
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   const openEditModal = (pkg: Package) => {
     setEditingPackage(pkg)
     setTitle(pkg.title)
     setPrice(pkg.price.toString())
-    setAqeAmount(pkg.aqeAmount.toString())
+    setAqeRequired(pkg.aqeRequired ? pkg.aqeRequired.toString() : "0")
     setBonusPercent(pkg.bonusPercent.toString())
     setF1CommissionPercent(pkg.f1CommissionPercent.toString())
     setF2CommissionPercent(pkg.f2CommissionPercent.toString())
@@ -167,9 +206,10 @@ export default function AdminPackagesPage() {
     setWellness(!!pkg.wellness)
     setPriority(!!pkg.priority)
     setConcierge(!!pkg.concierge)
+    setImageUrl(pkg.imageUrl || "")
     
     // Explicitly update calculated AQE Amount for editing modal
-    const baseAqe = pkg.aqeAmount || (pkg.price / 1.02)
+    const baseAqe = pkg.aqeAmount || (pkg.price / aqeRate)
     const totalAqe = baseAqe * (1 + pkg.bonusPercent / 100)
     setAqeAmount(totalAqe.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 }))
     
@@ -187,7 +227,8 @@ export default function AdminPackagesPage() {
     const payload = {
       title,
       price: Number(price),
-      aqeAmount: Number(price) / 1.02, // auto calculated base amount saved to DB
+      aqeAmount: Number(price) / aqeRate,
+      aqeRequired: Number(aqeRequired || 0),
       bonusPercent: Number(bonusPercent || 0),
       f1CommissionPercent: Number(f1CommissionPercent || 0),
       f2CommissionPercent: Number(f2CommissionPercent || 0),
@@ -195,7 +236,6 @@ export default function AdminPackagesPage() {
       description,
       isActive,
       color: color || undefined,
-      // Benefits Payload
       stayDays,
       roomType,
       vipLounge,
@@ -205,16 +245,17 @@ export default function AdminPackagesPage() {
       savings,
       wellness,
       priority,
-      concierge
+      concierge,
+      imageUrl
     }
 
     try {
       if (editingPackage) {
         await apiClient.put(`/admin/packages/${editingPackage._id}`, payload)
-        toast.success("Updated investment package successfully")
+        toast.success("Updated partnership package successfully")
       } else {
         await apiClient.post("/admin/packages", payload)
-        toast.success("Added new investment package successfully")
+        toast.success("Added new partnership package successfully")
       }
       setIsModalOpen(false)
       fetchPackages()
@@ -224,11 +265,11 @@ export default function AdminPackagesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this investment package?")) return
+    if (!window.confirm("Are you sure you want to delete this partnership package?")) return
 
     try {
       await apiClient.delete(`/admin/packages/${id}`)
-      toast.success("Deleted investment package successfully")
+      toast.success("Deleted partnership package successfully")
       fetchPackages()
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to delete package")
@@ -258,13 +299,12 @@ export default function AdminPackagesPage() {
         )}
       </div>
 
-      {/* Packages Table Card */}
       <div className="bg-white rounded-2xl border border-gray-150 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-150 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th className="py-4 px-6">Investment Package</th>
+                <th className="py-4 px-6">Partnership Package</th>
                 <th className="py-4 px-6">Price (USDT)</th>
                 <th className="py-4 px-6">Segment</th>
                 <th className="py-4 px-6">AQE Received</th>
@@ -339,12 +379,11 @@ export default function AdminPackagesPage() {
         </div>
       </div>
 
-      {/* Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#0d1f1d]/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-3xl w-full max-w-2xl p-8 shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-black text-[#0d1f1d] mb-6">
-              {editingPackage ? "Edit Investment Package" : "Add New Investment Package"}
+              {editingPackage ? "Edit Partnership Package" : "Add New Partnership Package"}
             </h2>
  
             <form onSubmit={handleSave} className="space-y-4">
@@ -401,6 +440,17 @@ export default function AdminPackagesPage() {
                     value={aqeAmount}
                     placeholder="Auto calculated"
                     className="h-11 rounded-xl bg-gray-50 border-gray-200 text-[#276152] font-black cursor-not-allowed select-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase select-none">AQE Required</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={aqeRequired}
+                    onChange={(e) => setAqeRequired(e.target.value)}
+                    placeholder="Total AQE required"
+                    className="h-11 rounded-xl"
                   />
                 </div>
               </div>
@@ -487,7 +537,23 @@ export default function AdminPackagesPage() {
                 </div>
               </div>
 
-              {/* Resort Benefits Section */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 uppercase select-none">Package Image</label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                    className="h-10 rounded-xl text-sm flex-1 cursor-pointer file:cursor-pointer file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#276152] file:text-white hover:file:bg-[#1e4d41]"
+                  />
+                  {isUploadingImage && <Loader2 size={16} className="animate-spin text-[#276152] shrink-0" />}
+                  {imageUrl && (
+                    <img src={getImageUrl(imageUrl)} alt="preview" className="w-10 h-14 object-cover rounded-lg border border-gray-200 shrink-0" />
+                  )}
+                </div>
+              </div>
+
               <div className="border-t border-gray-100 pt-4 space-y-3">
                 <h3 className="text-xs font-black text-[#276152] uppercase tracking-wider">Resort Privileges (Comparison Table)</h3>
                 

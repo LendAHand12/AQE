@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import {
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Pagination } from "@/components/common/Pagination"
 import {
   Table,
   TableBody,
@@ -48,6 +49,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { PackageDetailModal } from "@/components/PackageDetailModal"
 import {
   Select,
   SelectContent,
@@ -259,22 +262,77 @@ export default function AdminUserProfilePage() {
   const [depositData, setDepositData] = useState<any>({
     paidAmount: "",
     hash: "",
+    depositType: "individual", // 'individual' or 'package'
+    packageId: "",
+    payCommission: false,
+    grantAqe: true,
   })
   const [depositing, setDepositing] = useState(false)
+  const [packages, setPackages] = useState<any[]>([])
+
+  // Change Referrer state
+  const [isReferrerDialogOpen, setIsReferrerDialogOpen] = useState(false)
+  const [referrerSearch, setReferrerSearch] = useState("")
+  const [referrerResults, setReferrerResults] = useState<any[]>([])
+  const [searchingReferrer, setSearchingReferrer] = useState(false)
+  const [selectedReferrer, setSelectedReferrer] = useState<any>(null)
+  const [changingReferrer, setChangingReferrer] = useState(false)
 
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [aqeTypeFilter, setAqeTypeFilter] = useState<string>("ALL")
+  const [aqeHistoryPage, setAqeHistoryPage] = useState(1)
+  const AQE_HISTORY_PER_PAGE = 10
+
+  const filteredAqeHistory = useMemo(() => {
+    return (data?.tokenHistory || []).filter(
+      (bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter)
+    )
+  }, [data?.tokenHistory, aqeTypeFilter])
+
+  const paginatedAqeHistory = useMemo(() => {
+    const start = (aqeHistoryPage - 1) * AQE_HISTORY_PER_PAGE
+    return filteredAqeHistory.slice(start, start + AQE_HISTORY_PER_PAGE)
+  }, [filteredAqeHistory, aqeHistoryPage])
+  const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   useEffect(() => {
     fetchUserDetails()
   }, [id])
 
+  useEffect(() => {
+    if (!isReferrerDialogOpen) return
+    if (!referrerSearch.trim()) {
+      setReferrerResults([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setSearchingReferrer(true)
+      try {
+        const res = await apiClient.get("/admin/users", {
+          params: { search: referrerSearch, limit: 10 },
+        })
+        setReferrerResults(
+          (res.data.users || []).filter((u: any) => u._id !== id)
+        )
+      } catch (err) {
+        toast.error("Could not search users")
+      } finally {
+        setSearchingReferrer(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [referrerSearch, isReferrerDialogOpen, id])
+
   const fetchUserDetails = async () => {
     setLoading(true)
     try {
-      const res = await apiClient.get(`/admin/users/${id}`)
+      const [res, pkgRes] = await Promise.all([
+        apiClient.get(`/admin/users/${id}`),
+        apiClient.get('/admin/packages')
+      ])
       setData(res.data)
+      setPackages(pkgRes.data)
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Could not load user info")
       navigate("/admin/users")
@@ -325,13 +383,36 @@ export default function AdminUserProfilePage() {
       toast.success("Manual deposit processed successfully")
       setIsDepositDialogOpen(false)
       fetchUserDetails()
-      setDepositData({ paidAmount: "", hash: "" })
+      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false, grantAqe: true })
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || "Could not process manual deposit"
       )
     } finally {
       setDepositing(false)
+    }
+  }
+
+  const openReferrerDialog = () => {
+    setSelectedReferrer(user.referredBy || null)
+    setReferrerSearch("")
+    setReferrerResults([])
+    setIsReferrerDialogOpen(true)
+  }
+
+  const handleChangeReferrer = async () => {
+    setChangingReferrer(true)
+    try {
+      await apiClient.put(`/admin/users/${id}/referrer`, {
+        referrerId: selectedReferrer?._id || null,
+      })
+      toast.success("Referrer updated successfully")
+      setIsReferrerDialogOpen(false)
+      fetchUserDetails()
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not update referrer")
+    } finally {
+      setChangingReferrer(false)
     }
   }
 
@@ -570,11 +651,84 @@ export default function AdminUserProfilePage() {
               >
                 AQE
               </TabsTrigger>
+              <TabsTrigger
+                value="withdraws"
+                className="rounded-full px-8 py-2 font-bold transition-all data-[state=active]:bg-[#276152] data-[state=active]:text-white"
+              >
+                Withdraws
+              </TabsTrigger>
             </TabsList>
 
             {/* Tab: Information & Pledge History */}
             <TabsContent value="info" className="space-y-6 outline-none">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Card className="rounded-[24px] border-gray-100 shadow-sm md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
+                      <Building2 size={20} className="text-[#276152]" />
+                      Current Package
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {user.purchasedPackages?.length > 0 ? (() => {
+                      const purchased = user.purchasedPackages[0]
+                      const pkg = purchased.packageId
+                      return (
+                        <div className="flex flex-col items-center gap-6 md:flex-row">
+                          <div className="relative aspect-[3/4] w-[120px] shrink-0 overflow-hidden rounded-[16px] shadow-sm">
+                            {pkg?.imageUrl ? (
+                              <img
+                                src={getImageUrl(pkg.imageUrl)}
+                                alt={purchased.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-[#276152] px-2 text-center text-sm font-bold text-white">
+                                {purchased.title}
+                              </div>
+                            )}
+                          </div>
+                          <div className="w-full flex-1 space-y-3">
+                            <div>
+                              <h3 className="text-[20px] font-extrabold text-[#111827]">
+                                {purchased.title}
+                              </h3>
+                              <p className="mt-0.5 text-[12px] font-medium text-gray-400">
+                                Purchased at {dayjs(purchased.purchasedAt).format("DD/MM/YYYY HH:mm")}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="rounded-[12px] bg-gray-50 p-3">
+                                <p className="text-[11px] font-bold uppercase text-gray-400">Invested</p>
+                                <p className="text-[15px] font-extrabold text-[#111827]">
+                                  ${purchased.price?.toLocaleString()} USDT
+                                </p>
+                              </div>
+                              <div className="rounded-[12px] bg-emerald-50 p-3">
+                                <p className="text-[11px] font-bold uppercase text-emerald-600">AQE Received</p>
+                                <p className="text-[15px] font-extrabold text-emerald-700">
+                                  {purchased.aqeAmount?.toLocaleString()} AQE
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowPackageDetail(true)}
+                              className="rounded-[8px] border-[#276152] text-xs font-bold text-[#276152] hover:bg-[#276152]/5"
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })() : (
+                      <div className="py-10 text-center text-sm font-medium text-gray-400">
+                        This user does not own any package yet.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Card className="rounded-[24px] border-gray-100 shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
@@ -703,28 +857,37 @@ export default function AdminUserProfilePage() {
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase">
-                        Plinko Points
+                        Plinko Balls
                       </p>
                       <p className="text-[14px] font-bold text-emerald-600">
-                        {user.plinkoPoints ?? 0} pts
+                        {user.plinkoBalls ?? 0} balls
                       </p>
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase">
                         Referred By
                       </p>
-                      {user.referredBy ? (
-                        <Link
-                          to={`/admin/users/${user.referredBy._id}`}
-                          className="text-[14px] font-bold text-[#276152] hover:underline"
+                      <div className="flex items-center gap-2">
+                        {user.referredBy ? (
+                          <Link
+                            to={`/admin/users/${user.referredBy._id}`}
+                            className="text-[14px] font-bold text-[#276152] hover:underline"
+                          >
+                            @{user.referredBy.username}
+                          </Link>
+                        ) : (
+                          <p className="text-[14px] font-medium text-gray-400">
+                            None (Root)
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={openReferrerDialog}
+                          className="text-[12px] font-bold text-blue-600 hover:underline"
                         >
-                          @{user.referredBy.username}
-                        </Link>
-                      ) : (
-                        <p className="text-[14px] font-medium text-gray-400">
-                          None (Root)
-                        </p>
-                      )}
+                          Change
+                        </button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1310,7 +1473,13 @@ export default function AdminUserProfilePage() {
                     AQE Distribution History
                   </CardTitle>
                   <div className="w-[180px]">
-                    <Select value={aqeTypeFilter} onValueChange={setAqeTypeFilter}>
+                    <Select
+                      value={aqeTypeFilter}
+                      onValueChange={(value) => {
+                        setAqeTypeFilter(value)
+                        setAqeHistoryPage(1)
+                      }}
+                    >
                       <SelectTrigger className="h-9 rounded-full border-gray-200 bg-white px-4 text-xs font-bold text-gray-700">
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
@@ -1343,11 +1512,8 @@ export default function AdminUserProfilePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.tokenHistory?.filter(
-                        (bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter)
-                      ).length > 0 ? (
-                        data.tokenHistory
-                          .filter((bh: any) => bh.symbol === "AQE" && (aqeTypeFilter === "ALL" || bh.type === aqeTypeFilter))
+                      {paginatedAqeHistory.length > 0 ? (
+                        paginatedAqeHistory
                           .map((bh: any) => (
                             <TableRow key={bh._id}>
                               <TableCell className="pl-6 text-xs text-gray-500">
@@ -1399,6 +1565,114 @@ export default function AdminUserProfilePage() {
                             className="py-12 text-center text-gray-400"
                           >
                             No AQE distribution history
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  <Pagination
+                    currentPage={aqeHistoryPage}
+                    totalPages={Math.ceil(filteredAqeHistory.length / AQE_HISTORY_PER_PAGE)}
+                    onPageChange={setAqeHistoryPage}
+                    totalItems={filteredAqeHistory.length}
+                    itemsPerPage={AQE_HISTORY_PER_PAGE}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab: Withdraws */}
+            <TabsContent value="withdraws" className="outline-none">
+              <Card className="overflow-hidden rounded-[24px] border-gray-100 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[18px] font-bold">
+                    <Wallet size={20} className="text-[#276152]" />
+                    Withdrawal History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="pl-6 font-bold">Time</TableHead>
+                        <TableHead className="font-bold">Method</TableHead>
+                        <TableHead className="text-right font-bold">Amount</TableHead>
+                        <TableHead className="text-right font-bold">Fee</TableHead>
+                        <TableHead className="font-bold">Status</TableHead>
+                        <TableHead className="font-bold">Destination</TableHead>
+                        <TableHead className="pr-6 text-right font-bold">Hash</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.withdrawals?.length > 0 ? (
+                        data.withdrawals.map((w: any) => (
+                          <TableRow key={w._id}>
+                            <TableCell className="pl-6 text-xs text-gray-500">
+                              {dayjs(w.createdAt).format("DD/MM/YYYY HH:mm")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={cn(
+                                  "w-fit rounded-full border-none text-[10px] font-bold",
+                                  w.paymentMethod === "AQE"
+                                    ? "bg-amber-50 text-amber-600 border border-amber-100"
+                                    : w.paymentMethod === "ZELLE"
+                                      ? "bg-orange-50 text-orange-600"
+                                      : "bg-blue-50 text-blue-600"
+                                )}
+                              >
+                                {w.paymentMethod === "AQE" ? "AQE CONVERT" : w.paymentMethod}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-bold">
+                              {w.amount?.toLocaleString()} {w.symbol || "USDT"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm text-gray-500">
+                              {w.paymentMethod === "AQE" ? 0 : (w.fee ?? 1)} USDT
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={cn(
+                                  "flex w-fit items-center gap-1 rounded-full border-none text-[10px] font-bold",
+                                  w.status === "SUCCESS"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : w.status === "FAILED"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-amber-100 text-amber-700"
+                                )}
+                              >
+                                {w.status === "PENDING" && <Clock size={12} className="animate-pulse" />}
+                                {w.status === "SUCCESS" ? "Success" : w.status === "FAILED" ? "Rejected" : "Pending"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] text-sm text-gray-600">
+                              <span className="truncate block">
+                                {w.paymentMethod === "ZELLE"
+                                  ? `${w.zelleName || ""} (${w.zelleInfo || ""})`
+                                  : w.paymentMethod === "AQE"
+                                    ? "AQE Balance"
+                                    : w.walletAddress || "—"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="pr-6 text-right">
+                              {w.hash ? (
+                                <a
+                                  href={`https://bscscan.com/tx/${w.hash}`}
+                                  target="_blank"
+                                  className="inline-flex items-center gap-1 font-mono text-xs text-gray-400 hover:text-[#276152]"
+                                >
+                                  {w.hash.substring(0, 6)}... <ExternalLink size={12} />
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="py-12 text-center text-gray-400">
+                            No withdrawal data
                           </TableCell>
                         </TableRow>
                       )}
@@ -1651,15 +1925,15 @@ export default function AdminUserProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">
-                    Plinko Points
+                    Plinko Balls
                   </label>
                   <Input
                     type="number"
-                    value={editingUser?.plinkoPoints ?? 0}
+                    value={editingUser?.plinkoBalls ?? 0}
                     onChange={(e) =>
                       setEditingUser({
                         ...editingUser,
-                        plinkoPoints: parseFloat(e.target.value) || 0,
+                        plinkoBalls: parseFloat(e.target.value) || 0,
                       })
                     }
                     className="h-11 rounded-[8px] border-gray-200"
@@ -1720,6 +1994,72 @@ export default function AdminUserProfilePage() {
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-500">
+                Deposit Type
+              </label>
+              <Select
+                value={depositData.depositType}
+                onValueChange={(val) => {
+                  setDepositData({ ...depositData, depositType: val, packageId: "" })
+                }}
+              >
+                <SelectTrigger className="w-full h-11 rounded-[8px]">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Individual Top-up (AQE Only)</SelectItem>
+                  <SelectItem value="package">Package Top-up</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {depositData.depositType === "package" && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-500">
+                  Select Package *
+                </label>
+                <Select
+                  value={depositData.packageId}
+                  onValueChange={(val) => {
+                    const pkg = packages.find(p => p._id === val)
+                    setDepositData({ 
+                      ...depositData, 
+                      packageId: val,
+                      paidAmount: pkg ? pkg.price.toString() : ""
+                    })
+                  }}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-[8px]">
+                    <SelectValue placeholder="Choose a package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map(pkg => (
+                      <SelectItem key={pkg._id} value={pkg._id}>
+                        {pkg.title} - ${pkg.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {depositData.depositType === "package" && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="grantAqe"
+                  checked={depositData.grantAqe}
+                  onCheckedChange={(checked) =>
+                    setDepositData({ ...depositData, grantAqe: !!checked })
+                  }
+                  className="border-gray-300 data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]"
+                />
+                <label htmlFor="grantAqe" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+                  Grant AQE for this package (uncheck to just assign the package, e.g. user already qualifies)
+                </label>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-500">
                 Payment Amount (USDT) *
               </label>
               <Input
@@ -1745,6 +2085,19 @@ export default function AdminUserProfilePage() {
                 className="h-11 rounded-[8px] border-gray-200 font-mono text-xs"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="payCommission"
+                checked={depositData.payCommission}
+                onCheckedChange={(checked) =>
+                  setDepositData({ ...depositData, payCommission: !!checked })
+                }
+                className="border-gray-300 data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]"
+              />
+              <label htmlFor="payCommission" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+                Pay referral commission to upline (default: no)
+              </label>
+            </div>
           </div>
           <DialogFooter className="pt-4">
             <Button
@@ -1768,6 +2121,46 @@ export default function AdminUserProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Current Package Detail Modal */}
+      {showPackageDetail && user.purchasedPackages?.length > 0 && (() => {
+        const purchased = user.purchasedPackages[0]
+        const pkg = purchased.packageId
+        const benefitItems = [
+          { show: !!pkg?.vipLounge, label: "VIP Lounge 24/7" },
+          { show: !!pkg?.roomService, label: "24/7 Restaurant Room Service" },
+          { show: !!pkg?.transportation, label: "Airport Transportation 24/7" },
+          { show: !!pkg?.savings, label: `${pkg?.savings} Saving on All Services` },
+          { show: !!pkg?.priority, label: "Priority booking option" },
+          { show: !!pkg?.concierge, label: "Personal Concierge" },
+        ].filter((b) => b.show).map((b) => b.label)
+
+        return (
+          <PackageDetailModal
+            title={purchased.title}
+            imageUrl={pkg?.imageUrl}
+            subtitle={purchased.purchasedAt ? `Purchased at ${dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}` : undefined}
+            badgeLabel="Owned"
+            investment={{ label: "Invested", value: `$${purchased.price?.toLocaleString()} USDT` }}
+            aqeReceived={{ label: "AQE Received", value: `${purchased.aqeAmount?.toLocaleString()} AQE` }}
+            aqeRequired={pkg?.aqeRequired > 0 ? { label: "AQE Required", value: `${pkg.aqeRequired.toLocaleString()} AQE` } : undefined}
+            stay={{ label: "Stay", value: pkg?.stayDays || "—" }}
+            roomType={{ label: "Room Type", value: pkg?.roomType || "—" }}
+            benefitsTitle="Included Benefits"
+            benefits={benefitItems}
+            guests={{ label: "Guests", value: pkg?.guests || "—" }}
+            savings={{ label: "Savings", value: pkg?.savings || "—" }}
+            wellness={{ label: "Wellness", value: pkg?.wellness ? "Included" : "Not Included", included: !!pkg?.wellness }}
+            closeLabel="Close"
+            primaryLabel="Manage Packages"
+            onClose={() => setShowPackageDetail(false)}
+            onPrimaryClick={() => {
+              setShowPackageDetail(false)
+              navigate("/admin/packages")
+            }}
+          />
+        )
+      })()}
 
       {/* Image Preview Overlay */}
       {previewImage && (
@@ -1822,6 +2215,109 @@ export default function AdminUserProfilePage() {
               className="bg-red-600 font-bold text-white hover:bg-red-700"
             >
               Confirm Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isReferrerDialogOpen} onOpenChange={setIsReferrerDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#111827]">
+              Change Referrer for @{user.username}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="rounded-[8px] bg-amber-50 p-3 text-[12px] font-medium text-amber-700">
+              Changing this affects the user's position in the referral tree
+              and future commission calculations.
+            </p>
+
+            <div className="rounded-[8px] border border-gray-200 p-3">
+              <p className="text-[11px] font-bold text-gray-400 uppercase">
+                New referrer
+              </p>
+              <p className="text-[14px] font-bold text-[#276152]">
+                {selectedReferrer
+                  ? `@${selectedReferrer.username}`
+                  : "None (Root)"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedReferrer(null)}
+              className={cn(
+                "w-full rounded-[8px] border p-2 text-left text-[13px] font-semibold transition-colors",
+                !selectedReferrer
+                  ? "border-[#276152] bg-[#276152]/5 text-[#276152]"
+                  : "border-gray-200 text-gray-500 hover:bg-gray-50"
+              )}
+            >
+              Set as Root (no referrer)
+            </button>
+
+            <Input
+              value={referrerSearch}
+              onChange={(e) => setReferrerSearch(e.target.value)}
+              placeholder="Search by username, email or full name..."
+            />
+
+            <div className="custom-scrollbar max-h-[240px] space-y-1 overflow-y-auto">
+              {searchingReferrer ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#276152]" />
+                </div>
+              ) : referrerResults.length > 0 ? (
+                referrerResults.map((candidate: any) => (
+                  <button
+                    key={candidate._id}
+                    type="button"
+                    onClick={() => setSelectedReferrer(candidate)}
+                    className={cn(
+                      "flex w-full flex-col rounded-[8px] border p-2 text-left transition-colors",
+                      selectedReferrer?._id === candidate._id
+                        ? "border-[#276152] bg-[#276152]/5"
+                        : "border-transparent hover:bg-gray-50"
+                    )}
+                  >
+                    <span className="text-[13px] font-bold text-gray-900">
+                      @{candidate.username}{" "}
+                      <span className="font-medium text-gray-500">
+                        {candidate.fullName}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {candidate.email}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="py-6 text-center text-[12px] text-gray-400 italic">
+                  {referrerSearch
+                    ? "No users found"
+                    : "Type to search for a user"}
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsReferrerDialogOpen(false)}
+              disabled={changingReferrer}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangeReferrer}
+              disabled={changingReferrer}
+              className="bg-[#276152] font-bold text-white hover:bg-[#1e4a3f]"
+            >
+              {changingReferrer && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

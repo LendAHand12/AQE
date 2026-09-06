@@ -8,6 +8,7 @@ import {
     deleteUser,
     getUserById,
     getDirectReferrals,
+    updateUserReferrer,
     generate2FA,
     enable2FA,
     disable2FA,
@@ -17,7 +18,9 @@ import {
     updateSubadmin,
     deleteAdminAccount,
     getWalletConnections,
-    manualDepositUser
+    manualDepositUser,
+    getAdminSystemConfig,
+    updateAdminSystemConfig
 } from '../controllers/adminController.js';
 import { updateTokenSettings, getExplorerStats } from '../controllers/blockchainController.js';
 import { getPlinkoSettingsAdmin, updatePlinkoSettingsAdmin } from '../controllers/plinkoController.js';
@@ -85,6 +88,7 @@ router.route('/users/:id')
     .delete(adminProtect, deleteUser);
 
 router.get('/users/:id/referrals', adminProtect, getDirectReferrals);
+router.put('/users/:id/referrer', adminProtect, updateUserReferrer);
 router.post('/users/:id/manual-deposit', adminProtect, manualDepositUser);
 
 router.route('/token-settings')
@@ -134,5 +138,9 @@ router.route('/accounts')
 router.route('/accounts/:id')
     .put(adminProtect, updateSubadmin)
     .delete(adminProtect, deleteAdminAccount);
+
+// System Config Management
+router.get('/config', adminProtect, getAdminSystemConfig);
+router.put('/config/:key', adminProtect, updateAdminSystemConfig);
 
 export default router;

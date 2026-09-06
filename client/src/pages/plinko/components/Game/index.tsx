@@ -60,45 +60,48 @@ export function Game() {
   const lines: LinesType = 16
   const inGameBallsCount = useGameStore((state: any) => state.gamesRunning)
 
-  const [betAmount, setBetAmount] = useState<number>(1)
   const [ballCount, setBallCount] = useState<number>(1)
-  const [pointsToAqeRate, setPointsToAqeRate] = useState<number>(1)
+  const [plinkoBaseReward, setPlinkoBaseReward] = useState<number>(1)
 
-  const [localPoints, setLocalPoints] = useState<number | null>(null)
+  const [localBalls, setLocalBalls] = useState<number | null>(null)
+  const [localPendingReward, setLocalPendingReward] = useState<number | null>(null)
   const [localBalance, setLocalBalance] = useState<number | null>(null)
-  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; bet: number; multiplier: number; timestamp: Date }[]>([])
+  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; multiplier: number; timestamp: Date }[]>([])
   const [latestReward, setLatestReward] = useState<{ amount: number; multiplier: number; key: number } | null>(null)
 
-  // Conversion modal state
-  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false)
-  const [convertAmount, setConvertAmount] = useState<string>('')
-  const [isConverting, setIsConverting] = useState(false)
+  // Claim modal state
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
+  const [isClaiming, setIsClaiming] = useState(false)
 
   useEffect(() => {
-    if (user && localPoints === null) {
-      setLocalPoints(user.plinkoPoints || 0)
+    if (user && localBalls === null) {
+      setLocalBalls(user.plinkoBalls || 0)
+      setLocalPendingReward(user.plinkoAqeReward || 0)
       setLocalBalance(user.aqeBalance || 0)
     }
-  }, [user, localPoints])
+  }, [user, localBalls])
 
-  const pointsDisplay = localPoints !== null ? localPoints : (user?.plinkoPoints || 0)
+  const ballsDisplay = localBalls !== null ? localBalls : (user?.plinkoBalls || 0)
+  const pendingRewardDisplay = localPendingReward !== null ? localPendingReward : (user?.plinkoAqeReward || 0)
   const balanceDisplay = localBalance !== null ? localBalance : (user?.aqeBalance || 0)
 
   const fetchPlinkoInfo = useCallback(async () => {
     try {
       const res = await apiClient.get('/plinko/info')
       if (res.data) {
-        if (res.data.plinkoPoints !== undefined) {
-          setLocalPoints(res.data.plinkoPoints)
+        if (res.data.plinkoBalls !== undefined) {
+          setLocalBalls(res.data.plinkoBalls)
+        }
+        if (res.data.plinkoAqeReward !== undefined) {
+          setLocalPendingReward(res.data.plinkoAqeReward)
         }
         if (res.data.settings) {
-          setPointsToAqeRate(res.data.settings.pointsToAqeRate !== undefined ? res.data.settings.pointsToAqeRate : 1)
+          setPlinkoBaseReward(res.data.settings.plinkoBaseReward !== undefined ? res.data.settings.plinkoBaseReward : 1)
         }
         if (res.data.history) {
           const historyMapped = res.data.history.map((item: any) => ({
             id: item._id,
             reward: item.rewardAmount,
-            bet: item.betAmount || 1,
             multiplier: item.multiplier || 1,
             timestamp: new Date(item.playedAt || item.createdAt)
           }))
@@ -378,7 +381,7 @@ export function Game() {
   }, [lines])
 
   const addBall = useCallback(
-    (bet: number) => {
+    () => {
       incrementInGameBallsCount()
       const ballSound = new Audio(ballAudio)
       ballSound.volume = 0.2
@@ -401,7 +404,7 @@ export function Game() {
       const ball = Bodies.circle(ballX, 20, ballConfig.ballSize, {
         restitution: ballRestitution,
         friction: ballFriction,
-        label: `ball-${bet}`,
+        label: `ball-${new Date().getTime()}-${Math.random()}`,
         id: new Date().getTime() + Math.random(),
         frictionAir: ballFrictionAir,
         collisionFilter: {
@@ -457,38 +460,36 @@ export function Game() {
       }
     }
 
-    const parts = ball.label.split('-')
-    const bet = parseFloat(parts[1]) || 1
-
     const blockParts = multiplier.label.split('-')
     const parsedSlot = parseInt(blockParts[1], 10)
     const slotIndex = !isNaN(parsedSlot) && parsedSlot >= 0 ? parsedSlot : 8
 
     try {
       const res = await apiClient.post('/plinko/play', {
-        betAmount: bet,
         slotIndex
       })
 
       if (res.data && res.data.success) {
-        const { rewardAmount, multiplier: multiplierVal, newPoints } = res.data
+        const { rewardAmount, multiplier: multiplierVal, newBalls, newPendingReward } = res.data
 
         const multiplierSong = new Audio(getMultiplierSound(multiplierVal as MultiplierValues))
         multiplierSong.currentTime = 0
         multiplierSong.volume = 0.2
         multiplierSong.play().catch(e => console.warn(e))
 
-        if (newPoints !== undefined) {
-          setLocalPoints(newPoints)
+        if (newBalls !== undefined) {
+          setLocalBalls(newBalls)
+        }
+        if (newPendingReward !== undefined) {
+          setLocalPendingReward(newPendingReward)
         } else {
-          setLocalPoints(prev => (prev !== null ? prev : (user?.plinkoPoints || 0)) + rewardAmount)
+          setLocalPendingReward(prev => (prev !== null ? prev : (user?.plinkoAqeReward || 0)) + rewardAmount)
         }
 
         setDropHistory(prev => [
           {
             id: Math.random().toString(),
             reward: rewardAmount,
-            bet,
             multiplier: multiplierVal,
             timestamp: new Date()
           },
@@ -542,30 +543,29 @@ export function Game() {
     }
   }, [lines])
 
-  const handleBet = async () => {
-    const totalBet = betAmount * ballCount
+  const handleDrop = async () => {
     if (isLaunchingRef.current || isLoading || inGameBallsCount + ballCount > 15) return
-    if (totalBet <= 0 || pointsDisplay < totalBet) {
-      toast.error(t('plinko.insufficient_points', 'Số điểm của bạn không đủ để đặt cược'))
+    if (ballCount <= 0 || ballsDisplay < ballCount) {
+      toast.error(t('plinko.insufficient_balls', 'Số lượt thả bóng của bạn không đủ'))
       return
     }
 
     isLaunchingRef.current = true
     setIsLoading(true)
 
-    // Deduct total bet points immediately on client UI
-    setLocalPoints(prev => Math.max(0, (prev !== null ? prev : (user?.plinkoPoints || 0)) - totalBet))
+    // Deduct balls immediately on client UI
+    setLocalBalls(prev => Math.max(0, (prev !== null ? prev : (user?.plinkoBalls || 0)) - ballCount))
 
     try {
       for (let i = 0; i < ballCount; i++) {
         setTimeout(() => {
-          addBall(betAmount)
+          addBall()
         }, i * 150)
       }
     } catch (e: any) {
       console.warn("Error launching balls:", e)
       toast.error(t('plinko.play_error', 'Lỗi khi thả banh'))
-      setLocalPoints(user?.plinkoPoints || 0)
+      setLocalBalls(user?.plinkoBalls || 0)
     }
 
     const lockDuration = Math.max(500, (ballCount - 1) * 150 + 500)
@@ -575,39 +575,29 @@ export function Game() {
     }, lockDuration)
   }
 
-  const handleConvertPoints = async () => {
-    const pointsNum = parseFloat(convertAmount)
-    if (isNaN(pointsNum) || pointsNum <= 0) {
-      toast.error(t('plinko.invalid_convert_amount', 'Vui lòng nhập số điểm hợp lệ'))
-      return
-    }
-    if (pointsNum > pointsDisplay) {
-      toast.error(t('plinko.convert_exceeds_points', 'Số điểm quy đổi vượt quá số điểm hiện có'))
-      return
-    }
+  const handleClaimReward = async () => {
+    if (pendingRewardDisplay <= 0) return
 
-    setIsConverting(true)
+    setIsClaiming(true)
     try {
-      const res = await apiClient.post('/plinko/convert', { points: pointsNum })
+      const res = await apiClient.post('/plinko/claim')
       if (res.data.success) {
         toast.success(
-          t('plinko.convert_success', {
-            points: res.data.convertedPoints,
-            aqe: res.data.aqeReceived,
-            defaultValue: `Thành công quy đổi ${res.data.convertedPoints} điểm sang ${res.data.aqeReceived} AQE!`
+          t('plinko.claim_success', {
+            aqe: res.data.claimedAmount,
+            defaultValue: `Claim thành công ${res.data.claimedAmount} AQE!`
           })
         )
-        setLocalPoints(res.data.newPoints)
+        setLocalPendingReward(res.data.newPendingReward)
         setLocalBalance(res.data.newAqeBalance)
-        setIsConvertModalOpen(false)
-        setConvertAmount('')
+        setIsClaimModalOpen(false)
         syncProfile()
       }
     } catch (e: any) {
-      const errMsg = e.response?.data?.message || t('plinko.convert_error', 'Quy đổi thất bại')
+      const errMsg = e.response?.data?.message || t('plinko.claim_error', 'Claim thất bại')
       toast.error(errMsg)
     } finally {
-      setIsConverting(false)
+      setIsClaiming(false)
     }
   }
 
@@ -617,27 +607,39 @@ export function Game() {
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Header Bar: Plinko Points & AQE Balance */}
+      {/* Top Header Bar: Plinko Balls, Pending AQE Reward & AQE Balance */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full px-6 py-4 bg-slate-900/80 border border-indigo-500/30 text-white rounded-2xl gap-4 shadow-[0_0_25px_rgba(99,102,241,0.12)] backdrop-blur-md z-10">
-        
-        {/* Plinko Points Balance */}
+
+        {/* Plinko Balls Available */}
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-full bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
             <Sparkles size={20} />
           </div>
           <div>
-            <span className="text-emerald-300/80 text-xs font-semibold uppercase tracking-wider block">{t('plinko.plinko_points', 'Plinko Points')}</span>
-            <span className="text-emerald-400 font-black text-2xl tracking-tight drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">{pointsDisplay.toFixed(2)} pts</span>
+            <span className="text-emerald-300/80 text-xs font-semibold uppercase tracking-wider block">{t('plinko.plinko_balls', 'Plinko Balls')}</span>
+            <span className="text-emerald-400 font-black text-2xl tracking-tight drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">{ballsDisplay} {t('plinko.balls', 'bóng')}</span>
           </div>
         </div>
 
-        {/* Action Button: Convert Points to AQE */}
+        {/* Pending AQE Reward */}
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+            <CircleDollarSign size={20} />
+          </div>
+          <div>
+            <span className="text-cyan-300/80 text-xs font-semibold uppercase tracking-wider block">{t('plinko.pending_reward', 'AQE chờ Claim')}</span>
+            <span className="text-cyan-400 font-black text-2xl tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{pendingRewardDisplay.toFixed(4)} AQE</span>
+          </div>
+        </div>
+
+        {/* Action Button: Claim Pending AQE Reward */}
         <button
-          onClick={() => setIsConvertModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white font-bold text-sm transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] active:scale-95"
+          onClick={() => setIsClaimModalOpen(true)}
+          disabled={pendingRewardDisplay <= 0}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white font-bold text-sm transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <ArrowRightLeft size={16} />
-          <span>{t('plinko.convert_to_aqe', 'Quy đổi sang AQE')}</span>
+          <span>{t('plinko.claim_aqe', 'Claim AQE')}</span>
         </button>
 
         {/* AQE Wallet Balance */}
@@ -663,7 +665,7 @@ export function Game() {
               key={`board-${latestReward.key}`}
               className="absolute top-6 right-6 text-cyan-400 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s flex flex-col items-end drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]"
             >
-              <span>+{latestReward.amount.toFixed(2)} pts</span>
+              <span>+{latestReward.amount.toFixed(4)} AQE</span>
               <span className="text-xs bg-indigo-950/80 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">x{latestReward.multiplier}</span>
             </div>
           )}
@@ -671,65 +673,15 @@ export function Game() {
 
         {/* Betting Panel Column */}
         <div className="flex flex-col items-stretch gap-5 w-full md:w-80 bg-slate-900/60 p-5 rounded-2xl border border-indigo-500/20 backdrop-blur-md shadow-lg">
-          
-          {/* Bet Amount Input */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">{t('plinko.bet_amount', 'Số điểm cược')}</label>
-              <span className="text-xs font-semibold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
-                {t('plinko.rate_info', '1 USDT = 1 Điểm')}
-              </span>
-            </div>
 
-            <div className="flex items-center gap-1 bg-slate-950 border-2 border-indigo-500/30 rounded-xl p-1.5 focus-within:border-cyan-400 transition-colors shadow-inner">
-              <input
-                type="number"
-                min={1}
-                max={pointsDisplay}
-                value={betAmount}
-                onChange={(e) => setBetAmount(Math.max(1, parseFloat(e.target.value) || 1))}
-                className="w-full bg-transparent px-3 py-1 font-black text-lg text-cyan-300 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setBetAmount(Math.max(1, Math.floor(betAmount / 2)))}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
-              >
-                ½
-              </button>
-              <button
-                type="button"
-                onClick={() => setBetAmount(Math.min(pointsDisplay, betAmount * 2))}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
-              >
-                2x
-              </button>
-              <button
-                type="button"
-                onClick={() => setBetAmount(Math.max(1, pointsDisplay))}
-                className="px-2.5 py-1 text-xs font-bold bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-800/80 rounded-lg transition-colors"
-              >
-                Max
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Bet Buttons */}
-          <div className="grid grid-cols-4 gap-2">
-            {[1, 5, 10, 50].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setBetAmount(preset)}
-                className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
-                  betAmount === preset 
-                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.4)]' 
-                    : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                {preset} pts
-              </button>
-            ))}
+          {/* Info banner */}
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
+              {t('plinko.rate_info', '10 USDT = 1 Bóng')}
+            </span>
+            <span className="text-xs font-semibold text-indigo-300 bg-indigo-950/60 px-2.5 py-0.5 rounded-full border border-indigo-500/30">
+              {t('plinko.base_reward_info', { rate: plinkoBaseReward, defaultValue: `AQE = ${plinkoBaseReward} × Multiplier` })}
+            </span>
           </div>
 
           {/* Balls to Drop Selection */}
@@ -739,7 +691,7 @@ export function Game() {
                 {t('plinko.balls_to_drop', 'Số bóng thả:')}
               </label>
               <span className="text-xs font-bold text-indigo-300">
-                {t('plinko.total_bet', { totalBet: betAmount * ballCount, defaultValue: `Tổng: ${betAmount * ballCount} pts` })}
+                {t('plinko.balls_available', { count: ballsDisplay, defaultValue: `Khả dụng: ${ballsDisplay} bóng` })}
               </span>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -749,8 +701,8 @@ export function Game() {
                   type="button"
                   onClick={() => setBallCount(count)}
                   className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
-                    ballCount === count 
-                      ? 'bg-cyan-600 text-white border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' 
+                    ballCount === count
+                      ? 'bg-cyan-600 text-white border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]'
                       : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
@@ -762,8 +714,8 @@ export function Game() {
 
           {/* Drop Ball Button */}
           <button
-            onClick={handleBet}
-            disabled={isLoading || isLaunchingRef.current || pointsDisplay < betAmount * ballCount || inGameBallsCount + ballCount > 15}
+            onClick={handleDrop}
+            disabled={isLoading || isLaunchingRef.current || ballsDisplay < ballCount || inGameBallsCount + ballCount > 15}
             className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 active:scale-[0.98] text-white font-black text-lg shadow-[0_0_25px_rgba(129,140,248,0.35)] transition-all focus:outline-none disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:border disabled:border-slate-700 pointer-events-auto disabled:pointer-events-none"
           >
             {isLoading ? (
@@ -771,13 +723,12 @@ export function Game() {
                 <RefreshCw className="animate-spin h-5 w-5" />
                 {t('plinko.processing', 'Đang thả banh...')}
               </span>
-            ) : pointsDisplay < betAmount * ballCount ? (
-              t('plinko.no_points', 'Không đủ điểm Plinko')
+            ) : ballsDisplay < ballCount ? (
+              t('plinko.no_balls', 'Không đủ bóng Plinko')
             ) : (
               t('plinko.drop_balls_btn', {
                 count: ballCount,
-                totalBet: betAmount * ballCount,
-                defaultValue: `Thả ${ballCount} Banh (${betAmount * ballCount} Điểm)`
+                defaultValue: `Thả ${ballCount} Bóng`
               })
             )}
           </button>
@@ -803,7 +754,7 @@ export function Game() {
                         {formatDropTime(item.timestamp, t)}
                       </span>
                       <span className="text-xs font-bold text-slate-300">
-                        {t('plinko.bet_history_bet', { bet: item.bet, defaultValue: `Cược ${item.bet} pts` })}
+                        {t('plinko.bet_history_ball', 'Thả 1 bóng')}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -811,7 +762,7 @@ export function Game() {
                         x{item.multiplier}
                       </span>
                       <span className="text-xs font-black text-emerald-400">
-                        +{item.reward.toFixed(2)} pts
+                        +{item.reward.toFixed(4)} AQE
                       </span>
                     </div>
                   </div>
@@ -823,12 +774,12 @@ export function Game() {
         </div>
       </div>
 
-      {/* Convert Points Modal */}
-      {isConvertModalOpen && (
+      {/* Claim Reward Modal */}
+      {isClaimModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[0_0_50px_rgba(79,70,229,0.25)] text-white space-y-6 relative animate-in zoom-in-95 duration-200">
             <button
-              onClick={() => setIsConvertModalOpen(false)}
+              onClick={() => setIsClaimModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors"
             >
               <X size={20} />
@@ -837,72 +788,40 @@ export function Game() {
             <div className="space-y-1">
               <h3 className="text-xl font-black text-white flex items-center gap-2">
                 <CircleDollarSign className="w-6 h-6 text-emerald-400" />
-                {t('plinko.convert_modal_title', 'Quy đổi điểm sang AQE')}
+                {t('plinko.claim_modal_title', 'Claim thưởng AQE')}
               </h3>
               <p className="text-xs text-slate-400 font-medium">
-                {t('plinko.convert_modal_desc', 'Chuyển đổi điểm Plinko tích lũy từ trò chơi thành Token AQE chính thức.')}
+                {t('plinko.claim_modal_desc', 'Chuyển toàn bộ AQE thưởng từ Plinko vào số dư AQE chính thức của bạn.')}
               </p>
             </div>
 
             <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-2">
-              <div className="flex justify-between text-xs text-indigo-300 font-bold">
-                <span>{t('plinko.convert_rate', 'Tỷ lệ quy đổi:')}</span>
-                <span>1 Plinko Point = {pointsToAqeRate} AQE</span>
+              <div className="flex justify-between text-xs text-cyan-300 font-bold">
+                <span>{t('plinko.available_reward', 'AQE chờ Claim:')}</span>
+                <span className="font-black text-lg text-cyan-400">{pendingRewardDisplay.toFixed(4)} AQE</span>
               </div>
               <div className="flex justify-between text-xs text-emerald-400 font-medium">
-                <span>{t('plinko.available_points', 'Điểm Plinko khả dụng:')}</span>
-                <span className="font-bold">{pointsDisplay.toFixed(2)} pts</span>
+                <span>{t('plinko.current_aqe_balance', 'Số dư AQE hiện tại:')}</span>
+                <span className="font-bold">{balanceDisplay.toFixed(2)} AQE</span>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-extrabold text-slate-300 uppercase tracking-wider block">
-                {t('plinko.enter_points_to_convert', 'Nhập số điểm cần quy đổi')}
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  placeholder="e.g. 100"
-                  value={convertAmount}
-                  onChange={(e) => setConvertAmount(e.target.value)}
-                  className="w-full h-12 rounded-xl bg-slate-950 border-2 border-slate-800 px-4 font-black text-lg text-cyan-300 focus:border-indigo-500 focus:outline-none pr-16"
-                />
-                <button
-                  type="button"
-                  onClick={() => setConvertAmount(pointsDisplay.toString())}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-300 hover:text-white px-2 py-1 rounded-md bg-indigo-900/60 border border-indigo-500/30"
-                >
-                  {t('plinko.all', 'Tất cả')}
-                </button>
-              </div>
-
-              {/* AQE Preview */}
-              {parseFloat(convertAmount) > 0 && (
-                <div className="pt-2 flex justify-between items-center text-sm font-bold text-slate-200">
-                  <span className="text-slate-400">{t('plinko.aqe_received', 'Số AQE nhận được:')}</span>
-                  <span className="text-amber-400 font-black text-lg">
-                    {(parseFloat(convertAmount) * pointsToAqeRate).toFixed(4)} AQE
-                  </span>
-                </div>
-              )}
             </div>
 
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsConvertModalOpen(false)}
+                onClick={() => setIsClaimModalOpen(false)}
                 className="flex-1 py-3.5 rounded-xl border border-slate-800 text-slate-300 font-bold hover:bg-slate-800 transition-colors text-sm"
               >
                 {t('plinko.cancel', 'Hủy bỏ')}
               </button>
               <button
                 type="button"
-                onClick={handleConvertPoints}
-                disabled={isConverting || !parseFloat(convertAmount) || parseFloat(convertAmount) <= 0}
+                onClick={handleClaimReward}
+                disabled={isClaiming || pendingRewardDisplay <= 0}
                 className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-extrabold text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
               >
-                {isConverting ? <RefreshCw className="animate-spin w-4 h-4" /> : null}
-                {t('plinko.convert_now', 'Quy đổi ngay')}
+                {isClaiming ? <RefreshCw className="animate-spin w-4 h-4" /> : null}
+                {t('plinko.claim_now', 'Claim ngay')}
               </button>
             </div>
           </div>

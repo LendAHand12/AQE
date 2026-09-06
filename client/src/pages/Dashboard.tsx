@@ -11,12 +11,20 @@ import {
   Plus, 
   ArrowUp,
   Loader2,
-  Link2
+  Link2,
+  CheckCircle2,
+  Clock
 } from "lucide-react"
 import { toast } from "sonner"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import apiClient from "@/lib/axios"
 import dayjs from "dayjs"
+import { PackageDetailModal } from "@/components/PackageDetailModal"
+
+const getImageUrl = (url?: string) => {
+  if (!url) return ''
+  return url.startsWith('/uploads') ? import.meta.env.VITE_API_URL.replace('/api', '') + url : url
+}
 
 export default function Dashboard() {
   const { t } = useTranslation()
@@ -36,6 +44,7 @@ export default function Dashboard() {
   const [monthlyCommission, setMonthlyCommission] = useState(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [referralStats, setReferralStats] = useState<any>(null)
+  const [showPackageDetail, setShowPackageDetail] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,7 +142,7 @@ export default function Dashboard() {
     {
       label: t("dashboard.buy_token", "Mua AQE"),
       icon: Plus,
-      path: "/pre-register",
+      path: "/buy",
     },
     {
       label: t("dashboard.withdraw", "Rút tiền"),
@@ -259,9 +268,116 @@ export default function Dashboard() {
         })}
       </div>
 
+      {/* Purchased Package + Invite Friends Row */}
+      <div className={`grid grid-cols-1 gap-6 items-stretch ${userProfile?.purchasedPackages?.length > 0 ? 'xl:grid-cols-2' : ''}`}>
+      {userProfile?.purchasedPackages && userProfile.purchasedPackages.length > 0 && (() => {
+        const purchased = userProfile.purchasedPackages[0]
+        const pkg = purchased.packageId
+        const imageUrl = pkg?.imageUrl
+
+        const benefitItems = [
+          { show: !!pkg?.vipLounge, label: t("packages.comparison.vip_lounge_desc") },
+          { show: !!pkg?.roomService, label: t("packages.comparison.room_service_desc") },
+          { show: !!pkg?.transportation, label: t("packages.comparison.transportation_desc") },
+          { show: !!pkg?.savings, label: t("packages.comparison.savings_desc", { value: pkg?.savings }) },
+          { show: !!pkg?.priority, label: t("packages.comparison.priority") },
+          { show: !!pkg?.concierge, label: t("packages.comparison.concierge") },
+        ].filter((b) => b.show)
+
+        return (
+          <>
+            <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+
+              <button
+                type="button"
+                onClick={() => setShowPackageDetail(true)}
+                className="w-[150px] md:w-[170px] aspect-[2/3.1] relative rounded-2xl overflow-hidden shrink-0 shadow-md group cursor-pointer"
+              >
+                {imageUrl ? (
+                  <img src={getImageUrl(imageUrl)} alt={purchased.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-[#276152] flex items-center justify-center text-white font-bold text-lg text-center px-4">
+                    {purchased.title}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    {t("packages.view_details")}
+                  </span>
+                </div>
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-emerald-700 shadow-sm flex items-center gap-1">
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                  {t("packages.owned")}
+                </div>
+              </button>
+
+              <div className="flex-1 space-y-4 z-10 w-full">
+                <div>
+                  <h3 className="text-[13px] font-bold text-emerald-600 uppercase tracking-wider mb-1">{t("packages.your_current_package")}</h3>
+                  <h2 className="text-2xl font-bold text-[#111827]">{purchased.title}</h2>
+                  {purchased.purchasedAt && (
+                    <p className="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1">
+                      <Clock size={12} />
+                      {t("packages.purchased_at")} {dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <p className="text-[11px] text-gray-500 font-bold uppercase">{t("packages.invested_amount")}</p>
+                    <p className="text-lg font-black text-[#111827]">${purchased.price.toLocaleString()} USDT</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                    <p className="text-[11px] text-emerald-600 font-bold uppercase">{t("packages.aqe_received_label")}</p>
+                    <p className="text-lg font-black text-emerald-700">{purchased.aqeAmount.toLocaleString()} AQE</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPackageDetail(true)}
+                  className="text-[13px] font-bold text-[#276152] hover:underline"
+                >
+                  {t("packages.view_details")} →
+                </button>
+              </div>
+            </div>
+
+            {/* Purchased Package Detail Popup */}
+            {showPackageDetail && (
+              <PackageDetailModal
+                title={purchased.title}
+                imageUrl={imageUrl}
+                subtitle={purchased.purchasedAt ? `${t("packages.purchased_at")} ${dayjs(purchased.purchasedAt).format("HH:mm DD/MM/YYYY")}` : undefined}
+                badgeLabel={t("packages.owned")}
+                investment={{ label: t("packages.invested_amount"), value: `$${purchased.price.toLocaleString()} USDT` }}
+                aqeReceived={{ label: t("packages.aqe_received_label"), value: `${purchased.aqeAmount.toLocaleString()} AQE` }}
+                aqeRequired={pkg?.aqeRequired > 0 ? { label: t("packages.aqe_required_label"), value: `${pkg.aqeRequired.toLocaleString()} AQE` } : undefined}
+                stay={{ label: t("packages.comparison.stay_days"), value: pkg?.stayDays || "—" }}
+                roomType={{ label: t("packages.comparison.room_type"), value: pkg?.roomType || "—" }}
+                benefitsTitle={t("packages.included_benefits")}
+                benefits={benefitItems.map((b) => b.label)}
+                guests={{ label: t("packages.comparison.guests"), value: pkg?.guests || "—" }}
+                savings={{ label: t("packages.comparison.savings"), value: pkg?.savings || "—" }}
+                wellness={{ label: t("packages.comparison.wellness"), value: pkg?.wellness ? t("packages.included") : t("packages.not_included"), included: !!pkg?.wellness }}
+                closeLabel={t("packages.close_btn")}
+                primaryLabel={t("packages.view_all_packages")}
+                onClose={() => setShowPackageDetail(false)}
+                onPrimaryClick={() => {
+                  setShowPackageDetail(false)
+                  navigate("/partnership-packages")
+                }}
+              />
+            )}
+          </>
+        )
+      })()}
+
       {/* Referral / Invite Friends Card */}
-      <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-[#efefef] rounded-[24px] p-6 hover:shadow-md hover:border-[#276152]/20 transition-all duration-300 relative overflow-hidden h-full">
+        <div className="flex flex-col gap-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-full bg-[#d9ede8] flex items-center justify-center text-[#276152] shrink-0">
@@ -276,7 +392,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:w-1/2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
             <div className="flex-1 bg-gray-50 rounded-[12px] px-4 h-11 flex items-center overflow-hidden border border-gray-100 relative min-w-[200px]">
               <span className="text-[13px] font-medium text-gray-500 truncate">
                 {FRONTEND_URL ? `${FRONTEND_URL.replace(/^https?:\/\//, '')}/register?ref=${userProfile?.username || 'TN2024AQE'}` : `register?ref=${userProfile?.username || 'TN2024AQE'}`}
@@ -301,7 +417,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="flex items-center gap-6 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 shrink-0 text-[13px]">
+          <div className="flex items-center gap-6 border-t border-gray-100 pt-4 shrink-0 text-[13px]">
             <div>
               <p className="text-gray-400 font-medium">{t("pre_register.total_referrals")}</p>
               <p className="text-[20px] font-black text-[#276152]">{referralStats?.totalReferrals || 0}</p>
@@ -312,6 +428,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Quick Actions Row */}

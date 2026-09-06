@@ -79,6 +79,13 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
+    category: "Swap Requests",
+    permissions: [
+      { id: "SWAP_VIEW", label: "View Swap Requests" },
+      { id: "SWAP_APPROVE", label: "Approve/Reject/Complete Swap Requests" },
+    ]
+  },
+  {
     category: "Pool Settings",
     permissions: [
       { id: "SETTINGS_VIEW", label: "View Pool Settings" },

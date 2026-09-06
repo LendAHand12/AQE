@@ -25,6 +25,9 @@ import kycRoutes from './routes/kycRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import bonusRoutes from './routes/bonusRoutes.js';
 import plinkoRoutes from './routes/plinkoRoutes.js';
+import configRoutes from './routes/configRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import swapRoutes from './routes/swapRoutes.js';
 import { initCronJobs } from './services/cronService.js';
 import { initPaymentListener } from './services/paymentListener.js';
 import { createServer } from 'http';
@@ -65,6 +68,9 @@ app.use('/api/kyc', kycRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/bonus', bonusRoutes);
 app.use('/api/plinko', plinkoRoutes);
+app.use('/api/config', configRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/swap', swapRoutes);
 
 // Root route
 app.get('/', (req, res) => {
