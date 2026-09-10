@@ -54,7 +54,15 @@ export default function AssetsPage() {
     totalRemainingBonus: 0,
     totalExpectedBonus: 0,
     hasClaimedThisMonth: false,
-    schedule: []
+    schedule: [],
+
+    provisionalUsdtInterest: 0,
+    claimableUsdtInterest: 0,
+    totalInterestReceived: 0,
+    totalRemainingInterest: 0,
+    totalExpectedInterest: 0,
+    hasClaimedInterestThisMonth: false,
+    interestSchedule: []
   })
   const [claimingBonus, setClaimingBonus] = useState(false)
   const [bonusPage, setBonusPage] = useState(1)
@@ -62,6 +70,13 @@ export default function AssetsPage() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
   const [isClaimConfirmOpen, setIsClaimConfirmOpen] = useState(false)
   const [claimType, setClaimType] = useState<'USDT' | 'AQE'>('USDT')
+
+  // USDT Interest (6% APR on total deposited) state
+  const [claimingInterest, setClaimingInterest] = useState(false)
+  const [interestPage, setInterestPage] = useState(1)
+  const interestLimit = 10
+  const [isInterestScheduleOpen, setIsInterestScheduleOpen] = useState(false)
+  const [isInterestClaimConfirmOpen, setIsInterestClaimConfirmOpen] = useState(false)
 
   // Withdrawal Modal State
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
@@ -210,6 +225,30 @@ export default function AssetsPage() {
     }
   };
 
+  const handleClaimInterest = async () => {
+    if (bonusInfo.claimableUsdtInterest <= 0) {
+      toast.error(t("assets.interest.no_claimable"));
+      return;
+    }
+
+    setClaimingInterest(true);
+    try {
+      const res = await apiClient.post("/bonus/claim-interest");
+      toast.success(t(res.data.message || "assets.interest.claim_success"));
+      fetchData();
+      syncProfile();
+    } catch (err: any) {
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        toast.error(t(serverMsg));
+      } else {
+        toast.error(t("auth.errors.unknown"));
+      }
+    } finally {
+      setClaimingInterest(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
       <Loader2 className="h-10 w-10 animate-spin text-[#276152]" />
@@ -268,7 +307,7 @@ export default function AssetsPage() {
       </div>
 
       {/* Asset Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-gradient-to-br from-[#276152] to-[#1e4d40] text-white p-6 relative">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <Wallet size={120} />
@@ -315,7 +354,8 @@ export default function AssetsPage() {
           </div>
         </Card>
 
-        {/* AQE Bonus Card */}
+        {/* AQE Bonus Card (legacy - only shown while there's still something pending from the old system) */}
+        {(bonusInfo.provisionalAqeBonus > 0 || bonusInfo.claimableAqeBonus > 0 || bonusInfo.totalRemainingBonus > 0) && (
         <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white p-6 relative border border-gray-100 flex flex-col justify-between">
           <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500">
             <ShieldCheck size={120} />
@@ -377,6 +417,70 @@ export default function AssetsPage() {
               {bonusInfo.hasClaimedThisMonth
                 ? t("assets.bonus.already_claimed", "Already Claimed This Month")
                 : t("assets.bonus.claim_btn", "Claim")}
+            </Button>
+          </div>
+        </Card>
+        )}
+
+        {/* USDT Interest Card (6% APR on total USDT deposited) */}
+        <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white p-6 relative border border-gray-100 flex flex-col justify-between">
+          <div className="absolute top-0 right-0 p-8 opacity-5 text-cyan-500">
+            <ShieldCheck size={120} />
+          </div>
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="size-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
+                  <ArrowUpRight size={20} />
+                </div>
+                <span className="text-[14px] font-bold uppercase tracking-wider text-gray-500">{t("assets.interest.title", "USDT Interest")}</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[32px] font-black tracking-tight text-[#111827]">
+                {formatTruncated(bonusInfo.claimableUsdtInterest, 5)} <span className="text-[16px] font-bold text-gray-400 ml-1">USDT</span>
+              </p>
+              <div className="text-[12px] text-gray-400 font-bold uppercase tracking-wider">
+                {t("assets.interest.claimable", "Claimable Interest")}
+              </div>
+              <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.interest.total_expected", "Total Expected")}</span>
+                  <span className="font-bold text-gray-900">{formatTruncated(bonusInfo.totalExpectedInterest || 0, 5)} USDT</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.interest.total_received", "Total Received")}</span>
+                  <span className="font-bold text-[#276152]">+{formatTruncated(bonusInfo.totalInterestReceived || 0, 5)} USDT</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.interest.remaining", "Remaining")}</span>
+                  <span className="font-bold text-cyan-600">{formatTruncated(bonusInfo.totalRemainingInterest || 0, 5)} USDT</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-gray-500 font-medium">{t("assets.interest.provisional", "Provisional")}</span>
+                  <span className="font-bold text-blue-600">+{formatTruncated(bonusInfo.provisionalUsdtInterest || 0, 5)} USDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsInterestScheduleOpen(true)}
+              className="w-full h-[36px] border border-cyan-300 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50/50 rounded-[10px] font-bold text-[13px]"
+            >
+              {t("assets.interest.view_schedule_btn", "View Payout Schedule")}
+            </Button>
+            <Button
+              onClick={() => setIsInterestClaimConfirmOpen(true)}
+              disabled={claimingInterest || bonusInfo.claimableUsdtInterest <= 0 || bonusInfo.hasClaimedInterestThisMonth}
+              className="w-full h-[44px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold shadow-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none"
+            >
+              {claimingInterest ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {bonusInfo.hasClaimedInterestThisMonth
+                ? t("assets.interest.already_claimed", "Already Claimed This Month")
+                : t("assets.interest.claim_btn", "Claim")}
             </Button>
           </div>
         </Card>
@@ -634,9 +738,9 @@ export default function AssetsPage() {
             <DialogHeader className="space-y-1">
               <DialogTitle className="text-[24px] font-bold text-gray-900">{t("assets.withdraw_dialog.method_aqe")}</DialogTitle>
               <DialogDescription className="text-[14px] text-gray-500">
-                {user?.language === 'vi' 
-                  ? "Quy đổi số dư USDT hiện tại của bạn sang số dư AQE để hưởng lãi suất."
-                  : "Convert your current USDT balance to AQE balance to earn daily bonus."}
+                {user?.language === 'vi'
+                  ? "Quy đổi số dư USDT hiện tại của bạn sang số dư AQE."
+                  : "Convert your current USDT balance to AQE balance."}
               </DialogDescription>
             </DialogHeader>
 
@@ -693,9 +797,9 @@ export default function AssetsPage() {
               <div className="bg-amber-50 rounded-[16px] p-4 border border-amber-100 flex gap-3">
                 <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-[12px] text-amber-800 leading-relaxed">
-                  {user?.language === 'vi' 
-                    ? "Lưu ý: Số AQE được quy đổi sẽ được chuyển ngay lập tức vào số dư AQE của bạn và bắt đầu tính lãi 6% APR hàng ngày."
-                    : "Note: Converted AQE will be instantly credited to your AQE balance and start earning 6% APR daily bonus."}
+                  {user?.language === 'vi'
+                    ? "Lưu ý: Số AQE được quy đổi sẽ được chuyển ngay lập tức vào số dư AQE của bạn."
+                    : "Note: Converted AQE will be instantly credited to your AQE balance."}
                 </p>
               </div>
             </div>
@@ -875,6 +979,116 @@ export default function AssetsPage() {
               >
                 {claimingBonus ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {t("assets.bonus.claim_btn")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Interest Payout Schedule Dialog */}
+      <Dialog open={isInterestScheduleOpen} onOpenChange={setIsInterestScheduleOpen}>
+        <DialogContent className="max-w-2xl rounded-[24px] p-8 border-none shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-[24px] font-bold text-gray-900">
+              {t("assets.interest.schedule_title", "Interest Payout Schedule")}
+            </DialogTitle>
+            <DialogDescription className="text-[14px] text-gray-500">
+              {t("assets.interest.schedule_desc", "Projected daily interest based on your total USDT deposits.")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto my-4 pr-1">
+            <div className="bg-white border border-[#EFEFEF] rounded-[20px] overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#EFEFEF]/50">
+                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider">{t("assets.bonus.table_date")}</th>
+                    <th className="px-6 py-4 text-[12px] font-bold text-[#276152] uppercase tracking-wider text-right">{t("assets.bonus.table_amount")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EFEFEF]">
+                  {(() => {
+                    const paginatedSchedule = (bonusInfo.interestSchedule || []).slice(
+                      (interestPage - 1) * interestLimit,
+                      interestPage * interestLimit
+                    );
+                    if (paginatedSchedule.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={2} className="px-6 py-10 text-center text-[#868F9E] opacity-50">
+                            {t("assets.bonus.no_schedule")}
+                          </td>
+                        </tr>
+                      );
+                    }
+                    return paginatedSchedule.map((item: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="text-[14px] font-bold text-[#111827]">
+                            {dayjs(item.date).format("DD/MM/YYYY")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          <span className="text-[14px] font-bold text-cyan-600">
+                            +{formatTruncated(item.amount, 5)} USDT
+                          </span>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {bonusInfo.interestSchedule && bonusInfo.interestSchedule.length > interestLimit && (
+            <div className="pt-2">
+              <Pagination
+                currentPage={interestPage}
+                totalPages={Math.ceil(bonusInfo.interestSchedule.length / interestLimit)}
+                totalItems={bonusInfo.interestSchedule.length}
+                onPageChange={setInterestPage}
+                disabled={fetching}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Interest Claim Confirmation Dialog */}
+      <Dialog open={isInterestClaimConfirmOpen} onOpenChange={setIsInterestClaimConfirmOpen}>
+        <DialogContent className="max-w-md rounded-[24px] p-8 border-none shadow-2xl">
+          <div className="space-y-6">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-[24px] font-bold text-gray-900">
+                {t("assets.interest.confirm_title", "Claim USDT Interest")}
+              </DialogTitle>
+              <DialogDescription className="text-[14px] text-gray-500 leading-relaxed">
+                {t("assets.interest.confirm_desc", {
+                  amount: formatTruncated(bonusInfo.claimableUsdtInterest, 5),
+                  defaultValue: `${formatTruncated(bonusInfo.claimableUsdtInterest, 5)} USDT will be added directly to your USDT balance.`
+                })}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsInterestClaimConfirmOpen(false)}
+                className="flex-1 h-[52px] rounded-[16px] font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
+              >
+                {t("assets.bonus.confirm_cancel")}
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsInterestClaimConfirmOpen(false);
+                  handleClaimInterest();
+                }}
+                disabled={claimingInterest}
+                className="flex-1 h-[52px] bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[16px] font-bold gap-2"
+              >
+                {claimingInterest ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {t("assets.interest.claim_btn", "Claim")}
               </Button>
             </div>
           </div>

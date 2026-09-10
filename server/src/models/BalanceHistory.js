@@ -20,7 +20,7 @@ const balanceHistorySchema = mongoose.Schema({
     }, // AQE, HEWE, etc.
     type: { 
         type: String, 
-        enum: ['RECEIVE', 'SWAP', 'REWARD', 'WITHDRAW', 'TRANSFER', 'BUY_ASSET', 'COMMISSION', 'DEPOSIT', 'REFUND', 'BONUS', 'CLAIM_BONUS'], 
+        enum: ['RECEIVE', 'SWAP', 'REWARD', 'WITHDRAW', 'TRANSFER', 'BUY_ASSET', 'COMMISSION', 'DEPOSIT', 'REFUND', 'BONUS', 'CLAIM_BONUS', 'CLAIM_INTEREST'],
         required: true 
     },
     status: { 

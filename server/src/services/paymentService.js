@@ -490,7 +490,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
 /**
  * Process a manual deposit by Admin
  */
-export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount, hash, adminUsername) => {
+export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount, hash, adminUsername, countsForInterest = true) => {
     console.log('[Manual Deposit] Processing for user:', adminUsername);
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
@@ -534,6 +534,7 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
         type: 'PAYMENT',
         status: 'SUCCESS',
         description: `Manual Deposit by Admin (${adminUsername})`,
+        countsForInterest: countsForInterest !== false,
         metadata: {
             isManual: true,
             admin: adminUsername

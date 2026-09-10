@@ -394,6 +394,27 @@
       "view_schedule_btn": "Ver calendario de pagos",
       "no_schedule": "No hay pagos próximos"
     },
+    "interest": {
+      "title": "Interés USDT",
+      "total_expected": "Total esperado",
+      "total_received": "Total recibido",
+      "provisional": "Provisional",
+      "claimable": "Interés reclamable",
+      "claim_btn": "Reclamar",
+      "already_claimed": "Ya reclamado este mes",
+      "claim_success": "Reclamo exitoso",
+      "error_already_claimed": "Ya has reclamado el interés este mes. Por favor regrese a principios del próximo mes.",
+      "error_no_interest": "No hay interés USDT reclamable",
+      "no_claimable": "No hay ningún interés reclamable disponible",
+      "confirm_title": "Reclamar Interés USDT",
+      "confirm_desc": "{{amount}} USDT se agregarán directamente a tu saldo USDT.",
+      "confirm_cancel": "Cancelar",
+      "remaining": "Restante",
+      "schedule_title": "Calendario de pagos de interés",
+      "schedule_desc": "Cronograma proyectado de interés diario según el total de USDT depositado.",
+      "view_schedule_btn": "Ver calendario de pagos",
+      "no_schedule": "No hay pagos próximos"
+    },
     "withdraw_btn": "Retirar USDT",
     "withdraw_history": "Historial de retiros",
     "table": {

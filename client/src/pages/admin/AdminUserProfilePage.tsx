@@ -266,6 +266,7 @@ export default function AdminUserProfilePage() {
     packageId: "",
     payCommission: false,
     grantAqe: true,
+    countsForInterest: true,
   })
   const [depositing, setDepositing] = useState(false)
   const [packages, setPackages] = useState<any[]>([])
@@ -383,7 +384,7 @@ export default function AdminUserProfilePage() {
       toast.success("Manual deposit processed successfully")
       setIsDepositDialogOpen(false)
       fetchUserDetails()
-      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false, grantAqe: true })
+      setDepositData({ paidAmount: "", hash: "", depositType: "individual", packageId: "", payCommission: false, grantAqe: true, countsForInterest: true })
     } catch (err: any) {
       toast.error(
         err.response?.data?.message || "Could not process manual deposit"
@@ -2096,6 +2097,19 @@ export default function AdminUserProfilePage() {
               />
               <label htmlFor="payCommission" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
                 Pay referral commission to upline (default: no)
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="countsForInterest"
+                checked={depositData.countsForInterest}
+                onCheckedChange={(checked) =>
+                  setDepositData({ ...depositData, countsForInterest: !!checked })
+                }
+                className="border-gray-300 data-[state=checked]:bg-[#276152] data-[state=checked]:border-[#276152]"
+              />
+              <label htmlFor="countsForInterest" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+                Tính lãi 6%/năm cho giao dịch này (default: yes)
               </label>
             </div>
           </div>

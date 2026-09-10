@@ -1,7 +1,86 @@
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
+import Transaction from '../models/Transaction.js';
 import { getSystemTime, getStartOfDay } from '../utils/time.js';
 import { getSystemConfig } from '../utils/configHelper.js';
+
+// Build the day-by-day future interest schedule for a user's qualifying USDT deposits
+const buildInterestSchedule = async (userId) => {
+    const nowVN = getSystemTime();
+    const todayMidnight = getStartOfDay(nowVN);
+    const cutOffDateStr = process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
+    const cutOffDate = new Date(cutOffDateStr);
+
+    const deposits = await Transaction.find({
+        from: userId,
+        status: 'SUCCESS',
+        symbol: 'USDT',
+        type: 'PAYMENT',
+        countsForInterest: { $ne: false }
+    }).select('amount createdAt');
+
+    let maxInterestEndDate = null;
+    const processedDeposits = [];
+    let totalDeposited = 0;
+
+    for (const tx of deposits) {
+        totalDeposited += tx.amount;
+        const depositDateVN = getSystemTime(tx.createdAt);
+        let interestStartDate;
+        if (depositDateVN < cutOffDate) {
+            interestStartDate = getStartOfDay(cutOffDate);
+        } else {
+            interestStartDate = getStartOfDay(depositDateVN);
+        }
+        const interestEndDate = new Date(interestStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+        if (!maxInterestEndDate || interestEndDate > maxInterestEndDate) {
+            maxInterestEndDate = interestEndDate;
+        }
+
+        processedDeposits.push({
+            amount: tx.amount,
+            startDate: interestStartDate,
+            endDate: interestEndDate
+        });
+    }
+
+    // Check if today's daily interest has already been credited
+    const todayInterestExists = await BalanceHistory.findOne({
+        userId,
+        symbol: 'USDT',
+        type: 'BONUS',
+        status: 'SUCCESS',
+        createdAt: { $gte: todayMidnight }
+    });
+
+    const scheduleStartDate = todayInterestExists
+        ? new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000)
+        : new Date(todayMidnight.getTime());
+
+    const schedule = [];
+    if (maxInterestEndDate && maxInterestEndDate > scheduleStartDate) {
+        let currentDay = new Date(scheduleStartDate.getTime());
+        while (currentDay < maxInterestEndDate) {
+            let dailySum = 0;
+            processedDeposits.forEach(dep => {
+                if (currentDay >= dep.startDate && currentDay < dep.endDate) {
+                    dailySum += dep.amount * 0.06 / 365;
+                }
+            });
+
+            if (dailySum > 0) {
+                schedule.push({
+                    date: currentDay.toISOString(),
+                    amount: dailySum
+                });
+            }
+            currentDay.setDate(currentDay.getDate() + 1);
+        }
+    }
+
+    return { schedule, totalDeposited };
+};
 
 export const getBonusInfo = async (req, res) => {
     try {
@@ -148,6 +227,29 @@ export const getBonusInfo = async (req, res) => {
             createdAt: { $gte: startOfMonthDate }
         });
 
+        // --- New USDT interest system (based on total qualifying USDT deposited) ---
+        const { schedule: interestSchedule, totalDeposited } = await buildInterestSchedule(user._id);
+
+        let totalRemainingInterest = 0;
+        interestSchedule.forEach(item => {
+            totalRemainingInterest += item.amount;
+        });
+
+        const interestHistories = await BalanceHistory.find({
+            userId: user._id,
+            symbol: 'USDT',
+            status: 'SUCCESS',
+            type: 'BONUS'
+        }).select('amount');
+        const totalInterestReceived = interestHistories.reduce((sum, h) => sum + h.amount, 0);
+
+        const claimedInterestThisMonth = await BalanceHistory.findOne({
+            userId: user._id,
+            type: 'CLAIM_INTEREST',
+            status: 'SUCCESS',
+            createdAt: { $gte: startOfMonthDate }
+        });
+
         res.json({
             totalBonusReceived: totalBonusReceived,
             provisionalAqeBonus: user.provisionalAqeBonus || 0,
@@ -156,7 +258,15 @@ export const getBonusInfo = async (req, res) => {
             totalRemainingBonus: totalRemainingBonus,
             totalExpectedBonus: eligibleBalance * 0.06,
             hasClaimedThisMonth: !!claimedThisMonth,
-            schedule: schedule
+            schedule: schedule,
+
+            provisionalUsdtInterest: user.provisionalUsdtInterest || 0,
+            claimableUsdtInterest: user.claimableUsdtInterest || 0,
+            totalInterestReceived: totalInterestReceived,
+            totalRemainingInterest: totalRemainingInterest,
+            totalExpectedInterest: totalDeposited * 0.06,
+            hasClaimedInterestThisMonth: !!claimedInterestThisMonth,
+            interestSchedule: interestSchedule
         });
     } catch (error) {
         console.error('Get Bonus Info Error:', error);
@@ -260,6 +370,68 @@ export const claimBonus = async (req, res) => {
         res.json(responseData);
     } catch (error) {
         console.error('Claim Bonus Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Claim accumulated USDT interest (6% APR on total USDT deposited) into usdtBalance
+// @route   POST /api/bonus/claim-interest
+// @access  Private
+export const claimUsdtInterest = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const amountToClaim = user.claimableUsdtInterest;
+        if (!amountToClaim || amountToClaim <= 0) {
+            return res.status(400).json({ message: 'assets.bonus.error_no_interest' });
+        }
+
+        // Enforce once-per-month claim limit (independent from the legacy AQE bonus claim)
+        const nowVN = getSystemTime();
+        const startOfMonthStr = `${nowVN.getFullYear()}-${String(nowVN.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
+        const startOfMonthDate = new Date(startOfMonthStr);
+
+        const claimedThisMonth = await BalanceHistory.findOne({
+            userId: user._id,
+            type: 'CLAIM_INTEREST',
+            status: 'SUCCESS',
+            createdAt: { $gte: startOfMonthDate }
+        });
+
+        if (claimedThisMonth) {
+            return res.status(400).json({
+                message: 'assets.bonus.error_already_claimed'
+            });
+        }
+
+        const balanceBefore = user.usdtBalance || 0;
+        user.usdtBalance = balanceBefore + amountToClaim;
+        user.claimableUsdtInterest = 0; // Reset after claiming
+        await user.save();
+
+        await BalanceHistory.create({
+            userId: user._id,
+            amount: amountToClaim,
+            symbol: 'USDT',
+            type: 'CLAIM_INTEREST',
+            status: 'SUCCESS',
+            isOfficial: true,
+            balanceBefore: balanceBefore,
+            balanceAfter: user.usdtBalance,
+            description: `Claimed ${amountToClaim.toFixed(5)} USDT Interest (6% APR)`
+        });
+
+        res.json({
+            success: true,
+            message: 'assets.bonus.claim_success',
+            claimedUsdt: amountToClaim,
+            newUsdtBalance: user.usdtBalance
+        });
+    } catch (error) {
+        console.error('Claim Usdt Interest Error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };

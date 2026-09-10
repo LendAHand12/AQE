@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Transaction from '../models/Transaction.js';
 import BalanceHistory from '../models/BalanceHistory.js';
 import { getSystemTime, getStartOfDay } from '../utils/time.js';
 
@@ -13,123 +14,81 @@ export const calculateDailyBonus = async () => {
         return;
     }
 
-    console.log('[BONUS CRON] Starting Daily Bonus Calculation...');
+    console.log('[BONUS CRON] Starting Daily Interest Calculation...');
 
     try {
-        const users = await User.find({
-            $or: [
-                { aqeBalance: { $gt: 0 } },
-                { preRegisterTokens: { $gt: 0 } }
-            ]
-        });
-
         const todayMidnight = getStartOfDay(nowVN);
         const cutOffDate = new Date(cutOffDateStr);
 
-        for (const user of users) {
-            // 1. Sum up all successful REWARD transactions (pledge rewards) for this user
-            const rewardTransactions = await BalanceHistory.find({
-                userId: user._id,
-                symbol: 'AQE',
-                status: 'SUCCESS',
-                type: 'REWARD'
-            });
-            const totalRewardAqe = rewardTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+        // Gather every qualifying USDT deposit across all users in a single query
+        const deposits = await Transaction.find({
+            status: 'SUCCESS',
+            symbol: 'USDT',
+            type: 'PAYMENT',
+            countsForInterest: { $ne: false }
+        }).select('from amount createdAt');
 
-            // 2. Eligible balance is current total holdings (aqeBalance + preRegisterTokens) minus the reward tokens
-            const eligibleBalance = Math.max(0, (user.aqeBalance + user.preRegisterTokens) - totalRewardAqe);
+        const depositsByUser = new Map();
+        for (const tx of deposits) {
+            if (!tx.from) continue;
+            const key = tx.from.toString();
+            if (!depositsByUser.has(key)) depositsByUser.set(key, []);
+            depositsByUser.get(key).push(tx);
+        }
 
-            // 3. Find all successful AQE acquisitions (RECEIVE only, representing principal)
-            const acquisitions = await BalanceHistory.find({
-                userId: user._id,
-                symbol: 'AQE',
-                status: 'SUCCESS',
-                type: 'RECEIVE'
-            }).sort({ createdAt: 1 }); // Oldest first for FIFO
+        for (const [userId, userDeposits] of depositsByUser.entries()) {
+            let dailyInterestSum = 0;
 
-            if (eligibleBalance <= 0) {
-                continue;
-            }
+            for (const tx of userDeposits) {
+                const depositDateVN = getSystemTime(tx.createdAt);
 
-            let dailyBonusSum = 0;
-            let remainingEligible = eligibleBalance;
-
-            if (acquisitions.length > 0) {
-                for (const acq of acquisitions) {
-                    if (remainingEligible <= 0) break;
-
-                    // FIFO: Match eligible balance to acquisitions
-                    const heldAmount = Math.min(acq.amount, remainingEligible);
-                    remainingEligible -= heldAmount;
-
-                    const purchaseDateVN = getSystemTime(acq.createdAt);
-
-                    let bonusStartDate;
-                    if (purchaseDateVN < cutOffDate) {
-                        bonusStartDate = getStartOfDay(cutOffDate);
-                    } else {
-                        bonusStartDate = getStartOfDay(purchaseDateVN);
-                    }
-
-                    // Bonus duration is 365 days
-                    const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-
-                    // Today earns bonus if it's within the [startDate, endDate) window
-                    if (todayMidnight >= bonusStartDate && todayMidnight < bonusEndDate) {
-                        const dailyYield = heldAmount * 0.06 / 365;
-                        dailyBonusSum += dailyYield;
-                    }
-                }
-            }
-
-            // If there is still remaining eligible balance (unrecorded in BalanceHistory)
-            if (remainingEligible > 0) {
-                const userCreateDateVN = getSystemTime(user.createdAt);
-                let bonusStartDate;
-                if (userCreateDateVN < cutOffDate) {
-                    bonusStartDate = getStartOfDay(cutOffDate);
+                let interestStartDate;
+                if (depositDateVN < cutOffDate) {
+                    interestStartDate = getStartOfDay(cutOffDate);
                 } else {
-                    bonusStartDate = getStartOfDay(userCreateDateVN);
+                    interestStartDate = getStartOfDay(depositDateVN);
                 }
-                const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-                if (todayMidnight >= bonusStartDate && todayMidnight < bonusEndDate) {
-                    const dailyYield = remainingEligible * 0.06 / 365;
-                    dailyBonusSum += dailyYield;
+                // Interest duration is 365 days from the ORIGINAL deposit date (not reset)
+                const interestEndDate = new Date(interestStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+                if (todayMidnight >= interestStartDate && todayMidnight < interestEndDate) {
+                    const dailyYield = tx.amount * 0.06 / 365;
+                    dailyInterestSum += dailyYield;
                 }
             }
 
-            if (dailyBonusSum > 0) {
-                const balanceBefore = user.provisionalAqeBonus || 0;
-                user.provisionalAqeBonus = balanceBefore + dailyBonusSum;
-                console.log({ dailyBonusSum, balanceBefore, user: user._id });
+            if (dailyInterestSum <= 0) continue;
 
-                await BalanceHistory.create({
-                    userId: user._id,
-                    amount: dailyBonusSum,
-                    symbol: 'AQE',
-                    type: 'BONUS',
-                    status: 'SUCCESS',
-                    isOfficial: true,
-                    balanceBefore: balanceBefore,
-                    balanceAfter: user.provisionalAqeBonus,
-                    description: `Daily Bonus 6% APR consolidated daily bonus`
-                });
-            }
+            const user = await User.findById(userId);
+            if (!user) continue;
+
+            const balanceBefore = user.provisionalUsdtInterest || 0;
+            user.provisionalUsdtInterest = balanceBefore + dailyInterestSum;
+
+            await BalanceHistory.create({
+                userId: user._id,
+                amount: dailyInterestSum,
+                symbol: 'USDT',
+                type: 'BONUS',
+                status: 'SUCCESS',
+                isOfficial: true,
+                balanceBefore: balanceBefore,
+                balanceAfter: user.provisionalUsdtInterest,
+                description: `Daily Interest 6% APR on total USDT deposited`
+            });
 
             // Move provisional to claimable if today is the claim day (defaults to 1st of the month)
             const claimDay = Number(process.env.BONUS_CLAIM_DAY || process.env.INTEREST_CLAIM_DAY || 1);
-            if (nowVN.getDate() === claimDay) {
-                if (user.provisionalAqeBonus > 0) {
-                    user.claimableAqeBonus = (user.claimableAqeBonus || 0) + user.provisionalAqeBonus;
-                    user.provisionalAqeBonus = 0;
-                }
+            if (nowVN.getDate() === claimDay && user.provisionalUsdtInterest > 0) {
+                user.claimableUsdtInterest = (user.claimableUsdtInterest || 0) + user.provisionalUsdtInterest;
+                user.provisionalUsdtInterest = 0;
             }
 
             await user.save();
         }
 
-        console.log('[BONUS CRON] Daily Bonus Calculation completed.');
+        console.log('[BONUS CRON] Daily Interest Calculation completed.');
     } catch (error) {
         console.error('[BONUS CRON] Error:', error);
     }

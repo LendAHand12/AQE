@@ -19,7 +19,8 @@ const transactionSchema = mongoose.Schema({
     type: { type: String, enum: ['PAYMENT', 'DEPOSIT', 'WITHDRAW', 'PLEDGE'], default: 'PAYMENT' },
     status: { type: String, enum: ['SUCCESS', 'PENDING', 'FAILED', 'EXPIRED', 'AWAITING_APPROVAL', 'CANCELLED'], default: 'SUCCESS' },
     description: { type: String },
-    metadata: { type: Object }
+    metadata: { type: Object },
+    countsForInterest: { type: Boolean, default: true }
 }, { timestamps: true });
 
 // Ensure indexes are correctly applied

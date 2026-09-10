@@ -394,6 +394,27 @@
       "view_schedule_btn": "भुगतान अनुसूची देखें",
       "no_schedule": "कोई आगामी भुगतान नहीं"
     },
+    "interest": {
+      "title": "USDT ब्याज",
+      "total_expected": "कुल अपेक्षित",
+      "total_received": "कुल प्राप्त",
+      "provisional": "अनंतिम",
+      "claimable": "दावायोग्य ब्याज",
+      "claim_btn": "दावा",
+      "already_claimed": "इस माह पहले ही दावा किया जा चुका है",
+      "claim_success": "दावा सफल",
+      "error_already_claimed": "आप इस महीने पहले ही ब्याज का दावा कर चुके हैं। कृपया अगले महीने की शुरुआत में वापस आएं।",
+      "error_no_interest": "कोई दावायोग्य USDT ब्याज नहीं",
+      "no_claimable": "कोई दावायोग्य ब्याज उपलब्ध नहीं है",
+      "confirm_title": "USDT ब्याज का दावा करें",
+      "confirm_desc": "{{amount}} USDT सीधे आपके USDT बैलेंस में जोड़ा जाएगा।",
+      "confirm_cancel": "रद्द करना",
+      "remaining": "शेष",
+      "schedule_title": "ब्याज भुगतान अनुसूची",
+      "schedule_desc": "आपके कुल USDT जमा के आधार पर दैनिक ब्याज की अनुमानित समयरेखा।",
+      "view_schedule_btn": "भुगतान अनुसूची देखें",
+      "no_schedule": "कोई आगामी भुगतान नहीं"
+    },
     "withdraw_btn": "यूएसडीटी वापस लें",
     "withdraw_history": "वापसी का इतिहास",
     "table": {

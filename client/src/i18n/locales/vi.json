@@ -402,6 +402,27 @@
       "view_schedule_btn": "Xem lịch nhận thưởng",
       "no_schedule": "Không có lịch nhận thưởng sắp tới"
     },
+    "interest": {
+      "title": "Lãi USDT",
+      "total_expected": "Tổng lãi dự kiến",
+      "total_received": "Đã nhận",
+      "provisional": "Tạm tính",
+      "claimable": "Lãi khả dụng (rút)",
+      "claim_btn": "Claim",
+      "already_claimed": "Đã claim tháng này",
+      "claim_success": "Claim thành công",
+      "error_already_claimed": "Bạn đã claim lãi trong tháng này rồi. Vui lòng quay lại vào đầu tháng sau.",
+      "error_no_interest": "Không có lãi USDT nào để claim",
+      "no_claimable": "Không có lãi để claim",
+      "confirm_title": "Xác nhận Claim Lãi USDT",
+      "confirm_desc": "{{amount}} USDT sẽ được cộng thẳng vào số dư USDT của bạn.",
+      "confirm_cancel": "Hủy bỏ",
+      "remaining": "Còn lại",
+      "schedule_title": "Lịch trả lãi dự kiến",
+      "schedule_desc": "Chi tiết dòng thời gian trả lãi USDT hàng ngày dựa trên tổng USDT bạn đã nạp.",
+      "view_schedule_btn": "Xem lịch trả lãi",
+      "no_schedule": "Không có lịch trả lãi sắp tới"
+    },
     "withdraw_btn": "Rút tiền USDT",
     "withdraw_history": "Lịch sử rút tiền",
     "table": {

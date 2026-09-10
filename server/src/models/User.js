@@ -180,6 +180,14 @@ const userSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
+    provisionalUsdtInterest: {
+        type: Number,
+        default: 0
+    },
+    claimableUsdtInterest: {
+        type: Number,
+        default: 0
+    },
     plinkoBalls: {
         type: Number,
         default: 0

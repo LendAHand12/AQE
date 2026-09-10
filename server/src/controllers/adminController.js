@@ -1143,7 +1143,7 @@ export const getWalletConnections = async (req, res) => {
 export const manualDepositUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission, grantAqe } = req.body;
+        const { pledgeAmount, paidAmount, hash, depositType, packageId, payCommission, grantAqe, countsForInterest } = req.body;
 
         if (!paidAmount || !hash) {
             return res.status(400).json({ message: 'Missing paidAmount or hash' });
@@ -1209,9 +1209,10 @@ export const manualDepositUser = async (req, res) => {
             symbol: 'USDT',
             type: 'PAYMENT',
             status: 'SUCCESS',
-            description: isPackage 
+            description: isPackage
                 ? `Manual Deposit by Admin - Package: ${packageData.title} (${req.admin.username})`
                 : `Manual Deposit by Admin (${req.admin.username})`,
+            countsForInterest: countsForInterest !== false,
             metadata: {
                 isManual: true,
                 admin: req.admin.username,

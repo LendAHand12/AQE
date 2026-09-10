@@ -402,6 +402,27 @@
       "view_schedule_btn": "View Payout Schedule",
       "no_schedule": "No upcoming payouts"
     },
+    "interest": {
+      "title": "USDT Interest",
+      "total_expected": "Total Expected",
+      "total_received": "Total Received",
+      "provisional": "Provisional",
+      "claimable": "Claimable Interest",
+      "claim_btn": "Claim",
+      "already_claimed": "Already Claimed This Month",
+      "claim_success": "Claim successful",
+      "error_already_claimed": "You have already claimed interest this month. Please return at the beginning of next month.",
+      "error_no_interest": "No claimable USDT interest",
+      "no_claimable": "No claimable interest available",
+      "confirm_title": "Claim USDT Interest",
+      "confirm_desc": "{{amount}} USDT will be added directly to your USDT balance.",
+      "confirm_cancel": "Cancel",
+      "remaining": "Remaining",
+      "schedule_title": "Interest Payout Schedule",
+      "schedule_desc": "Projected daily interest based on your total USDT deposits.",
+      "view_schedule_btn": "View Payout Schedule",
+      "no_schedule": "No upcoming payouts"
+    },
     "withdraw_btn": "Withdraw USDT",
     "withdraw_history": "Withdrawal History",
     "table": {
