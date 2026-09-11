@@ -22,6 +22,10 @@ const plinkoHistorySchema = mongoose.Schema({
         type: String,
         default: 'AQE'
     },
+    isJackpot: {
+        type: Boolean,
+        default: false
+    },
     playedAt: { 
         type: Date, 
         default: Date.now 

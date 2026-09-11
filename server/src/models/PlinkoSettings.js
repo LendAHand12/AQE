@@ -5,6 +5,18 @@ const plinkoSettingsSchema = mongoose.Schema({
         type: Number,
         default: 1 // Base AQE reward per ball drop (X), actual reward = X * multiplier
     },
+    jackpotContributionRate: {
+        type: Number,
+        default: 0.001 // 0.1% of every USDT deposit goes into the jackpot pool
+    },
+    targetJackpot: {
+        type: Number,
+        default: 1000 // USDT target; when currentJackpot reaches this, the jackpot slot is armed
+    },
+    currentJackpot: {
+        type: Number,
+        default: 0 // USDT accumulated so far
+    },
     slots: {
         type: [
             {

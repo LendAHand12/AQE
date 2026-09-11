@@ -938,6 +938,9 @@
     "cancel": "Hủy bỏ",
     "claim_now": "Claim ngay",
     "claim_success": "Claim thành công {{aqe}} AQE!",
-    "claim_error": "Claim thất bại"
+    "claim_error": "Claim thất bại",
+    "jackpot_title": "Jackpot Plinko",
+    "jackpot_armed": "JACKPOT ĐÃ SẴN SÀNG!",
+    "jackpot_won_toast": "🎉 JACKPOT! Bạn vừa thắng {{amount}} AQE ({{usdt}} USDT)!"
   }
 }

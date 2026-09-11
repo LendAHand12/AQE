@@ -939,6 +939,9 @@
     "cancel": "Cancel",
     "claim_now": "Claim Now",
     "claim_success": "Successfully claimed {{aqe}} AQE!",
-    "claim_error": "Claim failed"
+    "claim_error": "Claim failed",
+    "jackpot_title": "Plinko Jackpot",
+    "jackpot_armed": "JACKPOT READY!",
+    "jackpot_won_toast": "🎉 JACKPOT! You just won {{amount}} AQE ({{usdt}} USDT)!"
   }
 }

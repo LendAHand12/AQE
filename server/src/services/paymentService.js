@@ -8,6 +8,7 @@ import InvestmentPackage from '../models/InvestmentPackage.js';
 import { emitNotification } from '../utils/socket.js';
 import { getSystemTime } from '../utils/time.js';
 import { getSystemConfig } from '../utils/configHelper.js';
+import { contributeToJackpot } from '../utils/jackpotHelper.js';
 
 /**
  * Auto-apply the highest-tier package a user's official AQE balance (aqeBalance)
@@ -319,6 +320,9 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                 });
             }
 
+            // Jackpot contribution
+            await contributeToJackpot(processingAmount);
+
             await user.save();
             console.log(`[Finalize Direct] User ${user.username} updated. Balance: ${user.aqeBalance}`);
 
@@ -450,6 +454,9 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
                     type: 'SYSTEM'
                 });
             }
+
+            // Jackpot contribution
+            await contributeToJackpot(processingAmount);
 
             await user.save();
             console.log(`[Finalize] User ${user.username} updated. Balance: ${user.aqeBalance}, Paid: ${user.paidUsdtPreRegister}`);
@@ -614,6 +621,9 @@ export const manualDepositFinalization = async (userId, pledgeAmount, paidAmount
             type: 'SYSTEM'
         });
     }
+
+    // Jackpot contribution
+    await contributeToJackpot(paidAmount);
 
     await user.save();
 

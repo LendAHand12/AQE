@@ -803,6 +803,9 @@
     "cancel": "रद्द करें",
     "claim_now": "अभी क्लेम करें",
     "claim_success": "सफलतापूर्वक {{aqe}} AQE क्लेम किया गया!",
-    "claim_error": "क्लेम विफल"
+    "claim_error": "क्लेम विफल",
+    "jackpot_title": "प्लिंको जैकपॉट",
+    "jackpot_armed": "जैकपॉट तैयार है!",
+    "jackpot_won_toast": "🎉 जैकपॉट! आपने अभी {{amount}} AQE ({{usdt}} USDT) जीता!"
   }
 }

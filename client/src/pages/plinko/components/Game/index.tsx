@@ -16,7 +16,7 @@ import { useGameStore } from '../../store/game'
 import { random } from '../../utils/random'
 import apiClient from '@/lib/axios'
 import { toast } from 'sonner'
-import { Coins, ArrowRightLeft, Sparkles, RefreshCw, X, CircleDollarSign } from 'lucide-react'
+import { Coins, ArrowRightLeft, Sparkles, RefreshCw, X, CircleDollarSign, Trophy } from 'lucide-react'
 
 import type { LinesType, MultiplierValues } from './@types'
 import confetti from 'canvas-confetti'
@@ -56,18 +56,20 @@ export function Game() {
   const pulsesRef = useRef<{ row: number; col: number; intensity: number }[]>([])
   const multipliersBodiesRef = useRef<Body[]>([])
   const isLaunchingRef = useRef(false)
+  const jackpotArmedRef = useRef(false)
 
   const lines: LinesType = 16
   const inGameBallsCount = useGameStore((state: any) => state.gamesRunning)
 
   const [ballCount, setBallCount] = useState<number>(1)
   const [plinkoBaseReward, setPlinkoBaseReward] = useState<number>(1)
+  const [jackpotInfo, setJackpotInfo] = useState<{ current: number; target: number; isArmed: boolean }>({ current: 0, target: 0, isArmed: false })
 
   const [localBalls, setLocalBalls] = useState<number | null>(null)
   const [localPendingReward, setLocalPendingReward] = useState<number | null>(null)
   const [localBalance, setLocalBalance] = useState<number | null>(null)
-  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; multiplier: number; timestamp: Date }[]>([])
-  const [latestReward, setLatestReward] = useState<{ amount: number; multiplier: number; key: number } | null>(null)
+  const [dropHistory, setDropHistory] = useState<{ id: string; reward: number; multiplier: number; timestamp: Date; isJackpot?: boolean }[]>([])
+  const [latestReward, setLatestReward] = useState<{ amount: number; multiplier: number; key: number; isJackpot?: boolean } | null>(null)
 
   // Claim modal state
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
@@ -98,12 +100,17 @@ export function Game() {
         if (res.data.settings) {
           setPlinkoBaseReward(res.data.settings.plinkoBaseReward !== undefined ? res.data.settings.plinkoBaseReward : 1)
         }
+        if (res.data.jackpot) {
+          setJackpotInfo(res.data.jackpot)
+          jackpotArmedRef.current = !!res.data.jackpot.isArmed
+        }
         if (res.data.history) {
           const historyMapped = res.data.history.map((item: any) => ({
             id: item._id,
             reward: item.rewardAmount,
             multiplier: item.multiplier || 1,
-            timestamp: new Date(item.playedAt || item.createdAt)
+            timestamp: new Date(item.playedAt || item.createdAt),
+            isJackpot: !!item.isJackpot
           }))
           setDropHistory(historyMapped)
         }
@@ -319,17 +326,28 @@ export function Game() {
       })
 
       // Draw glowing neon text numbers (e.g. 110x, 41x, 10x, 5x, 3x, 2x, 1x, 0.5x, 0.2x)
-      multipliersBodies.forEach(mb => {
+      multipliersBodies.forEach((mb, mbIndex) => {
         const parts = mb.label.split('-')
         const valNum = parseFloat(parts[2]) || parseFloat(parts[1]) || 1
-        const labelText = `${valNum}x`
+        const isJackpotSlot = mbIndex === 0 || mbIndex === multipliersBodies.length - 1
+
+        // Highlight the two jackpot slots with a pulsing gold aura while the jackpot is armed
+        if (isJackpotSlot && jackpotArmedRef.current) {
+          const pulse = 0.6 + Math.sin(Date.now() / 200) * 0.4
+          ctx.beginPath()
+          ctx.arc(mb.position.x, mb.position.y, 16 + pulse * 4, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(251, 191, 36, ${0.35 * pulse})`
+          ctx.fill()
+        }
+
+        const labelText = isJackpotSlot && jackpotArmedRef.current ? 'JACKPOT' : `${valNum}x`
         ctx.save()
-        ctx.font = 'bold 9px sans-serif'
+        ctx.font = isJackpotSlot && jackpotArmedRef.current ? 'bold 7px sans-serif' : 'bold 9px sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.shadowColor = '#818cf8'
-        ctx.shadowBlur = 5
-        ctx.fillStyle = '#38bdf8' // Glowing Cyan
+        ctx.shadowColor = isJackpotSlot && jackpotArmedRef.current ? '#fbbf24' : '#818cf8'
+        ctx.shadowBlur = isJackpotSlot && jackpotArmedRef.current ? 8 : 5
+        ctx.fillStyle = isJackpotSlot && jackpotArmedRef.current ? '#fbbf24' : '#38bdf8' // Glowing Gold vs Cyan
         ctx.fillText(labelText, mb.position.x, mb.position.y)
         ctx.restore()
       })
@@ -470,7 +488,7 @@ export function Game() {
       })
 
       if (res.data && res.data.success) {
-        const { rewardAmount, multiplier: multiplierVal, newBalls, newPendingReward } = res.data
+        const { rewardAmount, multiplier: multiplierVal, newBalls, newPendingReward, isJackpotWin, jackpotWonUsdt } = res.data
 
         const multiplierSong = new Audio(getMultiplierSound(multiplierVal as MultiplierValues))
         multiplierSong.currentTime = 0
@@ -491,7 +509,8 @@ export function Game() {
             id: Math.random().toString(),
             reward: rewardAmount,
             multiplier: multiplierVal,
-            timestamp: new Date()
+            timestamp: new Date(),
+            isJackpot: !!isJackpotWin
           },
           ...prev
         ].slice(0, 30))
@@ -499,8 +518,42 @@ export function Game() {
         setLatestReward({
           amount: rewardAmount,
           multiplier: multiplierVal,
-          key: Math.random()
+          key: Math.random(),
+          isJackpot: !!isJackpotWin
         })
+
+        if (isJackpotWin) {
+          // Jackpot has been claimed and reset to 0 server-side
+          setJackpotInfo(prev => ({ ...prev, current: 0, isArmed: false }))
+          jackpotArmedRef.current = false
+
+          if (renderRef.current && renderRef.current.canvas) {
+            try {
+              confetti({
+                particleCount: 150,
+                spread: 100,
+                startVelocity: 35,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#fbbf24', '#f59e0b', '#fde68a', '#ffffff'],
+                ticks: 200,
+                gravity: 0.9,
+                scalar: 1.1,
+                zIndex: 9999
+              })
+            } catch (e) {
+              console.warn("Jackpot confetti error:", e)
+            }
+          }
+
+          toast.success(
+            t('plinko.jackpot_won_toast', {
+              amount: rewardAmount,
+              usdt: (jackpotWonUsdt || 0).toFixed(2),
+              defaultValue: `🎉 JACKPOT! Bạn vừa thắng ${rewardAmount} AQE (${(jackpotWonUsdt || 0).toFixed(2)} USDT)!`
+            }),
+            { duration: 8000 }
+          )
+        }
       }
     } catch (e: any) {
       console.warn("Error finalizing Plinko drop:", e)
@@ -654,6 +707,31 @@ export function Game() {
         </div>
       </div>
 
+      {/* Jackpot Banner */}
+      <div className={`flex items-center justify-between w-full px-6 py-3 rounded-2xl border gap-4 backdrop-blur-md z-10 transition-colors ${
+        jackpotInfo.isArmed
+          ? 'bg-amber-500/10 border-amber-400/40 shadow-[0_0_25px_rgba(251,191,36,0.25)]'
+          : 'bg-slate-900/60 border-amber-500/20'
+      }`}>
+        <div className="flex items-center gap-3">
+          <Trophy size={20} className={jackpotInfo.isArmed ? 'text-amber-400 animate-pulse' : 'text-amber-500/70'} />
+          <div>
+            <span className="text-amber-300/80 text-xs font-semibold uppercase tracking-wider block">
+              {jackpotInfo.isArmed ? t('plinko.jackpot_armed', 'JACKPOT ĐÃ SẴN SÀNG!') : t('plinko.jackpot_title', 'Jackpot Plinko')}
+            </span>
+            <span className="text-amber-400 font-black text-lg tracking-tight">
+              {jackpotInfo.current.toFixed(2)} / {jackpotInfo.target.toFixed(2)} USDT
+            </span>
+          </div>
+        </div>
+        <div className="flex-1 max-w-xs h-2.5 bg-slate-800 rounded-full overflow-hidden border border-amber-500/20 hidden sm:block">
+          <div
+            className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-500"
+            style={{ width: `${jackpotInfo.target > 0 ? Math.min(100, (jackpotInfo.current / jackpotInfo.target) * 100) : 0}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row items-start justify-center gap-6 w-full z-10">
         {/* Game Board Column */}
         <div className="flex flex-col items-center bg-slate-900/80 border border-indigo-500/30 shadow-[0_0_30px_rgba(15,23,42,0.8)] p-4 rounded-2xl relative min-h-[400px] w-full md:w-auto flex-1 backdrop-blur-md overflow-hidden">
@@ -663,10 +741,16 @@ export function Game() {
           {latestReward && (
             <div
               key={`board-${latestReward.key}`}
-              className="absolute top-6 right-6 text-cyan-400 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s flex flex-col items-end drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+              className={`absolute top-6 right-6 font-black text-2xl pointer-events-none select-none z-10 animate-fade-out-3s flex flex-col items-end ${
+                latestReward.isJackpot ? 'text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)]' : 'text-cyan-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]'
+              }`}
             >
               <span>+{latestReward.amount.toFixed(4)} AQE</span>
-              <span className="text-xs bg-indigo-950/80 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">x{latestReward.multiplier}</span>
+              {latestReward.isJackpot ? (
+                <span className="text-xs bg-amber-950/80 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">🎉 JACKPOT</span>
+              ) : (
+                <span className="text-xs bg-indigo-950/80 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">x{latestReward.multiplier}</span>
+              )}
             </div>
           )}
         </div>
@@ -747,7 +831,11 @@ export function Game() {
                 dropHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between px-3 py-2 bg-slate-950/60 border border-slate-800/80 rounded-xl shadow-xs hover:border-indigo-500/30 transition-all"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl shadow-xs transition-all ${
+                      item.isJackpot
+                        ? 'bg-amber-500/10 border border-amber-400/40'
+                        : 'bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/30'
+                    }`}
                   >
                     <div className="flex flex-col">
                       <span className="text-[10px] text-slate-400 font-semibold">
@@ -758,9 +846,15 @@ export function Game() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] bg-slate-800 font-black text-cyan-400 px-2 py-0.5 rounded-full border border-indigo-500/20">
-                        x{item.multiplier}
-                      </span>
+                      {item.isJackpot ? (
+                        <span className="text-[11px] bg-amber-950/80 font-black text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">
+                          🎉 JACKPOT
+                        </span>
+                      ) : (
+                        <span className="text-[11px] bg-slate-800 font-black text-cyan-400 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                          x{item.multiplier}
+                        </span>
+                      )}
                       <span className="text-xs font-black text-emerald-400">
                         +{item.reward.toFixed(4)} AQE
                       </span>

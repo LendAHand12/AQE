@@ -762,6 +762,9 @@
     "cancel": "Cancelar",
     "claim_now": "Reclamar ahora",
     "claim_success": "¡Reclamaste exitosamente {{aqe}} AQE!",
-    "claim_error": "Error al reclamar"
+    "claim_error": "Error al reclamar",
+    "jackpot_title": "Jackpot de Plinko",
+    "jackpot_armed": "¡JACKPOT LISTO!",
+    "jackpot_won_toast": "🎉 ¡JACKPOT! Acabas de ganar {{amount}} AQE ({{usdt}} USDT)!"
   }
 }

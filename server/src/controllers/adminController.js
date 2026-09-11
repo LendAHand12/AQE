@@ -19,6 +19,7 @@ import { processCommissions, applyEligiblePackageForAqeHolding } from '../servic
 import Config from '../models/Config.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
 import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
+import { contributeToJackpot } from '../utils/jackpotHelper.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -1298,6 +1299,9 @@ export const manualDepositUser = async (req, res) => {
                 type: 'SYSTEM'
             });
         }
+
+        // Jackpot contribution
+        await contributeToJackpot(amountNum);
 
         await user.save();
 

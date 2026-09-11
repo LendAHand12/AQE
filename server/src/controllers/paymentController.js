@@ -13,6 +13,7 @@ import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
 import { getSystemConfig } from '../utils/configHelper.js';
+import { contributeToJackpot } from '../utils/jackpotHelper.js';
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -574,6 +575,9 @@ export const approveManualPayment = async (req, res) => {
                 });
             }
 
+            // Jackpot contribution
+            await contributeToJackpot(transaction.amount);
+
             await user.save();
 
             // Process commissions
@@ -694,6 +698,9 @@ export const approveManualPayment = async (req, res) => {
                 type: 'SYSTEM'
             });
         }
+
+        // Jackpot contribution
+        await contributeToJackpot(transaction.amount);
 
         await user.save();
 

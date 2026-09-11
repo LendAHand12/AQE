@@ -3,6 +3,9 @@ import BalanceHistory from '../models/BalanceHistory.js';
 import PlinkoHistory from '../models/PlinkoHistory.js';
 import PlinkoSettings from '../models/PlinkoSettings.js';
 import AdminLog from '../models/AdminLog.js';
+import Notification from '../models/Notification.js';
+import { emitNotification } from '../utils/socket.js';
+import { getSystemConfig } from '../utils/configHelper.js';
 
 const defaultSlots = [
     { multiplier: 110, weight: 1 },
@@ -43,6 +46,9 @@ export const getPlinkoInfo = async (req, res) => {
             settings = await PlinkoSettings.create({});
         }
 
+        const targetJackpot = settings.targetJackpot || 0;
+        const currentJackpot = settings.currentJackpot || 0;
+
         res.json({
             plinkoBalls: user.plinkoBalls || 0,
             plinkoAqeReward: user.plinkoAqeReward || 0,
@@ -50,6 +56,11 @@ export const getPlinkoInfo = async (req, res) => {
             settings: {
                 ...settings.toObject(),
                 plinkoBaseReward: settings.plinkoBaseReward !== undefined ? settings.plinkoBaseReward : 1
+            },
+            jackpot: {
+                current: currentJackpot,
+                target: targetJackpot,
+                isArmed: targetJackpot > 0 && currentJackpot >= targetJackpot
             }
         });
     } catch (error) {
@@ -107,7 +118,33 @@ export const playPlinko = async (req, res) => {
         }
 
         const multiplier = slots[slotIndex].multiplier !== undefined ? slots[slotIndex].multiplier : (slots[slotIndex].amount || 1);
-        const rewardAqe = Math.round(baseReward * multiplier * 10000) / 10000;
+
+        // Jackpot check: only the two outer-edge slots can trigger it, and only while armed (currentJackpot >= targetJackpot)
+        const isJackpotSlot = slotIndex === 0 || slotIndex === slots.length - 1;
+        let isJackpotWin = false;
+        let rewardAqe;
+        let jackpotWonUsdt = 0;
+
+        if (isJackpotSlot && settings.targetJackpot > 0 && settings.currentJackpot >= settings.targetJackpot) {
+            // Atomic compare-and-reset: only one concurrent request can win the jackpot
+            const claimedSettings = await PlinkoSettings.findOneAndUpdate(
+                { _id: settings._id, currentJackpot: { $gte: settings.targetJackpot } },
+                { $set: { currentJackpot: 0 } },
+                { new: false }
+            );
+
+            if (claimedSettings) {
+                jackpotWonUsdt = claimedSettings.currentJackpot;
+                const systemConfig = await getSystemConfig();
+                const aqeRate = systemConfig.aqeToUsdtRate;
+                rewardAqe = Math.round((jackpotWonUsdt / aqeRate) * 10000) / 10000;
+                isJackpotWin = true;
+            }
+        }
+
+        if (!isJackpotWin) {
+            rewardAqe = Math.round(baseReward * multiplier * 10000) / 10000;
+        }
 
         // 2. Credit won AQE to the user's pending Plinko reward (not aqeBalance directly)
         const finalUser = await User.findByIdAndUpdate(
@@ -126,14 +163,32 @@ export const playPlinko = async (req, res) => {
             betAmount: 1,
             multiplier,
             rewardAmount: rewardAqe,
-            symbol: 'AQE'
+            symbol: 'AQE',
+            isJackpot: isJackpotWin
         });
+
+        if (isJackpotWin) {
+            await Notification.create({
+                userId: finalUser._id,
+                title: 'Jackpot Plinko!',
+                message: `🎉 Chúc mừng! Bạn đã trúng Jackpot Plinko và nhận được ${rewardAqe} AQE (tương đương ${jackpotWonUsdt.toFixed(2)} USDT)!`,
+                type: 'SYSTEM'
+            });
+
+            emitNotification(finalUser._id, {
+                title: 'Jackpot Plinko!',
+                message: `🎉 JACKPOT! +${rewardAqe} AQE`,
+                type: 'SYSTEM'
+            });
+        }
 
         res.json({
             success: true,
             multiplier,
             rewardAmount: rewardAqe,
             slotIndex,
+            isJackpotWin,
+            jackpotWonUsdt,
             newBalls: finalUser.plinkoBalls,
             newPendingReward: finalUser.plinkoAqeReward,
             newBalance: finalUser.aqeBalance,
@@ -218,7 +273,7 @@ export const getPlinkoSettingsAdmin = async (req, res) => {
 // @route   PUT /api/admin/plinko-settings
 // @access  Private (Admin)
 export const updatePlinkoSettingsAdmin = async (req, res) => {
-    const { plinkoBaseReward, slots } = req.body;
+    const { plinkoBaseReward, slots, jackpotContributionRate, targetJackpot } = req.body;
     try {
         let settings = await PlinkoSettings.findOne();
         if (!settings) {
@@ -230,6 +285,12 @@ export const updatePlinkoSettingsAdmin = async (req, res) => {
         }
         if (slots && Array.isArray(slots)) {
             settings.slots = slots;
+        }
+        if (jackpotContributionRate !== undefined) {
+            settings.jackpotContributionRate = Number(jackpotContributionRate);
+        }
+        if (targetJackpot !== undefined) {
+            settings.targetJackpot = Number(targetJackpot);
         }
 
         const updatedSettings = await settings.save();
