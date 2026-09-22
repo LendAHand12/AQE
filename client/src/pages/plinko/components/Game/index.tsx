@@ -271,7 +271,7 @@ export function Game() {
         lastMultiplierX + pinsConfig.pinGap,
         worldWidth / lines + lines * pinsConfig.pinGap + pinsConfig.pinGap + 1,
         pinsConfig.pinGap - 1.5,
-        26,
+        37,
         {
           label: `block-${index}-${valNum}`,
           isStatic: true,
@@ -314,13 +314,13 @@ export function Game() {
 
         // Cosmic indigo aura
         ctx.beginPath()
-        ctx.arc(px, py, pinsConfig.pinSize + intensity * 8, 0, Math.PI * 2)
+        ctx.arc(px, py, pinsConfig.pinSize + intensity * 11, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(99, 102, 241, ${intensity * 0.45})`
         ctx.fill()
 
         // Bright star core
         ctx.beginPath()
-        ctx.arc(px, py, pinsConfig.pinSize + intensity * 2, 0, Math.PI * 2)
+        ctx.arc(px, py, pinsConfig.pinSize + intensity * 3, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(224, 231, 255, ${intensity * 0.95})`
         ctx.fill()
       })
@@ -335,14 +335,14 @@ export function Game() {
         if (isJackpotSlot && jackpotArmedRef.current) {
           const pulse = 0.6 + Math.sin(Date.now() / 200) * 0.4
           ctx.beginPath()
-          ctx.arc(mb.position.x, mb.position.y, 16 + pulse * 4, 0, Math.PI * 2)
+          ctx.arc(mb.position.x, mb.position.y, 23 + pulse * 6, 0, Math.PI * 2)
           ctx.fillStyle = `rgba(251, 191, 36, ${0.35 * pulse})`
           ctx.fill()
         }
 
         const labelText = isJackpotSlot && jackpotArmedRef.current ? 'JACKPOT' : `${valNum}x`
         ctx.save()
-        ctx.font = isJackpotSlot && jackpotArmedRef.current ? 'bold 7px sans-serif' : 'bold 9px sans-serif'
+        ctx.font = isJackpotSlot && jackpotArmedRef.current ? 'bold 10px sans-serif' : 'bold 13px sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.shadowColor = isJackpotSlot && jackpotArmedRef.current ? '#fbbf24' : '#818cf8'
@@ -655,7 +655,7 @@ export function Game() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-6 bg-slate-950/90 text-slate-100 border border-indigo-500/20 shadow-[0_0_60px_rgba(79,70,229,0.15)] rounded-3xl max-w-4xl mx-auto w-full relative overflow-hidden backdrop-blur-xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+    <div className="flex flex-col items-center justify-center gap-6 p-6 bg-slate-950/90 text-slate-100 border border-indigo-500/20 shadow-[0_0_60px_rgba(79,70,229,0.15)] rounded-3xl max-w-6xl mx-auto w-full relative overflow-hidden backdrop-blur-xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
       {/* Background stardust glow accents */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -734,7 +734,7 @@ export function Game() {
 
       <div className="flex flex-col md:flex-row items-start justify-center gap-6 w-full z-10">
         {/* Game Board Column */}
-        <div className="flex flex-col items-center bg-slate-900/80 border border-indigo-500/30 shadow-[0_0_30px_rgba(15,23,42,0.8)] p-4 rounded-2xl relative min-h-[400px] w-full md:w-auto flex-1 backdrop-blur-md overflow-hidden">
+        <div className="flex flex-col items-center bg-slate-900/80 border border-indigo-500/30 shadow-[0_0_30px_rgba(15,23,42,0.8)] p-4 rounded-2xl relative min-h-[550px] w-full md:w-auto flex-1 backdrop-blur-md overflow-x-auto overflow-y-hidden">
           <PlinkoGameBody />
           
           {/* Floating Reward in top-right */}

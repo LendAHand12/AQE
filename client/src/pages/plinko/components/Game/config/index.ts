@@ -1,12 +1,12 @@
 import { colors } from 'styles/colors'
 const pins = {
   startPins: 3,
-  pinSize: 2,
-  pinGap: 20
+  pinSize: 2.8,
+  pinGap: 28
 }
 
 const ball = {
-  ballSize: 5.7
+  ballSize: 8
 }
 
 const gravityEnv = import.meta.env.VITE_PLINKO_GRAVITY
@@ -17,8 +17,8 @@ const engine = {
 }
 
 const world = {
-  width: 390,
-  height: 390
+  width: 550,
+  height: 550
 }
 
 export const config = {

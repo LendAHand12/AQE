@@ -154,7 +154,8 @@ export const completeWithdrawal = async (req, res) => {
                 : `USDT withdrawal to ${paymentMethod === 'ZELLE' ? 'Zelle (' + zelleName + ' - ' + zelleInfo + ')' : 'wallet ' + (walletAddress?.substring(0, 6) || '') + '...' + (walletAddress?.substring(walletAddress.length - 4) || '')} (Fee: 1 USDT)`
         });
 
-        // Create AQE RECEIVE history so it qualifies for 6% daily interest
+        // Create AQE RECEIVE history for balance/audit trail
+        // (Note: USDT interest accrual is based on original USDT deposit Transactions, not AQE RECEIVE history, so this conversion does not start a new interest window)
         if (paymentMethod === 'AQE') {
             await BalanceHistory.create({
                 userId: user._id,

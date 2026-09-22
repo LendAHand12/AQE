@@ -523,9 +523,9 @@ export default function AssetsPage() {
                               {t("assets.withdraw_dialog.method_aqe")}
                             </span>
                             <span className="text-[12px] text-gray-500 mt-1">
-                              {user?.language === 'vi' 
-                                ? "Quy đổi sang số dư AQE hưởng lãi 6%" 
-                                : "Converted to AQE (6% APR)"}
+                              {user?.language === 'vi'
+                                ? "Quy đổi sang số dư AQE"
+                                : "Converted to AQE"}
                             </span>
                           </div>
                         ) : item.paymentMethod === 'ZELLE' ? (
@@ -955,7 +955,7 @@ export default function AssetsPage() {
                     {t("assets.bonus.claim_option_aqe", "Reinvest to AQE")}
                   </h4>
                   <p className="text-[12px] text-gray-500 mt-0.5">
-                    Add to AQE balance (this amount continues to earn 6% APR yield)
+                    Add to your official AQE balance
                   </p>
                 </div>
               </div>

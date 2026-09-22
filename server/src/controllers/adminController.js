@@ -1,5 +1,5 @@
 import Admin from '../models/Admin.js';
-import { getSystemTime, getStartOfDay } from '../utils/time.js';
+import { getSystemTime } from '../utils/time.js';
 import User from '../models/User.js';
 import AdminLog from '../models/AdminLog.js';
 import Notification from '../models/Notification.js';
@@ -252,7 +252,7 @@ export const getUserById = async (req, res) => {
         // Calculate Total Sales
         const totalSales = await calculateUserSystemSales(user._id);
 
-        // --- AQE Bonus Stats ---
+        // --- Legacy AQE Bonus Stats (frozen system — no longer accrues, kept only so users can claim out any leftover balance) ---
         const claimHistories = await BalanceHistory.find({
             userId: user._id,
             symbol: 'USDT',
@@ -261,7 +261,7 @@ export const getUserById = async (req, res) => {
         }).select('amount');
         const totalClaimed = claimHistories.reduce((sum, h) => sum + h.amount, 0);
 
-        // Sum up all successful BONUS transactions (daily interest) for this user
+        // Sum up all successful BONUS transactions (legacy daily AQE bonus, historical only) for this user
         const bonusHistories = await BalanceHistory.find({
             userId: user._id,
             symbol: 'AQE',
@@ -270,112 +270,32 @@ export const getUserById = async (req, res) => {
         }).select('amount');
         const totalBonusReceived = bonusHistories.reduce((sum, h) => sum + h.amount, 0);
 
-        // 1. Sum up all successful REWARD transactions (pledge rewards) for this user
-        const rewardTransactions = await BalanceHistory.find({
-            userId: user._id,
-            symbol: 'AQE',
+        // --- USDT Interest Stats (current system — 6% APR on total qualifying USDT deposited) ---
+        const qualifyingDeposits = await Transaction.find({
+            from: user._id,
             status: 'SUCCESS',
-            type: 'REWARD'
-        });
-        const totalRewardAqe = rewardTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+            symbol: 'USDT',
+            type: 'PAYMENT',
+            countsForInterest: { $ne: false }
+        }).select('amount');
+        const totalDeposited = qualifyingDeposits.reduce((sum, tx) => sum + tx.amount, 0);
+        const totalExpectedInterest = totalDeposited * 0.06;
 
-        // 2. Eligible balance is current total holdings (aqeBalance + preRegisterTokens) minus the reward tokens
-        const eligibleBalance = Math.max(0, (user.aqeBalance + user.preRegisterTokens) - totalRewardAqe);
-
-        // 3. Find all successful AQE acquisitions (RECEIVE only, representing principal)
-        const acquisitions = await BalanceHistory.find({
+        const interestHistories = await BalanceHistory.find({
             userId: user._id,
-            symbol: 'AQE',
+            symbol: 'USDT',
             status: 'SUCCESS',
-            type: 'RECEIVE'
-        }).select('amount createdAt').sort({ createdAt: 1 }); // Oldest first for FIFO
+            type: 'BONUS'
+        }).select('amount');
+        const totalInterestReceived = interestHistories.reduce((sum, h) => sum + h.amount, 0);
+        const totalRemainingInterest = Math.max(0, totalExpectedInterest - totalInterestReceived);
 
-        const totalExpected = eligibleBalance * 0.06;
-
-        const nowVN = getSystemTime();
-        const todayMidnight = getStartOfDay(nowVN);
-        const cutOffDateStr = process.env.BONUS_START_DATE || process.env.INTEREST_START_DATE || '2026-06-01T00:00:00';
-        const cutOffDate = new Date(cutOffDateStr);
-
-        let maxBonusEndDate = null;
-        let remainingEligible = eligibleBalance;
-        const processedAcqs = [];
-
-        // FIFO: Match eligible balance to acquisitions
-        for (const acq of acquisitions) {
-            if (remainingEligible <= 0) break;
-            const heldAmount = Math.min(acq.amount, remainingEligible);
-            remainingEligible -= heldAmount;
-
-            const purchaseDateVN = getSystemTime(acq.createdAt);
-            let bonusStartDate;
-            if (purchaseDateVN < cutOffDate) {
-                bonusStartDate = getStartOfDay(cutOffDate);
-            } else {
-                bonusStartDate = getStartOfDay(purchaseDateVN);
-            }
-            const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-
-            if (!maxBonusEndDate || bonusEndDate > maxBonusEndDate) {
-                maxBonusEndDate = bonusEndDate;
-            }
-
-            processedAcqs.push({
-                amount: heldAmount,
-                startDate: bonusStartDate,
-                endDate: bonusEndDate
-            });
-        }
-
-        // If there is still remaining eligible balance (unrecorded in BalanceHistory, i.e. temporary AQE not yet in history)
-        if (remainingEligible > 0) {
-            const userCreateDateVN = getSystemTime(user.createdAt);
-            let bonusStartDate;
-            if (userCreateDateVN < cutOffDate) {
-                bonusStartDate = getStartOfDay(cutOffDate);
-            } else {
-                bonusStartDate = getStartOfDay(userCreateDateVN);
-            }
-            const bonusEndDate = new Date(bonusStartDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-
-            if (!maxBonusEndDate || bonusEndDate > maxBonusEndDate) {
-                maxBonusEndDate = bonusEndDate;
-            }
-
-            processedAcqs.push({
-                amount: remainingEligible,
-                startDate: bonusStartDate,
-                endDate: bonusEndDate
-            });
-        }
-
-        // Check if today's daily bonus has already been credited
-        const todayBonusExists = await BalanceHistory.findOne({
+        const interestClaimHistories = await BalanceHistory.find({
             userId: user._id,
-            symbol: 'AQE',
-            type: 'BONUS',
-            status: 'SUCCESS',
-            createdAt: { $gte: todayMidnight }
-        });
-
-        const scheduleStartDate = todayBonusExists 
-            ? new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000) 
-            : new Date(todayMidnight.getTime());
-
-        let totalRemaining = 0;
-        if (maxBonusEndDate && maxBonusEndDate > scheduleStartDate) {
-            let currentDay = new Date(scheduleStartDate.getTime());
-            while (currentDay < maxBonusEndDate) {
-                let dailySum = 0;
-                processedAcqs.forEach(acq => {
-                    if (currentDay >= acq.startDate && currentDay < acq.endDate) {
-                        dailySum += acq.amount * 0.06 / 365;
-                    }
-                });
-                totalRemaining += dailySum;
-                currentDay.setDate(currentDay.getDate() + 1);
-            }
-        }
+            type: 'CLAIM_INTEREST',
+            status: 'SUCCESS'
+        }).select('amount');
+        const totalInterestClaimed = interestClaimHistories.reduce((sum, h) => sum + h.amount, 0);
 
         res.json({
             user,
@@ -388,12 +308,18 @@ export const getUserById = async (req, res) => {
             totalNetwork,
             totalPayments: totalPaymentAmount,
             bonusStats: {
-                totalExpected,
                 totalClaimed,
                 totalBonusReceived,
-                totalRemaining,
                 claimableAqeBonus: user.claimableAqeBonus || 0,
                 provisionalAqeBonus: user.provisionalAqeBonus || 0
+            },
+            interestStats: {
+                totalExpected: totalExpectedInterest,
+                totalReceived: totalInterestReceived,
+                totalRemaining: totalRemainingInterest,
+                totalClaimed: totalInterestClaimed,
+                claimableUsdtInterest: user.claimableUsdtInterest || 0,
+                provisionalUsdtInterest: user.provisionalUsdtInterest || 0
             }
         });
     } catch (error) {

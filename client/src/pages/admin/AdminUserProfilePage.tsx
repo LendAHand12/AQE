@@ -427,7 +427,8 @@ export default function AdminUserProfilePage() {
 
   if (!data) return null
 
-  const { user, transactions, commissions, bonusStats } = data
+  const { user, transactions, commissions, bonusStats, interestStats } = data
+  const hasLegacyAqeBonus = (bonusStats?.claimableAqeBonus || 0) > 0 || (bonusStats?.provisionalAqeBonus || 0) > 0 || (bonusStats?.totalBonusReceived || 0) > 0
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-8 pb-20 font-['SVN-Gilroy',sans-serif]">
@@ -1373,64 +1374,69 @@ export default function AdminUserProfilePage() {
             </TabsContent>
             {/* Tab: AQE Distribution */}
             <TabsContent value="aqe" className="space-y-6 outline-none">
-              {/* AQE Bonus Cards */}
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <Card className="rounded-[24px] border-none bg-gradient-to-br from-emerald-50/50 to-white shadow-sm">
-                  <CardContent className="space-y-2 p-6">
-                    <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                      Total Expected
-                    </p>
-                    <h3 className="text-2xl font-black text-[#276152]">
-                      {formatTruncated(bonusStats?.totalExpected, 5)}{" "}
-                      <span className="text-sm font-bold">AQE</span>
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      Lifetime bonus expected from all packages (6% APR)
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* USDT Interest Cards (current system: 6% APR on total qualifying USDT deposited) */}
+              <div>
+                <h4 className="mb-3 text-[13px] font-bold uppercase tracking-widest text-gray-400">
+                  USDT Interest (6% APR)
+                </h4>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <Card className="rounded-[24px] border-none bg-gradient-to-br from-emerald-50/50 to-white shadow-sm">
+                    <CardContent className="space-y-2 p-6">
+                      <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                        Total Expected
+                      </p>
+                      <h3 className="text-2xl font-black text-[#276152]">
+                        {formatTruncated(interestStats?.totalExpected, 5)}{" "}
+                        <span className="text-sm font-bold">USDT</span>
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Lifetime interest expected from all qualifying deposits (6% APR)
+                      </p>
+                    </CardContent>
+                  </Card>
 
-                <Card className="rounded-[24px] border-none bg-gradient-to-br from-blue-50/50 to-white shadow-sm">
-                  <CardContent className="space-y-2 p-6">
-                    <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                      Total Received
-                    </p>
-                    <h3 className="text-2xl font-black text-blue-700">
-                      {formatTruncated(bonusStats?.totalBonusReceived, 5)}{" "}
-                      <span className="text-sm font-bold">AQE</span>
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      Total daily bonus received so far (yield)
-                    </p>
-                  </CardContent>
-                </Card>
+                  <Card className="rounded-[24px] border-none bg-gradient-to-br from-blue-50/50 to-white shadow-sm">
+                    <CardContent className="space-y-2 p-6">
+                      <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                        Total Received
+                      </p>
+                      <h3 className="text-2xl font-black text-blue-700">
+                        {formatTruncated(interestStats?.totalReceived, 5)}{" "}
+                        <span className="text-sm font-bold">USDT</span>
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Total daily interest received so far (yield)
+                      </p>
+                    </CardContent>
+                  </Card>
 
-                <Card className="rounded-[24px] border-none bg-gradient-to-br from-amber-50/50 to-white shadow-sm">
-                  <CardContent className="space-y-2 p-6">
-                    <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                      Remaining
-                    </p>
-                    <h3 className="text-2xl font-black text-amber-600">
-                      {formatTruncated(bonusStats?.totalRemaining, 5)}{" "}
-                      <span className="text-sm font-bold">AQE</span>
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      Expected future bonus from today onwards
-                    </p>
-                  </CardContent>
-                </Card>
+                  <Card className="rounded-[24px] border-none bg-gradient-to-br from-amber-50/50 to-white shadow-sm">
+                    <CardContent className="space-y-2 p-6">
+                      <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                        Remaining
+                      </p>
+                      <h3 className="text-2xl font-black text-amber-600">
+                        {formatTruncated(interestStats?.totalRemaining, 5)}{" "}
+                        <span className="text-sm font-bold">USDT</span>
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Expected future interest from today onwards
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
-              {/* AQE Balances Summary */}
+              {/* USDT Interest Balances Summary */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
                   <div>
                     <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                      Claimable Bonus
+                      Claimable Interest
                     </p>
                     <h3 className="text-xl font-bold text-gray-900">
-                      {formatTruncated(bonusStats?.claimableAqeBonus, 5)}{" "}
-                      <span className="text-xs">AQE</span>
+                      {formatTruncated(interestStats?.claimableUsdtInterest, 5)}{" "}
+                      <span className="text-xs">USDT</span>
                     </h3>
                   </div>
                   <Badge className="border-none bg-[#276152]/10 font-bold text-[#276152]">
@@ -1440,11 +1446,11 @@ export default function AdminUserProfilePage() {
                 <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
                   <div>
                     <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                      Provisional Bonus
+                      Provisional Interest
                     </p>
                     <h3 className="text-xl font-bold text-gray-900">
-                      {formatTruncated(bonusStats?.provisionalAqeBonus, 5)}{" "}
-                      <span className="text-xs">AQE</span>
+                      {formatTruncated(interestStats?.provisionalUsdtInterest, 5)}{" "}
+                      <span className="text-xs">USDT</span>
                     </h3>
                   </div>
                   <Badge className="border-none bg-amber-100 font-bold text-amber-700">
@@ -1457,7 +1463,7 @@ export default function AdminUserProfilePage() {
                       Claimed to USDT
                     </p>
                     <h3 className="text-xl font-bold text-blue-700">
-                      {formatTruncated(bonusStats?.totalClaimed, 5)}{" "}
+                      {formatTruncated(interestStats?.totalClaimed, 5)}{" "}
                       <span className="text-xs">USDT</span>
                     </h3>
                   </div>
@@ -1466,6 +1472,73 @@ export default function AdminUserProfilePage() {
                   </Badge>
                 </Card>
               </div>
+
+              {/* Legacy AQE Bonus (frozen system — only shown while a leftover balance still exists) */}
+              {hasLegacyAqeBonus && (
+                <div>
+                  <h4 className="mb-3 text-[13px] font-bold uppercase tracking-widest text-gray-400">
+                    Legacy AQE Bonus (frozen, no longer accrues)
+                  </h4>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
+                      <div>
+                        <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                          Claimable Bonus
+                        </p>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {formatTruncated(bonusStats?.claimableAqeBonus, 5)}{" "}
+                          <span className="text-xs">AQE</span>
+                        </h3>
+                      </div>
+                      <Badge className="border-none bg-[#276152]/10 font-bold text-[#276152]">
+                        Available
+                      </Badge>
+                    </Card>
+                    <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
+                      <div>
+                        <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                          Provisional Bonus
+                        </p>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {formatTruncated(bonusStats?.provisionalAqeBonus, 5)}{" "}
+                          <span className="text-xs">AQE</span>
+                        </h3>
+                      </div>
+                      <Badge className="border-none bg-amber-100 font-bold text-amber-700">
+                        Accumulated
+                      </Badge>
+                    </Card>
+                    <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
+                      <div>
+                        <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                          Total Received
+                        </p>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {formatTruncated(bonusStats?.totalBonusReceived, 5)}{" "}
+                          <span className="text-xs">AQE</span>
+                        </h3>
+                      </div>
+                      <Badge className="border-none bg-gray-100 font-bold text-gray-500">
+                        Historical
+                      </Badge>
+                    </Card>
+                    <Card className="flex items-center justify-between rounded-[24px] border border-gray-100 bg-white p-6 shadow-sm">
+                      <div>
+                        <p className="mb-1 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+                          Claimed to USDT
+                        </p>
+                        <h3 className="text-xl font-bold text-blue-700">
+                          {formatTruncated(bonusStats?.totalClaimed, 5)}{" "}
+                          <span className="text-xs">USDT</span>
+                        </h3>
+                      </div>
+                      <Badge className="border-none bg-blue-100 font-bold text-blue-700">
+                        Claimed
+                      </Badge>
+                    </Card>
+                  </div>
+                </div>
+              )}
 
               <Card className="overflow-hidden rounded-[24px] border-gray-100 shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
