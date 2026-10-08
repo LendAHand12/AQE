@@ -704,7 +704,7 @@
     "current_balance": "Saldo actual de AQE",
     "amount_label": "Monto de la compra",
     "amount_placeholder": "Ingrese el monto en USDT",
-    "min_warning": "La compra mínima es 10 USDT",
+    "min_warning": "La compra mínima es 100 USDT",
     "expected_label": "AQE esperado",
     "june_promo_banner": "Promoción especial de junio: ¡Obtenga un bono del 5 % al instante en todas las compras!",
     "june_promo_desc": "Obtenga una bonificación oficial adicional del 5 % por cada compra de unidades digitales en junio de 2026. Se agrega directamente como existencias oficiales.",

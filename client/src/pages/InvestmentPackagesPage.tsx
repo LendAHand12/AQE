@@ -261,7 +261,7 @@ export default function InvestmentPackagesPage() {
       toast.error(t("pre_register.kyc_verified_required"))
       return
     }
-    if (purchaseAmount < 10) {
+    if (purchaseAmount < 100) {
       toast.error(t("buy.min_warning"))
       return
     }
@@ -361,7 +361,7 @@ export default function InvestmentPackagesPage() {
                   <div className="relative">
                     <Input
                       type="number"
-                      min={10}
+                      min={100}
                       value={purchaseAmount === 0 ? "" : purchaseAmount}
                       placeholder={t("buy.amount_placeholder")}
                       onChange={(e) => setPurchaseAmount(e.target.value === "" ? 0 : Number(e.target.value))}
@@ -371,7 +371,7 @@ export default function InvestmentPackagesPage() {
                       USDT
                     </div>
                   </div>
-                  {purchaseAmount > 0 && purchaseAmount < 10 && (
+                  {purchaseAmount > 0 && purchaseAmount < 100 && (
                     <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1">
                       <ShieldAlert size={12} />
                       {t("buy.min_warning")}
@@ -383,7 +383,7 @@ export default function InvestmentPackagesPage() {
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{t("buy.select_amount")}</p>
                   <div className="flex gap-2">
-                    {[50, 100, 500, 1000].map((amount) => (
+                    {[100, 500, 1000, 5000].map((amount) => (
                       <button
                         key={amount}
                         type="button"
@@ -441,7 +441,7 @@ export default function InvestmentPackagesPage() {
                   <Button
                     type="button"
                     onClick={handleBuyAqe}
-                    disabled={purchaseAmount < 10 || !!awaitingPayment?.pendingTransaction}
+                    disabled={purchaseAmount < 100 || !!awaitingPayment?.pendingTransaction}
                     className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
                   >
                     <span>{t("buy.buy_btn")}</span>

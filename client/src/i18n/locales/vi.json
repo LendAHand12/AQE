@@ -785,7 +785,7 @@
     "current_balance": "Số dư AQE hiện tại",
     "amount_label": "Số tiền mua",
     "amount_placeholder": "Nhập số tiền USDT",
-    "min_warning": "Số tiền mua tối thiểu là 10 USDT",
+    "min_warning": "Số tiền mua tối thiểu là 100 USDT",
     "expected_label": "AQE dự kiến nhận",
     "june_promo_banner": "Ưu đãi đặc biệt tháng 6: Nhận ngay 5% bonus trực tiếp cho tất cả các giao dịch mua!",
     "june_promo_desc": "Nhận thêm 5% bonus chính thức cho mỗi lượt mua đơn vị số trong tháng 6/2026. Được cộng trực tiếp vào số dư khả dụng của bạn.",
