@@ -765,7 +765,7 @@
     "current_balance": "Current AQE Balance",
     "amount_label": "Purchase Amount",
     "amount_placeholder": "Enter amount in USDT",
-    "min_warning": "Minimum purchase is 10 USDT",
+    "min_warning": "Minimum purchase is 100 USDT",
     "expected_label": "Expected AQE",
     "june_promo_banner": "June Special Promotion: Get a 5% bonus instantly on all purchases!",
     "june_promo_desc": "Earn an extra 5% official bonus on every digital unit purchase in June 2026. Added directly as official holdings.",

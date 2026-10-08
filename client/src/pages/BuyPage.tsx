@@ -87,7 +87,7 @@ export default function BuyPage() {
       return
     }
 
-    if (purchaseAmount < 10) {
+    if (purchaseAmount < 100) {
       toast.error(t("buy.min_warning"))
       return
     }
@@ -158,7 +158,7 @@ export default function BuyPage() {
             <div className="relative group">
               <Input
                 type="number"
-                min={10}
+                min={100}
                 value={purchaseAmount === 0 ? "" : purchaseAmount}
                 placeholder={t("buy.amount_placeholder")}
                 onChange={(e) => setPurchaseAmount(e.target.value === "" ? 0 : Number(e.target.value))}
@@ -169,7 +169,7 @@ export default function BuyPage() {
               </div>
             </div>
 
-            {purchaseAmount > 0 && purchaseAmount < 10 && (
+            {purchaseAmount > 0 && purchaseAmount < 100 && (
               <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 pl-0.5">
                 <ShieldAlert size={12} />
                 {t("buy.min_warning")}
@@ -181,7 +181,7 @@ export default function BuyPage() {
           <div className="space-y-2">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-0.5">{t("buy.select_amount")}</p>
             <div className="flex items-center gap-2">
-              {[50, 100, 500, 1000].map((amount) => (
+              {[100, 500, 1000, 5000].map((amount) => (
                 <button
                   key={amount}
                   type="button"
@@ -232,7 +232,7 @@ export default function BuyPage() {
               <Button
                 type="button"
                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[12px] font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
-                disabled={loading || purchaseAmount < 10 || !!awaitingPayment?.pendingTransaction}
+                disabled={loading || purchaseAmount < 100 || !!awaitingPayment?.pendingTransaction}
                 onClick={handlePurchase}
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> :

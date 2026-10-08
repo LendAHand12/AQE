@@ -279,6 +279,11 @@ export const createPayment = async (req, res) => {
             return res.status(400).json({ message: 'Invalid amount' });
         }
 
+        // Minimum purchase amount only applies to custom/direct amounts, not fixed package prices
+        if (!packageId && purchaseAmount < 100) {
+            return res.status(400).json({ message: 'buy.min_warning' });
+        }
+
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);
 
         const methodText = method === 'QR' ? 'QR Code' : (method === 'ZELLE' ? 'Zelle' : 'Direct Extension');
