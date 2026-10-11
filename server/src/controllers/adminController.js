@@ -122,8 +122,8 @@ export const getUsers = async (req, res) => {
 
         const query = {
             isDeleted: false,
-            ...(statusFilter === 'active' && { isActive: true }),
-            ...(statusFilter === 'inactive' && { isActive: false }),
+            ...(statusFilter === 'active' && { isLocked: false }),
+            ...(statusFilter === 'inactive' && { isLocked: true }),
             ...(queryRegex && {
                 $or: [
                     { fullName: { $regex: queryRegex } },
@@ -407,7 +407,7 @@ export const getUserStats = async (req, res) => {
         const total = await User.countDocuments({ isDeleted: false });
         const verified = await User.countDocuments({ isDeleted: false, kycStatus: 'verified' });
         const pending = await User.countDocuments({ isDeleted: false, kycStatus: 'pending' });
-        const locked = await User.countDocuments({ isDeleted: false, isActive: false });
+        const locked = await User.countDocuments({ isDeleted: false, isLocked: true });
 
         res.json({
             total,
@@ -442,7 +442,9 @@ export const updateUserByAdmin = async (req, res) => {
             }
 
             user.fullName = req.body.fullName ?? user.fullName;
+            // Email confirmation status (isActive) and admin lock (isLocked) are independent flags.
             user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
+            user.isLocked = req.body.isLocked !== undefined ? req.body.isLocked : user.isLocked;
             user.birthday = req.body.birthday ?? user.birthday;
             user.gender = req.body.gender ?? user.gender;
             user.telegram = req.body.telegram ?? user.telegram;

@@ -466,12 +466,22 @@ export default function AdminUserProfilePage() {
           <Badge
             className={cn(
               "flex h-11 min-w-[120px] items-center justify-center rounded-full border-none px-6 text-[13px] font-bold",
-              user.isActive
-                ? "bg-emerald-500 text-white"
-                : "bg-rose-500 text-white"
+              user.isLocked
+                ? "bg-rose-500 text-white"
+                : "bg-emerald-500 text-white"
             )}
           >
-            {user.isActive ? "Active" : "Locked"}
+            {user.isLocked ? "Locked" : "Active"}
+          </Badge>
+          <Badge
+            className={cn(
+              "flex h-11 min-w-[140px] items-center justify-center rounded-full border-none px-6 text-[13px] font-bold",
+              user.isActive
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-500"
+            )}
+          >
+            Email: {user.isActive ? "Confirmed" : "Pending"}
           </Badge>
           <Button
             className="h-11 rounded-full bg-amber-600 px-6 font-bold shadow-lg shadow-amber-600/10 hover:bg-amber-700"
@@ -1917,7 +1927,7 @@ export default function AdminUserProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-500">
-                    Account Status
+                    Email Confirmation
                   </label>
                   <Select
                     value={editingUser?.isActive ? "true" : "false"}
@@ -1929,12 +1939,32 @@ export default function AdminUserProfilePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Activated (Active)</SelectItem>
-                      <SelectItem value="false">
-                        Account Locked / Not activated
-                      </SelectItem>
+                      <SelectItem value="true">Confirmed</SelectItem>
+                      <SelectItem value="false">Not Confirmed</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-500">
+                    Account Lock
+                  </label>
+                  <Select
+                    value={editingUser?.isLocked ? "true" : "false"}
+                    onValueChange={(v) =>
+                      setEditingUser({ ...editingUser, isLocked: v === "true" })
+                    }
+                  >
+                    <SelectTrigger className="!h-11 w-full rounded-[8px] border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="false">Unlocked (Active)</SelectItem>
+                      <SelectItem value="true">Locked</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-gray-400">
+                    Locking immediately blocks login and ends any active session.
+                  </p>
                 </div>
               </div>
             </div>

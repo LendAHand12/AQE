@@ -20,6 +20,12 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Người dùng không tồn tại hoặc đã bị xóa' });
             }
 
+            // Checked on every request (not just at login) so a lock takes effect immediately,
+            // even for a session that is already logged in.
+            if (req.user.isLocked) {
+                return res.status(401).json({ message: 'auth.errors.account_locked' });
+            }
+
             next();
         } catch (error) {
             console.error(error);

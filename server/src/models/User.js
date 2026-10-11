@@ -50,7 +50,11 @@ const userSchema = mongoose.Schema({
     },
     isActive: {
         type: Boolean,
-        default: false
+        default: false // Email confirmation status only. True once the user confirms their email via confirmationToken.
+    },
+    isLocked: {
+        type: Boolean,
+        default: false // Admin-only lock. True blocks login AND invalidates any active session (checked on every request in protect middleware).
     },
     isDeleted: {
         type: Boolean,

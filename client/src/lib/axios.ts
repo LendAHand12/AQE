@@ -26,11 +26,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle specific error codes
+    // On 401 (e.g. account locked, deleted, or session expired), force an immediate logout
+    // so an already-logged-in session is kicked out right away, not just blocked at next login.
+    // Admin pages/tokens are handled separately and are left untouched here.
     if (error.response?.status === 401) {
-      // Potentially clear local storage and redirect to login
-      // localStorage.clear();
-      // window.location.href = '/login';
+      const isAdminPath = window.location.pathname.startsWith('/admin')
+      if (!isAdminPath) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+      }
     }
     return Promise.reject(error)
   }

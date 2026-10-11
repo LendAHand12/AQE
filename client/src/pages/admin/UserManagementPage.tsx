@@ -258,7 +258,7 @@ export default function UserManagementPage() {
               <SelectContent className="rounded-[12px] border-none shadow-lg">
                 <SelectItem value="all" className="font-['SVN-Gilroy:Medium',sans-serif]">All</SelectItem>
                 <SelectItem value="active" className="font-['SVN-Gilroy:Medium',sans-serif]">Active</SelectItem>
-                <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Inactive</SelectItem>
+                <SelectItem value="inactive" className="font-['SVN-Gilroy:Medium',sans-serif]">Locked</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center gap-2">
@@ -343,10 +343,10 @@ export default function UserManagementPage() {
                     )}
                   </TableCell>
                   <TableCell className="py-4 px-4">
-                    {user.isActive ? (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Active</span>
+                    {user.isLocked ? (
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#ef4444] tracking-[0.48px]">Locked</span>
                     ) : (
-                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#ef4444] tracking-[0.48px]">Inactive</span>
+                      <span className="font-['SVN-Gilroy:SemiBold',sans-serif] text-[16px] text-[#065f46] tracking-[0.48px]">Active</span>
                     )}
                   </TableCell>
 
@@ -572,14 +572,25 @@ export default function UserManagementPage() {
                   <Input value={editingUser?.walletAddress || ""} onChange={(e) => setEditingUser({...editingUser, walletAddress: e.target.value})} className="h-11 rounded-[8px] font-mono text-xs border-gray-200" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500">Active Status</label>
+                  <label className="text-sm font-bold text-gray-500">Email Confirmation</label>
                   <Select value={editingUser?.isActive ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isActive: v === "true"})}>
                     <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Activated (Active)</SelectItem>
-                      <SelectItem value="false">Account Locked / Inactive</SelectItem>
+                      <SelectItem value="true">Confirmed</SelectItem>
+                      <SelectItem value="false">Not Confirmed</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-500">Account Lock</label>
+                  <Select value={editingUser?.isLocked ? "true" : "false"} onValueChange={(v) => setEditingUser({...editingUser, isLocked: v === "true"})}>
+                    <SelectTrigger className="!h-11 rounded-[8px] w-full border-gray-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="false">Unlocked (Active)</SelectItem>
+                      <SelectItem value="true">Locked</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-gray-400">Locking immediately blocks login and ends any active session.</p>
                 </div>
               </div>
             </div>

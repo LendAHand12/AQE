@@ -82,6 +82,7 @@
       "email_not_found": "No account was found with this email address",
       "username_exists": "This username is already in use",
       "unconfirmed": "Your account's email has not been confirmed yet. Please check your inbox to activate.",
+      "account_locked": "Your account has been locked by an administrator.",
       "upload_failed": "Failed to upload image. Please try again.",
       "file_too_large": "Image size is too large (Maximum 5MB). Please try again with a smaller image or screenshot it to reduce size.",
       "only_images_allowed": "Only image formats are allowed (JPEG, JPG, PNG, WEBP).",

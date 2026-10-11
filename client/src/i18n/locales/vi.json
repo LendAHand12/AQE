@@ -82,6 +82,7 @@
       "email_not_found": "Không tìm thấy tài khoản nào với địa chỉ email này",
       "username_exists": "Tên đăng nhập này đã được sử dụng",
       "unconfirmed": "Tài khoản của bạn chưa được xác minh email. Vui lòng kiểm tra hộp thư để kích hoạt.",
+      "account_locked": "Tài khoản của bạn đã bị quản trị viên khóa.",
       "upload_failed": "Tải lên ảnh thất bại. Vui lòng thử lại.",
       "file_too_large": "Kích thước ảnh quá lớn (Tối đa 5MB). Vui lòng thử lại với ảnh nhỏ hơn hoặc chụp màn hình để giảm dung lượng.",
       "only_images_allowed": "Chỉ cho phép các định dạng ảnh (JPEG, JPG, PNG, WEBP).",

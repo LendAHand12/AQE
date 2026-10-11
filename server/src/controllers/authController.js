@@ -110,6 +110,7 @@ export const loginUser = async (req, res) => {
         const user = await User.findOne({ email, isDeleted: false });
 
         if (user && (await user.matchPassword(password))) {
+            if (user.isLocked) return res.status(401).json({ message: 'auth.errors.account_locked' });
             if (!user.isActive) return res.status(401).json({ message: 'auth.errors.unconfirmed' });
 
             if (user.isTwoFactorEnabled) {
@@ -140,6 +141,9 @@ export const verify2FALogin = async (req, res) => {
 
         if (!user || user.isDeleted || !user.isActive) {
             return res.status(401).json({ message: 'auth.errors.user_not_found' });
+        }
+        if (user.isLocked) {
+            return res.status(401).json({ message: 'auth.errors.account_locked' });
         }
 
         const isVerified = verifyTwoFactorCode(user.twoFactorSecret, code);
