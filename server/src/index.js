@@ -28,7 +28,6 @@ import configRoutes from './routes/configRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import swapRoutes from './routes/swapRoutes.js';
 import { initCronJobs } from './services/cronService.js';
-import { initPaymentListener } from './services/paymentListener.js';
 import { createServer } from 'http';
 import { initSocket } from './utils/socket.js';
 
@@ -80,9 +79,6 @@ initSocket(httpServer);
 
 // Initialize Cron Jobs
 initCronJobs();
-
-// Initialize Payment Listener (Uncomment when using RPC)
-// initPaymentListener();
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {

@@ -176,20 +176,38 @@ export async function processCommissions(buyer, amountPaid, transaction) {
 export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) => {
     try {
         console.log(`[Finalize] Processing PaymentID: ${paymentId}, Hash: ${hash}, Amount: ${actualAmount}`);
-        const transaction = await Transaction.findOne({ paymentId, status: 'PENDING' });
+        if (typeof hash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(hash)) {
+            console.error(`[Finalize] Rejected invalid hash format for paymentId ${paymentId}: ${hash}`);
+            return;
+        }
+        hash = hash.toLowerCase();
+
+        // Atomic claim: only one caller can move PENDING -> PROCESSING
+        const transaction = await Transaction.findOneAndUpdate(
+            { paymentId, status: 'PENDING' },
+            { status: 'PROCESSING' },
+            { new: true }
+        );
         if (!transaction) {
             console.error(`[Finalize] PENDING Transaction not found for paymentId: ${paymentId}`);
-            // Check if it's already success
-            const existing = await Transaction.findOne({ paymentId, status: 'SUCCESS' });
-            if (existing) {
-                console.log(`[Finalize] Transaction ${paymentId} already processed as SUCCESS.`);
-            }
+            return;
+        }
+
+        const releaseClaim = async () => {
+            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: 'PENDING' });
+        };
+
+        // Amount seen on-chain must cover the order (1% tolerance)
+        if (!(actualAmount >= transaction.amount * 0.99)) {
+            console.error(`[Finalize] Amount mismatch for ${paymentId}: chain ${actualAmount} < order ${transaction.amount}`);
+            await releaseClaim();
             return;
         }
 
         const user = await User.findById(transaction.from);
         if (!user) {
             console.error(`[Blockchain] User not found for transaction: ${transaction._id}`);
+            await releaseClaim();
             return;
         }
 
@@ -224,6 +242,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
             try {
                 await transaction.save();
             } catch (saveError) {
+                await releaseClaim();
                 if (saveError.code === 11000) {
                     console.log(`[Finalize] Transaction ${paymentId} already processed (duplicate hash).`);
                     return;
@@ -349,6 +368,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         try {
             await transaction.save();
         } catch (saveError) {
+            await releaseClaim();
             // E11000 duplicate key error on hash means another process already saved it
             if (saveError.code === 11000) {
                 console.log(`[Finalize] Transaction ${paymentId} already processed (duplicate hash).`);

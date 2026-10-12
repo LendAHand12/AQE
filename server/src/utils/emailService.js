@@ -209,3 +209,37 @@ export const sendUserRepliedEmailToAdmin = async (userEmail, userFullName, subje
         console.error('Error sending user reply admin email:', error);
     }
 };
+
+/**
+ * Security alert to the owner. Recipient comes from ALERT_EMAIL in .env.
+ * Never throws: an email problem must not break the payment flow.
+ */
+export const sendSecurityAlertEmail = async (subject, rows) => {
+    const to = process.env.ALERT_EMAIL;
+    if (!to) {
+        console.warn('[SecurityAlert] ALERT_EMAIL is not set in .env, alert not emailed:', subject);
+        return;
+    }
+
+    const escape = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const tableRows = rows
+        .map(([k, v]) => `<tr><td style="padding:6px 10px;color:#6b7280;vertical-align:top;white-space:nowrap;">${escape(k)}</td><td style="padding:6px 10px;word-break:break-all;">${escape(v)}</td></tr>`)
+        .join('');
+
+    try {
+        await transporter.sendMail({
+            from: `AQ Estate Security <${process.env.EMAIL_FROM}>`,
+            to,
+            subject: `[AQ Estate][SECURITY] ${subject}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 20px; border: 1px solid #fecaca; border-radius: 8px;">
+                    <h2 style="color: #b91c1c;">${escape(subject)}</h2>
+                    <table style="border-collapse: collapse; font-size: 14px;">${tableRows}</table>
+                </div>
+            `
+        });
+        console.log(`[SecurityAlert] Email sent to ${to}: ${subject}`);
+    } catch (error) {
+        console.error('[SecurityAlert] Error sending alert email:', error);
+    }
+};

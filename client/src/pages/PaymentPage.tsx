@@ -142,6 +142,13 @@ export default function PaymentPage() {
             setTxHash(res.data.hash);
             syncProfile();
             clearInterval(interval);
+          } else if (res.data.status === 'AWAITING_APPROVAL') {
+            setStatus('awaiting');
+            clearInterval(interval);
+          } else if (res.data.status === 'FAILED') {
+            setStatus('error');
+            toast.error(t("pre_register.pay_failed"));
+            clearInterval(interval);
           }
         } catch (e) { }
       }, 3000);

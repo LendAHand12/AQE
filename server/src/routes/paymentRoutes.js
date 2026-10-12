@@ -2,7 +2,6 @@ import express from 'express';
 import {
     submitPreRegisterPledge,
     getMyPreRegister,
-    submitPreRegisterPayment,
     getUserPayments,
     createPayment,
     getPurchaseLimits,
@@ -27,9 +26,8 @@ const router = express.Router();
 
 // Pre-Register & Checkout
 router.post('/pledge', protect, submitPreRegisterPledge);
-router.post('/payment', protect, submitPreRegisterPayment);
 router.post('/create', protect, createPayment);
-router.post('/confirm-hash', confirmTransactionHash);
+router.post('/confirm-hash', protect, confirmTransactionHash);
 router.post('/confirm-manual', protect, confirmManualPayment);
 router.post('/cancel', protect, cancelPayment);
 router.get('/pledge', protect, getMyPreRegister);

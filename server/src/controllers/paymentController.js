@@ -7,6 +7,7 @@ import User from '../models/User.js';
 import Commission from '../models/Commission.js';
 import Notification from '../models/Notification.js';
 import BalanceHistory from '../models/BalanceHistory.js';
+import { detectSuspiciousPayment, alertSuspiciousPayment, isValidTxHash } from '../utils/suspiciousPayment.js';
 import { finalizeBlockchainPayment, processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
 import { emitNotification } from '../utils/socket.js';
 import { sendTelegramNotification } from '../utils/telegramService.js';
@@ -52,109 +53,6 @@ export const submitPreRegisterPledge = async (req, res) => {
 
         await user.save();
         res.json({ message: 'payments.pledge_success', pledgeUsdt: user.pledgeUsdt });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Handle Actual Payment via WalletConnect
-export const submitPreRegisterPayment = async (req, res) => {
-    const { hash, amount, pledgeAmount } = req.body;
-    const amountNum = parseFloat(amount);
-    const pledgeAmountNum = parseFloat(pledgeAmount);
-
-    try {
-        const user = await User.findById(req.user._id);
-        const nowVN = getSystemTime();
-        const may31VN = new Date('2026-05-31T23:59:59');
-        const julyFirstVN = new Date('2026-07-01T00:00:00');
-
-        if (user.kycStatus !== 'verified' && user.kycStatus !== 'pending') {
-            return res.status(403).json({ message: 'payments.errors.kyc_required' });
-        }
-
-        if (!user.pledgeUsdt || user.pledgeUsdt <= 0 || user.isPledgeCompleted) {
-            if (user.isPledgeCompleted) {
-                user.pledgeRounds.push({
-                    roundNumber: user.pledgeRounds.length + 1,
-                    pledgeUsdt: user.pledgeUsdt,
-                    paidUsdt: user.paidUsdtPreRegister,
-                    tokensReceived: user.preRegisterTokens,
-                    bonusPercent: user.hasReceivedPromotion ? 0.10 : 0,
-                    completedAt: new Date()
-                });
-                user.paidUsdtPreRegister = 0;
-                user.preRegisterTokens = 0;
-                user.hasReceivedPromotion = false;
-                user.isPledgeCompleted = false;
-            }
-
-            if (!pledgeAmountNum || pledgeAmountNum < 100) {
-                return res.status(400).json({ message: 'payments.errors.min_pledge' });
-            }
-            user.pledgeUsdt = pledgeAmountNum;
-        }
-
-        // Pegged rate: lấy từ admin config
-        const systemConfig = await getSystemConfig();
-        const price = systemConfig.aqeToUsdtRate;
-
-        const tokensCalculated = amountNum / price;
-
-        await Transaction.create({
-            hash,
-            from: user._id,
-            to: 'System',
-            amount: amountNum,
-            symbol: 'USDT',
-            type: 'PAYMENT',
-            status: 'SUCCESS',
-            description: `Payment for AQE`
-        });
-
-        if (nowVN >= julyFirstVN) {
-            user.aqeBalance += tokensCalculated;
-        } else {
-            user.paidUsdtPreRegister += amountNum;
-            user.preRegisterTokens += tokensCalculated;
-
-            if (user.paidUsdtPreRegister >= user.pledgeUsdt && !user.isPledgeCompleted) {
-                user.isPledgeCompleted = true;
-
-                let bonusPercent = 0.10;
-
-                const bonusTokens = user.preRegisterTokens * bonusPercent;
-                const totalTokens = user.preRegisterTokens + bonusTokens;
-
-                user.aqeBalance += totalTokens;
-                user.preRegisterTokens = 0;
-                user.hasReceivedPromotion = true;
-
-                if (bonusTokens > 0) {
-                    await BalanceHistory.create({
-                        userId: user._id,
-                        amount: bonusTokens,
-                        symbol: 'AQE',
-                        type: 'REWARD',
-                        status: 'SUCCESS',
-                        isOfficial: true,
-                        balanceBefore: user.aqeBalance - bonusTokens,
-                        balanceAfter: user.aqeBalance,
-                        description: `Bonus ${bonusPercent * 100}% for completing pledge`
-                    });
-                }
-
-                // Convert all previous AQE balance history records to official
-                await BalanceHistory.updateMany(
-                    { userId: user._id, symbol: 'AQE', status: 'SUCCESS', isOfficial: false },
-                    { isOfficial: true }
-                );
-            }
-        }
-
-        await user.save();
-        res.json({ message: 'payments.payment_success' });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -276,18 +174,18 @@ export const getPurchaseLimits = async (req, res) => {
 
 // @desc    Create a new payment for QR flow
 export const createPayment = async (req, res) => {
-    const { amount, pledgeAmount, method, isDirectPurchase, packageId } = req.body;
+    const { amount, method, packageId } = req.body;
     try {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         // Check for an existing unfinished order (not yet confirmed, or awaiting admin approval)
-        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'AWAITING_APPROVAL'] } });
+        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'PROCESSING', 'AWAITING_APPROVAL'] } });
         if (existingPending) {
             return res.status(400).json({ message: 'payments.page.pending_manual_exists' });
         }
 
-        let purchaseAmount = amount;
+        let purchaseAmount = Number(amount);
         let packageData = null;
 
         if (packageId) {
@@ -298,7 +196,7 @@ export const createPayment = async (req, res) => {
             purchaseAmount = packageData.price;
         }
 
-        if (!purchaseAmount || purchaseAmount <= 0) {
+        if (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });
         }
 
@@ -317,10 +215,8 @@ export const createPayment = async (req, res) => {
         let description = "";
         if (packageData) {
             description = `Purchase of Partnership Package: ${packageData.title} (${methodText})`;
-        } else if (isDirectPurchase) {
-            description = `Direct purchase of AQE digital units (${methodText})`;
         } else {
-            description = `${method === 'ZELLE' ? 'Manual Payment' : 'Blockchain Payment'} (${methodText}). Pledge: ${pledgeAmount || user.pledgeUsdt} USDT`;
+            description = `Direct purchase of AQE digital units (${methodText})`;
         }
 
         const transaction = await Transaction.create({
@@ -333,9 +229,8 @@ export const createPayment = async (req, res) => {
             status: 'PENDING',
             description,
             metadata: { 
-                pledgeAmount, 
                 method, 
-                isDirectPurchase: !!isDirectPurchase || !!packageId,
+                isDirectPurchase: true,
                 packageId: packageData ? packageData._id : undefined,
                 packageTitle: packageData ? packageData.title : undefined,
                 aqeAmount: packageData ? packageData.aqeAmount : undefined,
@@ -363,14 +258,21 @@ export const createPayment = async (req, res) => {
 export const getPaymentById = async (req, res) => {
     const { paymentId } = req.params;
     try {
-        const transaction = await Transaction.findOne({ paymentId })
-            .populate('from', 'username fullName email');
+        const transaction = await Transaction.findOne({ paymentId }).populate('from', 'username');
 
         if (!transaction) {
             return res.status(404).json({ message: 'Payment not found' });
         }
 
-        res.json(transaction);
+        // Public endpoint (QR flow): expose only what the pay page needs, no user data
+        res.json({
+            paymentId: transaction.paymentId,
+            amount: transaction.amount,
+            symbol: transaction.symbol,
+            status: transaction.status,
+            hash: transaction.hash,
+            from: { username: transaction.from?.username }
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -391,7 +293,7 @@ export const getPaymentHistory = async (req, res) => {
     }
 };
 
-// @desc    Manually confirm a transaction hash for instant UX
+// @desc    User submits the wallet-transfer hash; the order is confirmed instantly (suspicious requests email the owner)
 export const confirmTransactionHash = async (req, res) => {
     const { paymentId, hash } = req.body;
 
@@ -400,9 +302,26 @@ export const confirmTransactionHash = async (req, res) => {
             return res.status(400).json({ message: 'Missing hash or paymentId' });
         }
 
-        const transaction = await Transaction.findOne({ paymentId });
+        const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
         if (!transaction) {
             return res.status(404).json({ message: 'Payment not found' });
+        }
+
+        // Detection only: the order is still confirmed instantly, but anything that does not look
+        // like our web app (Postman/curl/script, malformed or near-duplicate hash) emails the owner.
+        const reasons = await detectSuspiciousPayment(req, transaction, hash);
+        if (reasons.length) {
+            console.warn(`[ConfirmHash] Suspicious payment ${paymentId}: ${reasons.join(' | ')}`);
+            const user = await User.findById(req.user._id);
+            alertSuspiciousPayment(req, user, transaction, hash, reasons, 'confirm-hash').catch(() => {});
+            await Transaction.updateOne(
+                { _id: transaction._id },
+                { $set: { 'metadata.suspicious': { reasons, ip: req.ip, userAgent: req.get('user-agent') || '', at: new Date() } } }
+            );
+        }
+
+        if (!isValidTxHash(hash)) {
+            return res.status(400).json({ message: 'Invalid transaction hash' });
         }
 
         if (transaction.status !== 'PENDING') {
@@ -411,9 +330,13 @@ export const confirmTransactionHash = async (req, res) => {
 
         console.log(`[ConfirmHash] Auto-finalizing hash ${hash} for payment ${paymentId} (Instant Success)`);
 
-        // Auto-finalize without checking blockchain
-        // Use the amount from the transaction record since we're not checking the chain
+        // Instant success: the amount comes from the order record, the chain is not checked
         await finalizeBlockchainPayment(Number(paymentId), hash, transaction.amount);
+
+        const updated = await Transaction.findById(transaction._id);
+        if (updated?.status !== 'SUCCESS') {
+            return res.status(400).json({ message: 'Payment could not be confirmed', status: updated?.status });
+        }
 
         return res.json({
             message: 'Payment confirmed successfully',
@@ -492,16 +415,24 @@ export const cancelPayment = async (req, res) => {
 
 // @desc    Admin Approve Manual Payment
 export const approveManualPayment = async (req, res) => {
+    let approvalClaim = null;
     try {
         const { paymentId } = req.body;
-        const transaction = await Transaction.findOne({ paymentId, status: 'AWAITING_APPROVAL' });
+        // Atomic claim so two concurrent approvals (or approve + reject) can't both process the order
+        const transaction = await Transaction.findOneAndUpdate(
+            { paymentId, status: 'AWAITING_APPROVAL' },
+            { status: 'PROCESSING' },
+            { new: true }
+        );
 
         if (!transaction) {
             return res.status(404).json({ message: 'Transaction not found or already processed' });
         }
+        approvalClaim = transaction;
 
         const user = await User.findById(transaction.from);
         if (!user) {
+            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: 'AWAITING_APPROVAL' });
             return res.status(404).json({ message: 'User not found' });
         }
 
@@ -532,7 +463,7 @@ export const approveManualPayment = async (req, res) => {
             // Update Transaction
             transaction.status = 'SUCCESS';
             transaction.description = transaction.description + ` (Approved by ${req.admin.username})`;
-            transaction.hash = `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
+            transaction.hash = transaction.hash || `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
             await transaction.save();
 
             const balanceBefore = user.aqeBalance;
@@ -637,7 +568,7 @@ export const approveManualPayment = async (req, res) => {
         // Update Transaction
         transaction.status = 'SUCCESS';
         transaction.description = transaction.description + ` (Approved by ${req.admin.username})`;
-        transaction.hash = `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
+        transaction.hash = transaction.hash || `Approved by ${req.admin.username} at ${nowVN.toLocaleString('vi-VN')}`;
         await transaction.save();
 
         // Update User Profile
@@ -710,6 +641,10 @@ export const approveManualPayment = async (req, res) => {
 
         res.json({ message: 'Transaction approved successfully' });
     } catch (error) {
+        // Release the claim if we failed before the order was marked SUCCESS
+        if (approvalClaim) {
+            await Transaction.updateOne({ _id: approvalClaim._id, status: 'PROCESSING' }, { status: 'AWAITING_APPROVAL' }).catch(() => {});
+        }
         res.status(500).json({ message: error.message });
     }
 };
@@ -718,15 +653,15 @@ export const approveManualPayment = async (req, res) => {
 export const rejectManualPayment = async (req, res) => {
     try {
         const { paymentId, reason } = req.body;
-        const transaction = await Transaction.findOne({ paymentId, status: 'AWAITING_APPROVAL' });
+        const transaction = await Transaction.findOneAndUpdate(
+            { paymentId, status: 'AWAITING_APPROVAL' },
+            { $set: { status: 'FAILED', description: `Rejected by Admin: ${reason || 'Invalid details'}` }, $unset: { hash: 1 } },
+            { new: true }
+        );
 
         if (!transaction) {
             return res.status(404).json({ message: 'Transaction not found' });
         }
-
-        transaction.status = 'FAILED';
-        transaction.description = `Rejected by Admin: ${reason || 'Invalid details'}`;
-        await transaction.save();
 
         // Notify User
         await Notification.create({
