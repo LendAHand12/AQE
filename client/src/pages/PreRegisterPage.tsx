@@ -26,6 +26,7 @@ import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import dayjs from "dayjs"
 import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
+import { usePurchaseLimits } from "@/hooks/usePurchaseLimits"
 import { useSocket } from "@/providers/SocketProvider"
 
 export default function PreRegisterPage() {
@@ -42,6 +43,7 @@ export default function PreRegisterPage() {
   const [modalStatus, setModalStatus] = useState<'idle' | 'success'>('idle')
 
   const { isConnected } = useAccount()
+  const { minPurchase } = usePurchaseLimits()
 
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
@@ -124,7 +126,7 @@ export default function PreRegisterPage() {
       return
     }
 
-    const minAmount = isFirstPayment ? (pledgeAmount * 0.3) : 1
+    const minAmount = Math.max(isFirstPayment ? (pledgeAmount * 0.3) : 1, minPurchase)
 
     if (paymentAmount < minAmount) {
       toast.error(t("pre_register.pay_min_error", { min: minAmount.toLocaleString() }))
@@ -413,7 +415,7 @@ export default function PreRegisterPage() {
                       </div>
                       {pledge?.paidUsdtPreRegister === 0 && (
                         <p className="text-[11px] text-amber-600 font-medium">
-                          {t("pre_register.pay_min_error", { min: (pledge.pledgeUsdt * 0.3).toLocaleString() })}
+                          {t("pre_register.pay_min_error", { min: Math.max(pledge.pledgeUsdt * 0.3, minPurchase).toLocaleString() })}
                         </p>
                       )}
                     </div>

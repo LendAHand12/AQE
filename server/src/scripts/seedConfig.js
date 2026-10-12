@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Config from '../models/Config.js';
+import { PURCHASE_LIMIT_CONFIGS } from '../utils/configHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ const DEFAULT_CONFIGS = [
         label: 'HEWE/AQE Swap Rate (1 HEWE = X AQE)',
         value: 1,
     },
+    ...PURCHASE_LIMIT_CONFIGS,
 ];
 
 const seedConfig = async () => {

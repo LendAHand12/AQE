@@ -28,6 +28,7 @@ import { PendingPaymentDialog } from "@/components/PendingPaymentDialog"
 import { useSocket } from "@/providers/SocketProvider"
 import { useTranslation } from "react-i18next"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
+import { usePurchaseLimits } from "@/hooks/usePurchaseLimits"
 
 const getImageUrl = (url?: string) => {
   if (!url) return ''
@@ -165,6 +166,7 @@ export default function InvestmentPackagesPage() {
   const { t } = useTranslation()
   const { socket } = useSocket()
   const { rate: aqeRate } = useExchangeRate()
+  const { minPurchase, loaded: limitsLoaded } = usePurchaseLimits()
   
   const [packages, setPackages] = useState<Package[]>([])
   const [userProfile, setUserProfile] = useState<any>(null)
@@ -261,8 +263,8 @@ export default function InvestmentPackagesPage() {
       toast.error(t("pre_register.kyc_verified_required"))
       return
     }
-    if (purchaseAmount < 100) {
-      toast.error(t("buy.min_warning"))
+    if (purchaseAmount < minPurchase) {
+      toast.error(t("buy.min_warning", { min: minPurchase }))
       return
     }
     setIsBuyModalOpen(true)
@@ -361,7 +363,7 @@ export default function InvestmentPackagesPage() {
                   <div className="relative">
                     <Input
                       type="number"
-                      min={100}
+                      min={minPurchase}
                       value={purchaseAmount === 0 ? "" : purchaseAmount}
                       placeholder={t("buy.amount_placeholder")}
                       onChange={(e) => setPurchaseAmount(e.target.value === "" ? 0 : Number(e.target.value))}
@@ -371,10 +373,10 @@ export default function InvestmentPackagesPage() {
                       USDT
                     </div>
                   </div>
-                  {purchaseAmount > 0 && purchaseAmount < 100 && (
+                  {purchaseAmount > 0 && purchaseAmount < minPurchase && (
                     <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1">
                       <ShieldAlert size={12} />
-                      {t("buy.min_warning")}
+                      {t("buy.min_warning", { min: minPurchase })}
                     </p>
                   )}
                 </div>
@@ -441,7 +443,7 @@ export default function InvestmentPackagesPage() {
                   <Button
                     type="button"
                     onClick={handleBuyAqe}
-                    disabled={purchaseAmount < 100 || !!awaitingPayment?.pendingTransaction}
+                    disabled={!limitsLoaded || purchaseAmount < minPurchase || !!awaitingPayment?.pendingTransaction}
                     className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
                   >
                     <span>{t("buy.buy_btn")}</span>

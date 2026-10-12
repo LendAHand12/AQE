@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/axios';
+import { usePurchaseLimits } from '@/hooks/usePurchaseLimits';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from "react-i18next";
 import {
@@ -51,6 +52,7 @@ export function BlockchainPaymentModal({
   packageId
 }: PaymentModalProps) {
   const { t } = useTranslation();
+  const { minPurchase, loaded } = usePurchaseLimits();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('choice'); // 'choice', 'qr', 'success'
@@ -63,6 +65,11 @@ export function BlockchainPaymentModal({
   }, [externalStatus]);
 
   const initPayment = async (method = 'DIRECT') => {
+    // Fixed-price packages are exempt; any custom amount must meet the admin-configured minimum
+    if (!packageId && loaded && amount < minPurchase) {
+      toast.error(t("buy.min_warning", { min: minPurchase }));
+      return null;
+    }
     setLoading(true);
     try {
       const res = await apiClient.post('/payments/create', { 
@@ -76,7 +83,7 @@ export function BlockchainPaymentModal({
       return res.data;
     } catch (error: any) {
       const backendMsg = error.response?.data?.message;
-      toast.error(backendMsg ? t(backendMsg) : t("pre_register.pay_failed"));
+      toast.error(backendMsg ? t(backendMsg, { min: error.response?.data?.min }) : t("pre_register.pay_failed"));
       return null;
     } finally {
       setLoading(false);

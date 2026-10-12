@@ -251,6 +251,29 @@ export const getUserPayments = async (req, res) => {
     }
 };
 
+// Minimum purchase for this user: first purchase = no successful PAYMENT yet, otherwise the repeat minimum
+const getMinPurchaseForUser = async (userId) => {
+    const config = await getSystemConfig();
+    const hasPurchased = await Transaction.exists({ from: userId, type: 'PAYMENT', status: 'SUCCESS' });
+    const minFirstPurchase = Number(config.minFirstPurchase) || 100;
+    const minRepeatPurchase = Number(config.minRepeatPurchase) || 100;
+    return {
+        isFirstPurchase: !hasPurchased,
+        minFirstPurchase,
+        minRepeatPurchase,
+        minPurchase: hasPurchased ? minRepeatPurchase : minFirstPurchase
+    };
+};
+
+// @desc    Get the minimum purchase amount that applies to the current user
+export const getPurchaseLimits = async (req, res) => {
+    try {
+        res.json(await getMinPurchaseForUser(req.user._id));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Create a new payment for QR flow
 export const createPayment = async (req, res) => {
     const { amount, pledgeAmount, method, isDirectPurchase, packageId } = req.body;
@@ -280,8 +303,11 @@ export const createPayment = async (req, res) => {
         }
 
         // Minimum purchase amount only applies to custom/direct amounts, not fixed package prices
-        if (!packageId && purchaseAmount < 100) {
-            return res.status(400).json({ message: 'buy.min_warning' });
+        if (!packageId) {
+            const { minPurchase } = await getMinPurchaseForUser(req.user._id);
+            if (Number(purchaseAmount) < minPurchase) {
+                return res.status(400).json({ message: 'buy.min_warning', min: minPurchase });
+            }
         }
 
         const paymentId = Math.floor(1000000000 + Math.random() * 9000000000);

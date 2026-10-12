@@ -54,4 +54,14 @@ export const getDefaultConfig = () => ({
     aqeToUsdtRate: 1.02,
     heweToQhewRate: 1,
     heweToAqeRate: 1,
+    minFirstPurchase: 100,
+    minRepeatPurchase: 100,
 });
+
+/**
+ * Config mua tối thiểu — admin chỉnh được, dùng chung cho seed và admin GET
+ */
+export const PURCHASE_LIMIT_CONFIGS = [
+    { key: 'minFirstPurchase', label: 'Minimum Purchase - First Purchase (USDT)', value: 100 },
+    { key: 'minRepeatPurchase', label: 'Minimum Purchase - 2nd Purchase Onwards (USDT)', value: 100 },
+];

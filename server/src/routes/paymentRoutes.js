@@ -5,6 +5,7 @@ import {
     submitPreRegisterPayment,
     getUserPayments,
     createPayment,
+    getPurchaseLimits,
     getPaymentById,
     getPaymentHistory,
     confirmTransactionHash,
@@ -35,6 +36,7 @@ router.get('/pledge', protect, getMyPreRegister);
 router.get('/history', protect, getPaymentHistory);
 router.get('/my-payments', protect, getUserPayments);
 router.get('/packages', protect, getPackages);
+router.get('/purchase-limits', protect, getPurchaseLimits);
 // Financial History & Stats
 router.get('/my-commissions', protect, getUserCommissions);
 router.get('/my-balance-history', protect, getUserBalanceHistory);

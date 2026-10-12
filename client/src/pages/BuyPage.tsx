@@ -17,11 +17,13 @@ import { BlockchainPaymentModal } from "@/components/BlockchainPaymentModal"
 import { PendingPaymentDialog } from "@/components/PendingPaymentDialog"
 import { useSocket } from "@/providers/SocketProvider"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
+import { usePurchaseLimits } from "@/hooks/usePurchaseLimits"
 
 export default function BuyPage() {
   const { t } = useTranslation()
   const { socket } = useSocket()
   const { rate: aqeRate } = useExchangeRate()
+  const { minPurchase, loaded: limitsLoaded } = usePurchaseLimits()
   const [purchaseAmount, setPurchaseAmount] = useState<number>(0)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [awaitingPayment, setAwaitingPayment] = useState<any>(null)
@@ -87,8 +89,8 @@ export default function BuyPage() {
       return
     }
 
-    if (purchaseAmount < 100) {
-      toast.error(t("buy.min_warning"))
+    if (purchaseAmount < minPurchase) {
+      toast.error(t("buy.min_warning", { min: minPurchase }))
       return
     }
 
@@ -158,7 +160,7 @@ export default function BuyPage() {
             <div className="relative group">
               <Input
                 type="number"
-                min={100}
+                min={minPurchase}
                 value={purchaseAmount === 0 ? "" : purchaseAmount}
                 placeholder={t("buy.amount_placeholder")}
                 onChange={(e) => setPurchaseAmount(e.target.value === "" ? 0 : Number(e.target.value))}
@@ -169,10 +171,10 @@ export default function BuyPage() {
               </div>
             </div>
 
-            {purchaseAmount > 0 && purchaseAmount < 100 && (
+            {purchaseAmount > 0 && purchaseAmount < minPurchase && (
               <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 pl-0.5">
                 <ShieldAlert size={12} />
-                {t("buy.min_warning")}
+                {t("buy.min_warning", { min: minPurchase })}
               </p>
             )}
           </div>
@@ -232,7 +234,7 @@ export default function BuyPage() {
               <Button
                 type="button"
                 className="w-full h-11 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-[12px] font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 text-sm"
-                disabled={loading || purchaseAmount < 100 || !!awaitingPayment?.pendingTransaction}
+                disabled={loading || !limitsLoaded || purchaseAmount < minPurchase || !!awaitingPayment?.pendingTransaction}
                 onClick={handlePurchase}
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> :

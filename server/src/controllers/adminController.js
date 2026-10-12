@@ -18,7 +18,7 @@ import { calculateUserSystemSales, calculateUserNetworkSize } from '../utils/sal
 import { processCommissions, applyEligiblePackageForAqeHolding } from '../services/paymentService.js';
 import Config from '../models/Config.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
-import { invalidateConfigCache, getDefaultConfig, getSystemConfig } from '../utils/configHelper.js';
+import { invalidateConfigCache, getDefaultConfig, getSystemConfig, PURCHASE_LIMIT_CONFIGS } from '../utils/configHelper.js';
 
 // @desc    Auth admin & get token
 // @route   POST /api/admin/login
@@ -1326,6 +1326,10 @@ export const manualDepositUser = async (req, res) => {
 // @access  Admin
 export const getAdminSystemConfig = async (req, res) => {
     try {
+        // Make sure purchase-limit configs exist so admin can edit them without running the seed script
+        for (const item of PURCHASE_LIMIT_CONFIGS) {
+            await Config.updateOne({ key: item.key }, { $setOnInsert: item }, { upsert: true });
+        }
         const docs = await Config.find({}).sort({ key: 1 });
         res.json(docs);
     } catch (error) {
@@ -1346,7 +1350,7 @@ export const updateAdminSystemConfig = async (req, res) => {
             return res.status(400).json({ message: 'Value is required' });
         }
 
-        const CONFIGURABLE_KEYS = ['aqeToUsdtRate', 'heweToQhewRate', 'heweToAqeRate'];
+        const CONFIGURABLE_KEYS = ['aqeToUsdtRate', 'heweToQhewRate', 'heweToAqeRate', 'minFirstPurchase', 'minRepeatPurchase'];
         if (!CONFIGURABLE_KEYS.includes(key)) {
             return res.status(400).json({ message: `Config key "${key}" is not configurable` });
         }
