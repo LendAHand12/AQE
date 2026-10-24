@@ -217,7 +217,7 @@ export default function AssetsPage() {
       syncProfile();
     } catch (err: any) {
       const serverMsg = err.response?.data?.message;
-      toast.error(serverMsg ? t(serverMsg, serverMsg) : t("auth.errors.unknown"));
+      toast.error(serverMsg ? String(t(serverMsg, { defaultValue: serverMsg })) : t("auth.errors.unknown"));
     } finally {
       setClaimingCommission(false);
     }
