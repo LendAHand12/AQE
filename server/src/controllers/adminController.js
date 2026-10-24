@@ -797,7 +797,7 @@ export const getAllTransactionsForAdmin = async (req, res) => {
                 percentage: c.percentage,
                 symbol: 'USDT',
                 type: 'COMMISSION',
-                status: 'SUCCESS',
+                status: c.status === 'PENDING' ? 'PENDING' : 'SUCCESS',
                 description: `Level ${c.level} Commission (${c.percentage}%)`,
                 createdAt: c.createdAt
             }));

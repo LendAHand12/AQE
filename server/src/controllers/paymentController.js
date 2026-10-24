@@ -759,7 +759,7 @@ export const getAllCommissionsForAdmin = async (req, res) => {
 
         const total = await Commission.countDocuments(query);
         const commissionsRaw = await Commission.find(query)
-            .populate('fromUserId', 'username fullName email')
+            .populate('fromUserId', 'username fullName email faceTecTid')
             .populate('recipientId', 'username fullName email')
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -768,9 +768,12 @@ export const getAllCommissionsForAdmin = async (req, res) => {
         // Map to match frontend expectations
         const transactions = commissionsRaw.map(c => ({
             _id: c._id,
-            from: c.fromUserId,
+            from: c.fromUserId ? { _id: c.fromUserId._id, username: c.fromUserId.username, fullName: c.fromUserId.fullName, email: c.fromUserId.email } : c.fromUserId,
             to: c.recipientId,
             amount: c.amountUsdt,
+            status: c.status || 'CLAIMED',
+            claimedAt: c.claimedAt,
+            buyerFaceVerified: !!c.fromUserId?.faceTecTid,
             salesAmount: c.salesAmount,
             description: `Level ${c.level} Commission (${c.percentage}%)`,
             createdAt: c.createdAt

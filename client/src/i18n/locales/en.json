@@ -376,6 +376,16 @@
     "subtitle": "Manage your USDT and AQE balances",
     "usdt_available": "Available USDT Balance",
     "aqe_total": "Total AQE Assets",
+    "commission": {
+      "pending_title": "Pending commission",
+      "claimable_now": "Claimable now",
+      "waiting_buyer": "Waiting for the buyer to complete FaceID",
+      "claim_btn": "Claim commission",
+      "claim_success": "Commission claimed",
+      "still_pending": "{{count}} commission(s) ({{amount}} USDT) are still pending: the buyer has not completed FaceID.",
+      "error_buyers_not_verified": "Nothing to claim yet: the buyers have not completed FaceID.",
+      "error_none_pending": "No pending commission"
+    },
     "bonus": {
       "title": "AQE Bonus",
       "total_expected": "Total Expected",

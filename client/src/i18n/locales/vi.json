@@ -376,6 +376,16 @@
     "subtitle": "Quản lý số dư USDT và AQE trong tài khoản của bạn",
     "usdt_available": "Số dư USDT khả dụng",
     "aqe_total": "Tổng tài sản AQE",
+    "commission": {
+      "pending_title": "Hoa hồng đang chờ",
+      "claimable_now": "Có thể nhận ngay",
+      "waiting_buyer": "Chờ người mua quét khuôn mặt (FaceID)",
+      "claim_btn": "Nhận hoa hồng",
+      "claim_success": "Nhận hoa hồng thành công",
+      "still_pending": "{{count}} khoản hoa hồng ({{amount}} USDT) vẫn đang chờ vì người mua chưa quét khuôn mặt.",
+      "error_buyers_not_verified": "Chưa có khoản nào nhận được: người mua chưa hoàn tất quét khuôn mặt (FaceID).",
+      "error_none_pending": "Không có hoa hồng nào đang chờ"
+    },
     "bonus": {
       "title": "AQE Bonus (Thưởng)",
       "total_expected": "Tổng thưởng",

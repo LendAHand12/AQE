@@ -28,6 +28,17 @@ const commissionSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    // PENDING: the buyer (fromUserId) has not completed FaceTec yet, so the amount is NOT in the recipient's balance.
+    // CLAIMED: credited to recipient's usdtBalance. Default is CLAIMED so commissions created before this field existed stay paid.
+    status: {
+        type: String,
+        enum: ['PENDING', 'CLAIMED'],
+        default: 'CLAIMED'
+    },
+    claimedAt: {
+        type: Date,
+        default: null
+    },
 }, {
     timestamps: true
 });

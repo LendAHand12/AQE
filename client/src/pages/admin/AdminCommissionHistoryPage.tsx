@@ -107,6 +107,7 @@ export default function AdminCommissionHistoryPage() {
               <TableHead className="font-bold text-[#111827]">Recipient</TableHead>
               <TableHead className="font-bold text-[#111827] text-right">Sales</TableHead>
               <TableHead className="font-bold text-[#111827] text-right">Commission</TableHead>
+              <TableHead className="font-bold text-[#111827] text-center">Status</TableHead>
               <TableHead className="font-bold text-[#111827] pr-8 text-right">Description</TableHead>
             </TableRow>
           </TableHeader>
@@ -140,6 +141,27 @@ export default function AdminCommissionHistoryPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="text-[16px] font-bold text-amber-600">+{tx.amount?.toLocaleString()} USDT</span>
+                </TableCell>
+                <TableCell className="text-center">
+                  {tx.status === "PENDING" ? (
+                    <div className="inline-flex flex-col items-center gap-1">
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-700">
+                        Pending
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {tx.buyerFaceVerified ? "Buyer FaceID done – awaiting claim" : "Buyer FaceID not done"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex flex-col items-center gap-1">
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-700">
+                        Claimed
+                      </span>
+                      {tx.claimedAt && (
+                        <span className="text-[10px] text-gray-400">{dayjs(tx.claimedAt).format("DD/MM/YYYY HH:mm")}</span>
+                      )}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="text-right pr-8 text-xs text-gray-500 italic">
                   {tx.description}

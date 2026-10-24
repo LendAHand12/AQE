@@ -13,7 +13,9 @@ import {
 } from '../controllers/paymentController.js';
 import {
     getUserCommissions,
-    getUserBalanceHistory
+    getUserBalanceHistory,
+    getCommissionSummary,
+    claimCommissions
 } from '../controllers/balanceController.js';
 import {
     buyToken,
@@ -37,6 +39,8 @@ router.get('/packages', protect, getPackages);
 router.get('/purchase-limits', protect, getPurchaseLimits);
 // Financial History & Stats
 router.get('/my-commissions', protect, getUserCommissions);
+router.get('/commission-summary', protect, getCommissionSummary);
+router.post('/claim-commissions', protect, claimCommissions);
 router.get('/my-balance-history', protect, getUserBalanceHistory);
 
 // Trading Operations

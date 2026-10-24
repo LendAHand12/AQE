@@ -77,6 +77,7 @@ export default function Dashboard() {
           const now = dayjs()
           const startOfMonth = now.startOf("month")
           const commissionsThisMonth = (commissionsRes.data || []).filter((c: any) => {
+            if (c.status === "PENDING") return false // not credited yet
             return dayjs(c.createdAt).isAfter(startOfMonth) || dayjs(c.createdAt).isSame(startOfMonth)
           })
           const monthlySum = commissionsThisMonth.reduce((sum: number, c: any) => sum + (c.amountUsdt || 0), 0)

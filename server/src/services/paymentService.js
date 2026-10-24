@@ -83,91 +83,91 @@ export async function processCommissions(buyer, amountPaid, transaction) {
     const amountF1 = amountPaid * (f1Percent / 100);
     const amountF2 = amountPaid * (f2Percent / 100);
 
+    // Commission is paid out immediately only if the BUYER (the one who generated it) has completed FaceTec.
+    // Otherwise it is stored as PENDING and the recipient can claim it later once the buyer has scanned.
+    const buyerHasFaceId = !!buyer.faceTecTid;
+
     // F1 - f1Percent%
     const f1 = await User.findById(buyer.referredBy);
     if (f1) {
-        const balanceBeforeF1 = f1.usdtBalance || 0;
-        f1.usdtBalance = (f1.usdtBalance || 0) + amountF1;
-        await f1.save();
-        
-        await Commission.create({
-            recipientId: f1._id,
-            fromUserId: buyer._id,
-            amountUsdt: amountF1,
-            level: 1,
-            percentage: f1Percent,
-            salesAmount: amountPaid
-        });
-
-        await BalanceHistory.create({
-            userId: f1._id,
-            amount: amountF1,
-            symbol: 'USDT',
-            type: 'COMMISSION',
-            status: 'SUCCESS',
-            isOfficial: true,
-            balanceBefore: balanceBeforeF1,
-            balanceAfter: f1.usdtBalance,
-            description: `Commission Level 1 (${f1Percent}%) from ${buyer.username}`
-        });
-
-        // Notify F1
-        await Notification.create({
-            userId: f1._id,
-            title: 'Commission Received',
-            message: `You received ${amountF1} USDT commission (Level 1) from ${buyer.username}'s payment.`,
-            type: 'COMMISSION'
-        });
-        emitNotification(f1._id, {
-            title: 'Commission Received',
-            message: `+${amountF1} USDT (Level 1) from ${buyer.username}`,
-            type: 'COMMISSION'
-        });
+        await recordCommission({ recipient: f1, buyer, amount: amountF1, level: 1, percent: f1Percent, amountPaid, buyerHasFaceId });
 
         // F2 - f2Percent%
         if (f1.referredBy) {
             const f2 = await User.findById(f1.referredBy);
             if (f2) {
-                const balanceBeforeF2 = f2.usdtBalance || 0;
-                f2.usdtBalance = (f2.usdtBalance || 0) + amountF2;
-                await f2.save();
-                
-                await Commission.create({
-                    recipientId: f2._id,
-                    fromUserId: buyer._id,
-                    amountUsdt: amountF2,
-                    level: 2,
-                    percentage: f2Percent,
-                    salesAmount: amountPaid
-                });
-
-                await BalanceHistory.create({
-                    userId: f2._id,
-                    amount: amountF2,
-                    symbol: 'USDT',
-                    type: 'COMMISSION',
-                    status: 'SUCCESS',
-                    isOfficial: true,
-                    balanceBefore: balanceBeforeF2,
-                    balanceAfter: f2.usdtBalance,
-                    description: `Commission Level 2 (${f2Percent}%) from ${buyer.username}`
-                });
-
-                // Notify F2
-                await Notification.create({
-                    userId: f2._id,
-                    title: 'Commission Received',
-                    message: `You received ${amountF2} USDT commission (Level 2) from ${buyer.username}'s payment.`,
-                    type: 'COMMISSION'
-                });
-                emitNotification(f2._id, {
-                    title: 'Commission Received',
-                    message: `+${amountF2} USDT (Level 2) from ${buyer.username}`,
-                    type: 'COMMISSION'
-                });
+                await recordCommission({ recipient: f2, buyer, amount: amountF2, level: 2, percent: f2Percent, amountPaid, buyerHasFaceId });
             }
         }
     }
+}
+
+async function recordCommission({ recipient, buyer, amount, level, percent, amountPaid, buyerHasFaceId }) {
+    const commission = await Commission.create({
+        recipientId: recipient._id,
+        fromUserId: buyer._id,
+        amountUsdt: amount,
+        level,
+        percentage: percent,
+        salesAmount: amountPaid,
+        status: buyerHasFaceId ? 'CLAIMED' : 'PENDING',
+        claimedAt: buyerHasFaceId ? new Date() : null
+    });
+
+    if (!buyerHasFaceId) {
+        const message = `Commission ${amount} USDT (Level ${level}) from ${buyer.username} is pending until they complete FaceID.`;
+        await Notification.create({
+            userId: recipient._id,
+            title: 'Commission Pending',
+            message,
+            type: 'COMMISSION'
+        });
+        emitNotification(recipient._id, {
+            title: 'Commission Pending',
+            message,
+            type: 'COMMISSION'
+        });
+        return commission;
+    }
+
+    await creditCommission(recipient._id, commission, `Commission Level ${level} (${percent}%) from ${buyer.username}`);
+
+    await Notification.create({
+        userId: recipient._id,
+        title: 'Commission Received',
+        message: `You received ${amount} USDT commission (Level ${level}) from ${buyer.username}'s payment.`,
+        type: 'COMMISSION'
+    });
+    emitNotification(recipient._id, {
+        title: 'Commission Received',
+        message: `+${amount} USDT (Level ${level}) from ${buyer.username}`,
+        type: 'COMMISSION'
+    });
+    return commission;
+}
+
+/**
+ * Add a commission's amount to the recipient's usdtBalance and write the balance history.
+ * Callers must have already marked the commission CLAIMED (atomically) so it can't be credited twice.
+ */
+export async function creditCommission(recipientId, commission, description) {
+    const updated = await User.findByIdAndUpdate(
+        recipientId,
+        { $inc: { usdtBalance: commission.amountUsdt } },
+        { new: true }
+    );
+    await BalanceHistory.create({
+        userId: recipientId,
+        amount: commission.amountUsdt,
+        symbol: 'USDT',
+        type: 'COMMISSION',
+        status: 'SUCCESS',
+        isOfficial: true,
+        balanceBefore: (updated.usdtBalance || 0) - commission.amountUsdt,
+        balanceAfter: updated.usdtBalance,
+        description
+    });
+    return updated;
 }
 
 /**

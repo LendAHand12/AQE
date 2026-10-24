@@ -56,6 +56,14 @@ export default function AssetsPage() {
     hasClaimedThisMonth: false,
     schedule: []
   })
+  const [commissionSummary, setCommissionSummary] = useState({
+    claimableAmount: 0,
+    claimableCount: 0,
+    blockedAmount: 0,
+    blockedCount: 0,
+    pendingAmount: 0
+  })
+  const [claimingCommission, setClaimingCommission] = useState(false)
   const [claimingBonus, setClaimingBonus] = useState(false)
   const [bonusPage, setBonusPage] = useState(1)
   const bonusLimit = 10
@@ -92,6 +100,9 @@ export default function AssetsPage() {
 
       const bonusRes = await apiClient.get(`/bonus/info`)
       setBonusInfo(bonusRes.data)
+
+      const commissionRes = await apiClient.get(`/payments/commission-summary`)
+      setCommissionSummary(commissionRes.data)
     } catch (err) {
       console.error("Fetch Error:", err)
     } finally {
@@ -183,6 +194,32 @@ export default function AssetsPage() {
       toast.error(t(err.response?.data?.message) || t("auth.errors.unknown"));
     } finally {
       setWithdrawing(false);
+    }
+  };
+
+  const handleClaimCommissions = async () => {
+    setClaimingCommission(true);
+    try {
+      const res = await apiClient.post("/payments/claim-commissions");
+      toast.success(
+        `${t(res.data.message, "Commission claimed")}: +${res.data.claimedAmount} USDT`
+      );
+      if (res.data.stillPendingCount > 0) {
+        toast.info(
+          t("assets.commission.still_pending", {
+            count: res.data.stillPendingCount,
+            amount: res.data.stillPendingAmount,
+            defaultValue: "{{count}} commission(s) ({{amount}} USDT) are still pending: the buyer has not completed FaceID."
+          })
+        );
+      }
+      fetchData();
+      syncProfile();
+    } catch (err: any) {
+      const serverMsg = err.response?.data?.message;
+      toast.error(serverMsg ? t(serverMsg, serverMsg) : t("auth.errors.unknown"));
+    } finally {
+      setClaimingCommission(false);
     }
   };
 
@@ -381,6 +418,41 @@ export default function AssetsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Pending referral commissions: credited only once the buyer has completed FaceTec */}
+      {commissionSummary.pendingAmount > 0 && (
+        <Card className="rounded-[24px] border border-amber-200 bg-amber-50/50 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-amber-700 font-bold uppercase tracking-wider text-[13px]">
+              <AlertCircle size={18} />
+              {t("assets.commission.pending_title", "Pending commission")}
+            </div>
+            <p className="text-[28px] font-black text-[#111827]">
+              {commissionSummary.pendingAmount.toLocaleString()} <span className="text-[16px] font-bold text-gray-400">USDT</span>
+            </p>
+            <div className="text-[13px] text-gray-600 space-y-0.5">
+              <p>
+                {t("assets.commission.claimable_now", "Claimable now")}:{" "}
+                <span className="font-bold text-[#276152]">{commissionSummary.claimableAmount.toLocaleString()} USDT</span>{" "}
+                ({commissionSummary.claimableCount})
+              </p>
+              <p>
+                {t("assets.commission.waiting_buyer", "Waiting for the buyer to complete FaceID")}:{" "}
+                <span className="font-bold text-amber-700">{commissionSummary.blockedAmount.toLocaleString()} USDT</span>{" "}
+                ({commissionSummary.blockedCount})
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={handleClaimCommissions}
+            disabled={claimingCommission || commissionSummary.claimableCount <= 0}
+            className="h-[48px] px-8 bg-[#276152] hover:bg-[#1e4d40] text-white rounded-[12px] font-bold disabled:bg-gray-100 disabled:text-gray-400"
+          >
+            {claimingCommission ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {t("assets.commission.claim_btn", "Claim commission")}
+          </Button>
+        </Card>
+      )}
 
       <div className="space-y-6">
         <h3 className="text-[20px] font-bold text-[#111827]">{t("assets.withdraw_history")}</h3>
