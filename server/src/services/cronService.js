@@ -6,6 +6,7 @@ import { emitNotification } from '../utils/socket.js';
 
 import { updateLeaderboard } from './leaderboardService.js';
 import { calculateDailyBonus } from './bonusService.js';
+import { initPaymentVerificationJob } from './paymentVerificationService.js';
 
 /**
  * Initialize all cron jobs
@@ -82,6 +83,8 @@ export const initCronJobs = () => {
     }, {
         timezone: "America/Chicago"
     });
+
+    initPaymentVerificationJob();
 
     console.log('[CRON] Automatic Release, Leaderboard, & Interest Jobs Scheduled.');
 };

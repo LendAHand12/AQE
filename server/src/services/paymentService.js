@@ -173,7 +173,7 @@ export async function creditCommission(recipientId, commission, description) {
 /**
  * Process a successful payment from blockchain
  */
-export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) => {
+export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount, fromStatus = 'PENDING') => {
     try {
         console.log(`[Finalize] Processing PaymentID: ${paymentId}, Hash: ${hash}, Amount: ${actualAmount}`);
         if (typeof hash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(hash)) {
@@ -184,7 +184,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
 
         // Atomic claim: only one caller can move PENDING -> PROCESSING
         const transaction = await Transaction.findOneAndUpdate(
-            { paymentId, status: 'PENDING' },
+            { paymentId, status: fromStatus },
             { status: 'PROCESSING' },
             { new: true }
         );
@@ -194,7 +194,7 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         }
 
         const releaseClaim = async () => {
-            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: 'PENDING' });
+            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: fromStatus });
         };
 
         // Amount seen on-chain must cover the order (1% tolerance)
@@ -459,8 +459,8 @@ export const finalizeBlockchainPayment = async (paymentId, hash, actualAmount) =
         } catch (processError) {
             // ROLLBACK TRANSACTION LOCK IF SOMETHING FAILED
             console.error(`[Finalize] Critical Error! Rolling back transaction ${paymentId}. Error:`, processError);
-            transaction.status = 'PENDING';
-            transaction.hash = undefined;
+            transaction.status = fromStatus;
+            if (fromStatus === 'PENDING') transaction.hash = undefined;
             await transaction.save();
             throw processError; // Re-throw to be logged
         }

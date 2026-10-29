@@ -278,17 +278,18 @@ export default function AdminPaymentHistoryPage() {
                     <Badge className={cn(
                       "border-none rounded-full px-3 py-1 font-bold",
                       tx.status === 'SUCCESS' ? "bg-green-100 text-green-700" :
-                      tx.status === 'AWAITING_APPROVAL' ? "bg-amber-100 text-amber-700" :
+                      tx.status === 'AWAITING_APPROVAL' || tx.status === 'PENDING_REVIEW' ? "bg-amber-100 text-amber-700" :
                       "bg-gray-100 text-gray-600"
                     )}>
                       {tx.status === 'SUCCESS' ? "Success" : 
-                       tx.status === 'AWAITING_APPROVAL' ? "Awaiting Approval" : "Processing"}
+                       tx.status === 'AWAITING_APPROVAL' ? "Awaiting Approval" :
+                       tx.status === 'PENDING_REVIEW' ? "Needs Review" : "Processing"}
                     </Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right pr-8">
                   <div className="flex items-center justify-end gap-2">
-                    {tx.status === 'AWAITING_APPROVAL' && (
+                    {(tx.status === 'AWAITING_APPROVAL' || tx.status === 'PENDING_REVIEW') && (
                       <div className="flex items-center gap-1 mr-2">
                         <button 
                           onClick={() => handleApprove(tx.paymentId)}

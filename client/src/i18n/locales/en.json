@@ -656,7 +656,14 @@
       "cancel_success": "Order cancelled successfully",
       "cancelled_title": "Order Cancelled",
       "cancelled_hint": "This payment order has been cancelled. You can start a new purchase anytime.",
-      "create_new_btn": "Start New Purchase"
+      "create_new_btn": "Start New Purchase",
+      "status_verifying": "Verifying on blockchain",
+      "verifying_hint": "Your transaction was submitted. We are waiting for blockchain confirmations - this page updates automatically.",
+      "status_review": "Under review",
+      "review_hint": "We could not confirm this payment automatically. Our team has been notified and will review it shortly.",
+      "sign_title": "Sign to confirm your payment",
+      "sign_retry": "Sign & submit proof",
+      "sign_hint": "Your USDT was sent. Sign the message with the same wallet to prove ownership (free, no gas)."
     },
     "pledge_success": "Pledge amount registered successfully",
     "payment_success": "Payment successful",

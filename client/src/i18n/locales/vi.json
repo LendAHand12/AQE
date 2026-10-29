@@ -655,7 +655,14 @@
       "cancel_success": "Đã hủy lệnh thành công",
       "cancelled_title": "Lệnh đã bị hủy",
       "cancelled_hint": "Lệnh thanh toán này đã bị hủy. Bạn có thể tạo giao dịch mua mới bất cứ lúc nào.",
-      "create_new_btn": "Tạo giao dịch mới"
+      "create_new_btn": "Tạo giao dịch mới",
+      "status_verifying": "Đang xác minh trên blockchain",
+      "verifying_hint": "Giao dịch đã được gửi. Hệ thống đang chờ đủ số xác nhận trên blockchain - trang sẽ tự cập nhật.",
+      "status_review": "Đang được xem xét",
+      "review_hint": "Chưa thể tự động xác nhận khoản thanh toán này. Đội ngũ đã được thông báo và sẽ xem xét sớm.",
+      "sign_title": "Ký xác nhận thanh toán",
+      "sign_retry": "Ký & gửi bằng chứng",
+      "sign_hint": "USDT đã được chuyển. Hãy ký tin nhắn bằng cùng ví để chứng minh quyền sở hữu (miễn phí, không tốn gas)."
     },
     "pledge_success": "Đăng ký số tiền mua sớm thành công",
     "payment_success": "Thanh toán thành công",

@@ -14,6 +14,8 @@ import { sendTelegramNotification } from '../utils/telegramService.js';
 import { getSystemTime } from '../utils/time.js';
 import InvestmentPackage from '../models/InvestmentPackage.js';
 import { getSystemConfig } from '../utils/configHelper.js';
+import { buildPaymentMessage, getReceiver } from '../services/usdtVerifier.js';
+import { processVerification } from '../services/paymentVerificationService.js';
 
 // @desc    Submit a pledge for Pre-registration
 export const submitPreRegisterPledge = async (req, res) => {
@@ -66,7 +68,7 @@ export const getMyPreRegister = async (req, res) => {
         const transactions = await Transaction.find({
             from: req.user._id,
             type: 'PAYMENT',
-            status: { $in: ['SUCCESS', 'PENDING', 'AWAITING_APPROVAL'] }
+            status: { $in: ['SUCCESS', 'PENDING', 'AWAITING_APPROVAL', 'VERIFYING', 'PENDING_REVIEW'] }
         }).sort({ createdAt: -1 });
 
         const awaitingApprovalAmount = transactions
@@ -74,7 +76,7 @@ export const getMyPreRegister = async (req, res) => {
             .reduce((sum, t) => sum + (t.amount || 0), 0);
 
         // Most recent unfinished order (not yet confirmed by user, or awaiting admin approval)
-        const pendingTransaction = transactions.find(t => t.status === 'PENDING' || t.status === 'AWAITING_APPROVAL') || null;
+        const pendingTransaction = transactions.find(t => ['PENDING', 'AWAITING_APPROVAL', 'VERIFYING', 'PENDING_REVIEW'].includes(t.status)) || null;
 
         if (!user.pledgeUsdt || user.pledgeUsdt <= 0) {
             if (pendingTransaction) {
@@ -180,7 +182,7 @@ export const createPayment = async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         // Check for an existing unfinished order (not yet confirmed, or awaiting admin approval)
-        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'PROCESSING', 'AWAITING_APPROVAL'] } });
+        const existingPending = await Transaction.findOne({ from: req.user._id, status: { $in: ['PENDING', 'PROCESSING', 'AWAITING_APPROVAL', 'VERIFYING', 'PENDING_REVIEW'] } });
         if (existingPending) {
             return res.status(400).json({ message: 'payments.page.pending_manual_exists' });
         }
@@ -222,7 +224,7 @@ export const createPayment = async (req, res) => {
         const transaction = await Transaction.create({
             paymentId,
             from: req.user._id,
-            to: process.env.ADMIN_WALLET_ADDRESS,
+            to: getReceiver(),
             amount: purchaseAmount,
             symbol: 'USDT',
             type: 'PAYMENT',
@@ -293,22 +295,34 @@ export const getPaymentHistory = async (req, res) => {
     }
 };
 
-// @desc    User submits the wallet-transfer hash; the order is confirmed instantly (suspicious requests email the owner)
+// @desc    User submits proof of an on-chain USDT payment (tx hash + wallet signature).
+//          The order is NOT completed here: it moves to VERIFYING and is completed only once the chain confirms it.
 export const confirmTransactionHash = async (req, res) => {
-    const { paymentId, hash } = req.body;
+    const { paymentId, hash, fromAddress, signature } = req.body;
 
     try {
-        if (!hash || !paymentId) {
-            return res.status(400).json({ message: 'Missing hash or paymentId' });
+        if (!hash || !paymentId || !fromAddress || !signature) {
+            return res.status(400).json({ message: 'Missing hash, paymentId, fromAddress or signature' });
+        }
+        if (!isValidTxHash(hash)) {
+            return res.status(400).json({ message: 'Invalid transaction hash' });
+        }
+        if (typeof fromAddress !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(fromAddress)) {
+            return res.status(400).json({ message: 'Invalid wallet address' });
+        }
+        if (typeof signature !== 'string' || !/^0x[0-9a-fA-F]+$/.test(signature)) {
+            return res.status(400).json({ message: 'Invalid signature' });
         }
 
         const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
         if (!transaction) {
             return res.status(404).json({ message: 'Payment not found' });
         }
+        if (transaction.status !== 'PENDING') {
+            return res.status(400).json({ message: 'Transaction is already processed' });
+        }
 
-        // Detection only: the order is still confirmed instantly, but anything that does not look
-        // like our web app (Postman/curl/script, malformed or near-duplicate hash) emails the owner.
+        // Detection only: anything that does not look like our web app (Postman/curl/script) emails the owner.
         const reasons = await detectSuspiciousPayment(req, transaction, hash);
         if (reasons.length) {
             console.warn(`[ConfirmHash] Suspicious payment ${paymentId}: ${reasons.join(' | ')}`);
@@ -320,31 +334,69 @@ export const confirmTransactionHash = async (req, res) => {
             );
         }
 
-        if (!isValidTxHash(hash)) {
-            return res.status(400).json({ message: 'Invalid transaction hash' });
+        const txHash = hash.toLowerCase();
+
+        // Hash already used by another order?
+        const used = await Transaction.exists({ hash: txHash, _id: { $ne: transaction._id } });
+        if (used) {
+            return res.status(400).json({ message: 'This transaction hash has already been used' });
         }
 
-        if (transaction.status !== 'PENDING') {
-            return res.status(400).json({ message: 'Transaction is already processed' });
+        // Proves the submitter controls the paying wallet
+        let signatureOk = false;
+        try {
+            signatureOk = ethers.verifyMessage(buildPaymentMessage(transaction.paymentId, txHash), signature).toLowerCase() === fromAddress.toLowerCase();
+        } catch {
+            signatureOk = false;
+        }
+        if (!signatureOk) {
+            return res.status(400).json({ message: 'Invalid signature' });
         }
 
-        console.log(`[ConfirmHash] Auto-finalizing hash ${hash} for payment ${paymentId} (Instant Success)`);
-
-        // Instant success: the amount comes from the order record, the chain is not checked
-        await finalizeBlockchainPayment(Number(paymentId), hash, transaction.amount);
-
-        const updated = await Transaction.findById(transaction._id);
-        if (updated?.status !== 'SUCCESS') {
-            return res.status(400).json({ message: 'Payment could not be confirmed', status: updated?.status });
+        // Atomic PENDING -> VERIFYING; the unique index on hash closes the race with a parallel submit
+        try {
+            const claimed = await Transaction.findOneAndUpdate(
+                { _id: transaction._id, status: 'PENDING' },
+                { $set: { status: 'VERIFYING', hash: txHash, payerAddress: fromAddress.toLowerCase(), paymentSignature: signature, paidAt: new Date() }, $unset: { paymentError: 1 } },
+                { new: true }
+            );
+            if (!claimed) return res.status(400).json({ message: 'Transaction is already processed' });
+        } catch (e) {
+            if (e.code === 11000) return res.status(400).json({ message: 'This transaction hash has already been used' });
+            throw e;
         }
+
+        // Verify right away; the background job keeps retrying while it is still VERIFYING
+        const updated = await processVerification(transaction._id).catch((e) => {
+            console.error('[ConfirmHash] Immediate verification failed:', e.message);
+            return null;
+        }) || await Transaction.findById(transaction._id);
 
         return res.json({
-            message: 'Payment confirmed successfully',
-            status: 'SUCCESS'
+            message: 'Payment submitted',
+            status: updated?.status,
+            reason: updated?.paymentError
         });
-
     } catch (error) {
         console.error('[ConfirmHash] Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Client poll: re-check a VERIFYING order on-chain and return its current state
+export const refreshPayment = async (req, res) => {
+    try {
+        const { paymentId } = req.body;
+        const transaction = await Transaction.findOne({ paymentId, from: req.user._id });
+        if (!transaction) return res.status(404).json({ message: 'Payment not found' });
+
+        let current = transaction;
+        if (transaction.status === 'VERIFYING') {
+            current = await processVerification(transaction._id) || await Transaction.findById(transaction._id);
+        }
+        res.json({ status: current.status, hash: current.hash, reason: current.paymentError });
+    } catch (error) {
+        console.error('[Refresh] Error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -416,11 +468,14 @@ export const cancelPayment = async (req, res) => {
 // @desc    Admin Approve Manual Payment
 export const approveManualPayment = async (req, res) => {
     let approvalClaim = null;
+    let approvalPrevStatus = 'AWAITING_APPROVAL';
     try {
         const { paymentId } = req.body;
         // Atomic claim so two concurrent approvals (or approve + reject) can't both process the order
+        const before = await Transaction.findOne({ paymentId, status: { $in: ['AWAITING_APPROVAL', 'PENDING_REVIEW'] } }).select('status');
+        approvalPrevStatus = before?.status || 'AWAITING_APPROVAL';
         const transaction = await Transaction.findOneAndUpdate(
-            { paymentId, status: 'AWAITING_APPROVAL' },
+            { paymentId, status: { $in: ['AWAITING_APPROVAL', 'PENDING_REVIEW'] } },
             { status: 'PROCESSING' },
             { new: true }
         );
@@ -432,7 +487,7 @@ export const approveManualPayment = async (req, res) => {
 
         const user = await User.findById(transaction.from);
         if (!user) {
-            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: 'AWAITING_APPROVAL' });
+            await Transaction.updateOne({ _id: transaction._id, status: 'PROCESSING' }, { status: approvalPrevStatus });
             return res.status(404).json({ message: 'User not found' });
         }
 
@@ -643,7 +698,7 @@ export const approveManualPayment = async (req, res) => {
     } catch (error) {
         // Release the claim if we failed before the order was marked SUCCESS
         if (approvalClaim) {
-            await Transaction.updateOne({ _id: approvalClaim._id, status: 'PROCESSING' }, { status: 'AWAITING_APPROVAL' }).catch(() => {});
+            await Transaction.updateOne({ _id: approvalClaim._id, status: 'PROCESSING' }, { status: approvalPrevStatus }).catch(() => {});
         }
         res.status(500).json({ message: error.message });
     }
@@ -653,11 +708,20 @@ export const approveManualPayment = async (req, res) => {
 export const rejectManualPayment = async (req, res) => {
     try {
         const { paymentId, reason } = req.body;
-        const transaction = await Transaction.findOneAndUpdate(
-            { paymentId, status: 'AWAITING_APPROVAL' },
-            { $set: { status: 'FAILED', description: `Rejected by Admin: ${reason || 'Invalid details'}` }, $unset: { hash: 1 } },
+        const rejection = { status: 'FAILED', description: `Rejected by Admin: ${reason || 'Invalid details'}` };
+        // On-chain reviews keep their tx hash so it can't be re-submitted on another order
+        let transaction = await Transaction.findOneAndUpdate(
+            { paymentId, status: 'PENDING_REVIEW' },
+            { $set: rejection },
             { new: true }
         );
+        if (!transaction) {
+            transaction = await Transaction.findOneAndUpdate(
+                { paymentId, status: 'AWAITING_APPROVAL' },
+                { $set: rejection, $unset: { hash: 1 } },
+                { new: true }
+            );
+        }
 
         if (!transaction) {
             return res.status(404).json({ message: 'Transaction not found' });
@@ -693,8 +757,8 @@ export const getAllTransactionsForAdmin = async (req, res) => {
         const search = req.query.search || '';
 
         let query = req.query.category === 'ALL'
-            ? { status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } }
-            : { symbol: req.query.category || 'USDT', status: { $in: ['SUCCESS', 'AWAITING_APPROVAL'] } };
+            ? { status: { $in: ['SUCCESS', 'AWAITING_APPROVAL', 'PENDING_REVIEW'] } }
+            : { symbol: req.query.category || 'USDT', status: { $in: ['SUCCESS', 'AWAITING_APPROVAL', 'PENDING_REVIEW'] } };
 
         if (search) {
             // Find users matching search first if we want to search by username/fullName

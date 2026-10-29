@@ -17,13 +17,19 @@ const transactionSchema = mongoose.Schema({
     amount: { type: Number, required: true },
     symbol: { type: String, default: 'USDT' },
     type: { type: String, enum: ['PAYMENT', 'DEPOSIT', 'WITHDRAW', 'PLEDGE'], default: 'PAYMENT' },
-    status: { type: String, enum: ['SUCCESS', 'PENDING', 'PROCESSING', 'FAILED', 'EXPIRED', 'AWAITING_APPROVAL', 'CANCELLED'], default: 'SUCCESS' },
+    status: { type: String, enum: ['SUCCESS', 'PENDING', 'PROCESSING', 'FAILED', 'EXPIRED', 'AWAITING_APPROVAL', 'CANCELLED', 'VERIFYING', 'PENDING_REVIEW'], default: 'SUCCESS' },
     description: { type: String },
+    // On-chain (USDT BEP20) payment proof
+    payerAddress: { type: String, lowercase: true }, // wallet that signed + sent the tx
+    paymentSignature: { type: String },
+    paidAt: { type: Date },                          // when the client submitted the proof
+    paymentError: { type: String },                  // last verifier reason (pending / invalid)
     metadata: { type: Object }
 }, { timestamps: true });
 
 // Ensure indexes are correctly applied
 transactionSchema.index({ from: 1 });
+transactionSchema.index({ status: 1, paidAt: 1 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 

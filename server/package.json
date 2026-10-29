@@ -12,6 +12,7 @@
     "test-email": "node src/scripts/testEmail.js",
     "seed-config": "node src/scripts/seedConfig.js",
     "aqe": "node src/scripts/runBonusCalculation.js",
+    "audit-payments": "node src/scripts/auditPayments.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

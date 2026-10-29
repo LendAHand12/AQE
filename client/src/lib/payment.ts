@@ -5,6 +5,11 @@ import BEP20USDT_ABI from "@/abis/BEP20USDT.json";
 import { toast } from "sonner";
 import i18n from "@/i18n/config";
 
+/** Must stay character-for-character identical to buildPaymentMessage in server/src/services/usdtVerifier.js */
+export const buildPaymentMessage = (orderCode: number | string, txHash: string) =>
+  `AQE payment for order ${orderCode}
+Transaction: ${txHash.toLowerCase()}`;
+
 const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955" as `0x${string}`;
 const MAIN_WALLET_ADDRESS = import.meta.env.VITE_ADMIN_WALLET_ADDRESS as `0x${string}`;
 

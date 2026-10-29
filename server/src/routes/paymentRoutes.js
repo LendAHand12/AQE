@@ -8,6 +8,7 @@ import {
     getPaymentById,
     getPaymentHistory,
     confirmTransactionHash,
+    refreshPayment,
     confirmManualPayment,
     cancelPayment
 } from '../controllers/paymentController.js';
@@ -22,14 +23,19 @@ import {
     sellToken
 } from '../controllers/blockchainController.js';
 import { protect } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 import { getPackages } from '../controllers/packageController.js';
 
 const router = express.Router();
 
+const submitLimiter = rateLimit({ windowMs: 60 * 1000, max: 10 });
+const refreshLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
+
 // Pre-Register & Checkout
 router.post('/pledge', protect, submitPreRegisterPledge);
 router.post('/create', protect, createPayment);
-router.post('/confirm-hash', protect, confirmTransactionHash);
+router.post('/confirm-hash', protect, submitLimiter, confirmTransactionHash);
+router.post('/refresh', protect, refreshLimiter, refreshPayment);
 router.post('/confirm-manual', protect, confirmManualPayment);
 router.post('/cancel', protect, cancelPayment);
 router.get('/pledge', protect, getMyPreRegister);

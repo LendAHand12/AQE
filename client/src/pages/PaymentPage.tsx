@@ -18,8 +18,9 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from '@/providers/AuthProvider';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
-import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core';
+import { writeContract, waitForTransactionReceipt, readContract, signMessage } from '@wagmi/core';
 import { config } from '@/config/wagmi.config';
+import { buildPaymentMessage } from '@/lib/payment';
 import { parseUnits } from 'viem';
 import BEP20USDT_ABI from "@/abis/BEP20USDT.json";
 import ZelleQR from "@/assets/zelle.jpeg";
@@ -73,9 +74,10 @@ export default function PaymentPage() {
 
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<Payment | null>(null);
-  const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, success, error, awaiting, cancelled
+  const [status, setStatus] = useState('idle'); // idle, connecting, checking_balance, paying, sign, submitting, chain_verifying, review, success, error, awaiting, cancelled
   const [txHash, setTxHash] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const pendingTxKey = `aqe_unsubmitted_tx_${paymentId}`;
   const method = searchParams.get('method') === 'zelle' ? 'zelle' : 'wallet';
 
   useEffect(() => {
@@ -98,6 +100,17 @@ export default function PaymentPage() {
         setStatus('awaiting');
       } else if (res.data.status === 'CANCELLED') {
         setStatus('cancelled');
+      } else if (res.data.status === 'VERIFYING') {
+        setTxHash(res.data.hash);
+        setStatus('chain_verifying');
+      } else if (res.data.status === 'PENDING_REVIEW') {
+        setStatus('review');
+      } else if (res.data.status === 'PENDING') {
+        // Paid on-chain earlier but never signed/submitted (e.g. page closed) - let the user finish
+        try {
+          const saved = localStorage.getItem(pendingTxKey);
+          if (saved) { setTxHash(saved); setStatus('sign'); }
+        } catch { /* storage unavailable */ }
       }
     } catch (error) {
       toast.error(t("payments.page.errors.not_found"));
@@ -155,6 +168,62 @@ export default function PaymentPage() {
     }
     return () => clearInterval(interval);
   }, [status, paymentId, txHash]);
+
+  // While the chain confirms the transaction, ask the server to re-check it
+  useEffect(() => {
+    if (status !== 'chain_verifying') return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiClient.post('/payments/refresh', { paymentId });
+        if (res.data.status === 'SUCCESS') {
+          setTxHash(res.data.hash);
+          setStatus('success');
+          syncProfile();
+        } else if (res.data.status === 'PENDING_REVIEW') {
+          setStatus('review');
+        } else if (res.data.status !== 'VERIFYING') {
+          setStatus('error');
+        }
+      } catch { /* transient, retry on next tick */ }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [status, paymentId]);
+
+  // Sign "order + tx hash" with the paying wallet and submit it; the server verifies on-chain
+  const submitProof = async (hash: string) => {
+    if (!account || !payment) return;
+    try {
+      setStatus('submitting');
+      const signature = await signMessage(config, {
+        account: account as `0x${string}`,
+        message: buildPaymentMessage(payment.paymentId, hash),
+      });
+
+      const res = await apiClient.post('/payments/confirm-hash', {
+        paymentId: payment.paymentId,
+        hash,
+        fromAddress: account,
+        signature,
+      });
+      try { localStorage.removeItem(pendingTxKey); } catch { /* ignore */ }
+      setTxHash(hash);
+
+      if (res.data.status === 'SUCCESS') {
+        setStatus('success');
+        toast.success(t("payments.page.success_msg"));
+        await syncProfile();
+      } else if (res.data.status === 'PENDING_REVIEW') {
+        setStatus('review');
+      } else {
+        setStatus('chain_verifying');
+      }
+    } catch (error: any) {
+      console.error(error);
+      // The money is already sent: keep the hash so the user can retry signing/submitting
+      setStatus('sign');
+      toast.error(error.response?.data?.message || error.shortMessage || error.message || t("pre_register.pay_failed"));
+    }
+  };
 
   const connectWallet = async () => {
     try {
@@ -214,24 +283,11 @@ export default function PaymentPage() {
         args: [ADMIN_ADDRESS as `0x${string}`, amountWei],
       });
 
-      // CHỦ ĐỘNG GỬI HASH VỀ BACKEND NGAY LẬP TỨC
-      setStatus('verifying');
+      // Keep the hash locally until the proof is accepted, so a closed tab can't strand a paid order
+      try { localStorage.setItem(pendingTxKey, hash); } catch { /* ignore */ }
+      setTxHash(hash);
       await waitForTransactionReceipt(config, { hash });
-
-      // Gửi hash lên backend và ĐỢI backend xử lý xong xuôi (cộng token, hoa hồng...)
-      const res = await apiClient.post('/payments/confirm-hash', {
-        paymentId: payment.paymentId,
-        hash: hash
-      });
-
-      if (res.data.status === 'SUCCESS') {
-        setTxHash(hash);
-        setStatus('success');
-        toast.success(t("payments.page.success_msg"));
-        await syncProfile();
-      } else {
-        throw new Error("Backend verification failed");
-      }
+      await submitProof(hash);
     } catch (error: any) {
       console.error(error);
       setStatus('error');
@@ -299,12 +355,14 @@ export default function PaymentPage() {
               <span className={cn(
                 "px-3 py-1 rounded-full text-xs font-bold uppercase",
                 status === 'success' ? "bg-emerald-50 text-emerald-600" :
-                  status === 'awaiting' ? "bg-amber-50 text-amber-600" :
+                  status === 'awaiting' || status === 'chain_verifying' || status === 'review' ? "bg-amber-50 text-amber-600" :
                     status === 'cancelled' ? "bg-rose-50 text-rose-600" :
                       "bg-gray-50 text-gray-500"
               )}>
                 {status === 'success' ? t("payments.page.status_success") :
                   status === 'awaiting' ? t("payments.page.status_awaiting") :
+                    status === 'chain_verifying' ? t("payments.page.status_verifying") :
+                    status === 'review' ? t("payments.page.status_review") :
                     status === 'cancelled' ? t("payments.page.status_cancelled") :
                       t("payments.page.status_pending")}
               </span>
@@ -346,6 +404,30 @@ export default function PaymentPage() {
                 <h3 className="text-2xl font-black text-[#0d1f1d]">{t("payments.page.status_awaiting")}</h3>
                 <p className="text-sm text-gray-400">{t("payments.page.manual_success_hint")}</p>
               </div>
+              <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
+                {t("payments.page.back_home")}
+              </Button>
+            </div>
+          ) : status === 'chain_verifying' || status === 'review' ? (
+            <div className="text-center space-y-6 pt-4">
+              <div className="flex justify-center">
+                <div className="size-20 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(245,158,11,0.3)]">
+                  {status === 'chain_verifying' ? <Loader2 size={40} className="animate-spin" /> : <Clock size={40} />}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0d1f1d]">
+                  {status === 'chain_verifying' ? t("payments.page.status_verifying") : t("payments.page.status_review")}
+                </h3>
+                <p className="text-sm text-gray-400">
+                  {status === 'chain_verifying' ? t("payments.page.verifying_hint") : t("payments.page.review_hint")}
+                </p>
+              </div>
+              {txHash && (
+                <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" className="inline-flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline">
+                  {t("payments.page.view_bscscan")} <ExternalLink size={14} />
+                </a>
+              )}
               <Button onClick={() => navigate('/buy')} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold">
                 {t("payments.page.back_home")}
               </Button>
@@ -400,6 +482,19 @@ export default function PaymentPage() {
                         </button>
                       </div>
 
+                      {(status === 'sign' || status === 'submitting') ? (
+                        <div className="space-y-3">
+                          <p className="text-xs text-gray-500 text-center">{t("payments.page.sign_hint")}</p>
+                          <Button
+                            onClick={() => submitProof(txHash)}
+                            disabled={status === 'submitting'}
+                            className="w-full h-14 bg-[#276152] hover:bg-[#1e4d41] text-white rounded-2xl font-bold flex items-center justify-center gap-3"
+                          >
+                            {status === 'submitting' ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} />}
+                            {status === 'submitting' ? t("payments.page.verifying") : t("payments.page.sign_retry")}
+                          </Button>
+                        </div>
+                      ) : (
                       <Button
                         onClick={handlePayment}
                         disabled={status === 'checking_balance' || status === 'paying' || status === 'verifying'}
@@ -408,6 +503,7 @@ export default function PaymentPage() {
                         {(status === 'checking_balance' || status === 'paying' || status === 'verifying') ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} />}
                         {status === 'checking_balance' ? t("auth.processing") : status === 'paying' ? t("payments.page.paying") : status === 'verifying' ? t("payments.page.verifying") : t("payments.page.pay_now")}
                       </Button>
+                      )}
                     </div>
                   )}
 
@@ -462,6 +558,7 @@ export default function PaymentPage() {
                 </div>
               )}
 
+              {status !== 'sign' && status !== 'submitting' && (
               <div className="text-center">
                 <button
                   onClick={handleCancel}
@@ -471,6 +568,7 @@ export default function PaymentPage() {
                   {cancelling ? t("auth.processing") : t("payments.page.cancel_btn")}
                 </button>
               </div>
+              )}
             </div>
           )}
         </div>
