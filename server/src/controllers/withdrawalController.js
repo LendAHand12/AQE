@@ -1,7 +1,7 @@
 import Withdrawal from '../models/Withdrawal.js';
 import User from '../models/User.js';
 import BalanceHistory from '../models/BalanceHistory.js';
-import { sendUsdt } from '../services/blockchainService.js';
+import { sendUsdt, alertWithdrawalFailed } from '../services/blockchainService.js';
 import jwt from 'jsonwebtoken';
 import Transaction from '../models/Transaction.js';
 import mongoose from 'mongoose';
@@ -179,7 +179,8 @@ export const completeWithdrawal = async (req, res) => {
             fee: fee,
             symbol: 'USDT',
             method: 'AUTO',
-            status: paymentMethod === 'AQE' ? 'SUCCESS' : ((paymentMethod === 'WALLET' && withdrawalAmount <= 200) ? 'SUCCESS' : 'PENDING'),
+            // Wallet auto-payouts start PENDING and only become SUCCESS once the transfer is sent
+            status: paymentMethod === 'AQE' ? 'SUCCESS' : 'PENDING',
             description: paymentMethod === 'AQE'
                 ? `Converted USDT to AQE balance`
                 : `Withdrawal request to ${paymentMethod === 'ZELLE' ? 'Zelle: ' + zelleName + ' (' + zelleInfo + ')' : walletAddress}`
@@ -197,6 +198,10 @@ export const completeWithdrawal = async (req, res) => {
         if (paymentMethod === 'WALLET' && withdrawalAmount <= 200) {
             try {
                 const hash = await sendUsdt(walletAddress, withdrawalAmount);
+                // SUCCESS only when the chain returned a real tx hash
+                if (typeof hash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(hash)) {
+                    throw new Error('Transfer returned no valid transaction hash');
+                }
                 withdrawal.hash = hash;
                 withdrawal.status = 'SUCCESS';
                 await withdrawal.save();
@@ -209,6 +214,9 @@ export const completeWithdrawal = async (req, res) => {
                 });
             } catch (blockchainError) {
                 console.error('Auto Withdrawal Failed:', blockchainError);
+                withdrawal.description = `${withdrawal.description} (auto payout failed: ${blockchainError.message})`;
+                await withdrawal.save().catch(() => {});
+                alertWithdrawalFailed({ user, withdrawal, error: blockchainError }).catch(() => {});
                 return res.json({ 
                     success: true, 
                     message: 'withdrawals.success_manual_needed',
